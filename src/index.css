@@ -17,16 +17,16 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 220 15% 15%;
 
-    --primary: 178 88% 37%;
+    --primary: 200 100% 70%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 178 30% 90%;
+    --secondary: 200 30% 85%;
     --secondary-foreground: 220 15% 15%;
 
     --muted: 210 20% 95%;
     --muted-foreground: 220 10% 45%;
 
-    --accent: 178 88% 37%;
+    --accent: 200 100% 70%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84.2% 60.2%;
@@ -34,7 +34,7 @@ All colors MUST be HSL.
 
     --border: 220 15% 85%;
     --input: 220 15% 90%;
-    --ring: 178 88% 37%;
+    --ring: 200 100% 70%;
 
     --radius: 0.75rem;
 
