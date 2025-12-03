@@ -18,9 +18,10 @@ const categoryColors = {
 type TimelineActivityProps = {
   activity: Activity;
   isLast: boolean;
+  onClick?: () => void;
 };
 
-const TimelineActivity = ({ activity, isLast }: TimelineActivityProps) => {
+const TimelineActivity = ({ activity, isLast, onClick }: TimelineActivityProps) => {
   const Icon = categoryIcons[activity.category];
 
   return (
@@ -39,7 +40,10 @@ const TimelineActivity = ({ activity, isLast }: TimelineActivityProps) => {
 
       {/* Content */}
       <div className="flex-1 pb-6">
-        <div className="bg-card border-2 border-foreground rounded-xl p-4 shadow-brutal-sm">
+        <div
+          onClick={onClick}
+          className="bg-card border-2 border-foreground rounded-xl p-4 shadow-brutal-sm cursor-pointer hover:shadow-brutal hover:-translate-y-0.5 transition-all"
+        >
           <div className="flex items-center gap-2 mb-1">
             <span className="text-sm font-bold text-primary">
               {activity.time}

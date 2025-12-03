@@ -39,7 +39,7 @@ const Onboarding = () => {
     } else {
       localStorage.setItem("onboardingComplete", "true");
       localStorage.setItem("onboardingData", JSON.stringify(data));
-      navigate("/");
+      navigate("/select");
     }
   };
 
