@@ -4,24 +4,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-
-type OnboardingData = {
-  duration: string;
-  groupSize: string;
-  startTime: string;
-  endTime: string;
-  interests: string[];
-};
-
-const INTERESTS = [
-  "Local Food",
-  "Culture & History",
-  "Adventure",
-  "Nightlife",
-  "Beach & Nature",
-  "Shopping",
-];
+import {
+  OnboardingData,
+  INTERESTS,
+  FOOD_PREFERENCES,
+  TRANSPORT_MODES,
+  MOBILITY_OPTIONS,
+  BUDGET_OPTIONS,
+} from "@/types/onboarding";
 
 const Onboarding = () => {
   const navigate = useNavigate();
@@ -32,50 +24,283 @@ const Onboarding = () => {
     startTime: "",
     endTime: "",
     interests: [],
+    budget: "",
+    foodPreferences: [],
+    transportMode: "",
+    mobility: "",
   });
 
-  const totalSteps = 5;
+  const totalSteps = 9;
   const progress = (step / totalSteps) * 100;
 
   const handleNext = () => {
     if (step < totalSteps) {
       setStep(step + 1);
     } else {
-      // Complete onboarding
       localStorage.setItem("onboardingComplete", "true");
+      localStorage.setItem("onboardingData", JSON.stringify(data));
       navigate("/");
     }
   };
 
   const handleBack = () => {
-    if (step > 1) {
-      setStep(step - 1);
-    }
+    if (step > 1) setStep(step - 1);
   };
 
-  const toggleInterest = (interest: string) => {
+  const toggleArrayItem = (key: "interests" | "foodPreferences", item: string) => {
     setData((prev) => ({
       ...prev,
-      interests: prev.interests.includes(interest)
-        ? prev.interests.filter((i) => i !== interest)
-        : [...prev.interests, interest],
+      [key]: prev[key].includes(item)
+        ? prev[key].filter((i) => i !== item)
+        : [...prev[key], item],
     }));
   };
 
   const canProceed = () => {
     switch (step) {
+      case 1: return data.duration !== "";
+      case 2: return data.groupSize !== "";
+      case 3: return data.startTime !== "";
+      case 4: return data.endTime !== "";
+      case 5: return data.interests.length > 0;
+      case 6: return data.budget !== "";
+      case 7: return data.foodPreferences.length > 0;
+      case 8: return data.transportMode !== "";
+      case 9: return data.mobility !== "";
+      default: return false;
+    }
+  };
+
+  const renderStep = () => {
+    switch (step) {
       case 1:
-        return data.duration !== "";
+        return (
+          <div className="space-y-4">
+            <h2 className="text-2xl font-bold text-foreground">
+              How long are you staying in Da Nang?
+            </h2>
+            <div className="space-y-2">
+              <Label htmlFor="duration">Number of days</Label>
+              <Input
+                id="duration"
+                type="number"
+                min="1"
+                placeholder="e.g., 3"
+                value={data.duration}
+                onChange={(e) => setData({ ...data, duration: e.target.value })}
+                className="border-2 border-foreground shadow-brutal-sm focus:shadow-brutal"
+              />
+            </div>
+          </div>
+        );
+
       case 2:
-        return data.groupSize !== "";
+        return (
+          <div className="space-y-4">
+            <h2 className="text-2xl font-bold text-foreground">
+              How many people are traveling?
+            </h2>
+            <div className="space-y-2">
+              <Label htmlFor="groupSize">Number of travelers</Label>
+              <Input
+                id="groupSize"
+                type="number"
+                min="1"
+                placeholder="e.g., 2"
+                value={data.groupSize}
+                onChange={(e) => setData({ ...data, groupSize: e.target.value })}
+                className="border-2 border-foreground shadow-brutal-sm focus:shadow-brutal"
+              />
+            </div>
+          </div>
+        );
+
       case 3:
-        return data.startTime !== "";
+        return (
+          <div className="space-y-4">
+            <h2 className="text-2xl font-bold text-foreground">
+              What time do you prefer to start your day?
+            </h2>
+            <div className="space-y-2">
+              <Label htmlFor="startTime">Start time</Label>
+              <Input
+                id="startTime"
+                type="time"
+                value={data.startTime}
+                onChange={(e) => setData({ ...data, startTime: e.target.value })}
+                className="border-2 border-foreground shadow-brutal-sm focus:shadow-brutal"
+              />
+            </div>
+          </div>
+        );
+
       case 4:
-        return data.endTime !== "";
+        return (
+          <div className="space-y-4">
+            <h2 className="text-2xl font-bold text-foreground">
+              What time do you prefer to end your day?
+            </h2>
+            <div className="space-y-2">
+              <Label htmlFor="endTime">End time</Label>
+              <Input
+                id="endTime"
+                type="time"
+                value={data.endTime}
+                onChange={(e) => setData({ ...data, endTime: e.target.value })}
+                className="border-2 border-foreground shadow-brutal-sm focus:shadow-brutal"
+              />
+            </div>
+          </div>
+        );
+
       case 5:
-        return data.interests.length > 0;
+        return (
+          <div className="space-y-4">
+            <h2 className="text-2xl font-bold text-foreground">
+              What are you interested in?
+            </h2>
+            <p className="text-sm text-muted-foreground">Select all that apply</p>
+            <div className="space-y-3">
+              {INTERESTS.map((interest) => (
+                <div
+                  key={interest}
+                  className="flex items-center space-x-3 p-3 rounded-lg border-2 border-foreground bg-background hover:bg-secondary transition-colors cursor-pointer"
+                  onClick={() => toggleArrayItem("interests", interest)}
+                >
+                  <Checkbox
+                    id={interest}
+                    checked={data.interests.includes(interest)}
+                    onCheckedChange={() => toggleArrayItem("interests", interest)}
+                  />
+                  <Label htmlFor={interest} className="flex-1 cursor-pointer">
+                    {interest}
+                  </Label>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+
+      case 6:
+        return (
+          <div className="space-y-4">
+            <h2 className="text-2xl font-bold text-foreground">
+              What's your daily budget?
+            </h2>
+            <RadioGroup
+              value={data.budget}
+              onValueChange={(value) => setData({ ...data, budget: value })}
+              className="space-y-3"
+            >
+              {BUDGET_OPTIONS.map((option) => (
+                <div
+                  key={option.value}
+                  className="flex items-center space-x-3 p-3 rounded-lg border-2 border-foreground bg-background hover:bg-secondary transition-colors cursor-pointer"
+                  onClick={() => setData({ ...data, budget: option.value })}
+                >
+                  <RadioGroupItem value={option.value} id={option.value} />
+                  <Label htmlFor={option.value} className="flex-1 cursor-pointer">
+                    <span className="font-medium">{option.label}</span>
+                    <span className="text-sm text-muted-foreground ml-2">
+                      {option.description}
+                    </span>
+                  </Label>
+                </div>
+              ))}
+            </RadioGroup>
+          </div>
+        );
+
+      case 7:
+        return (
+          <div className="space-y-4">
+            <h2 className="text-2xl font-bold text-foreground">
+              Any food preferences?
+            </h2>
+            <p className="text-sm text-muted-foreground">Select all that apply</p>
+            <div className="space-y-3">
+              {FOOD_PREFERENCES.map((pref) => (
+                <div
+                  key={pref}
+                  className="flex items-center space-x-3 p-3 rounded-lg border-2 border-foreground bg-background hover:bg-secondary transition-colors cursor-pointer"
+                  onClick={() => toggleArrayItem("foodPreferences", pref)}
+                >
+                  <Checkbox
+                    id={pref}
+                    checked={data.foodPreferences.includes(pref)}
+                    onCheckedChange={() => toggleArrayItem("foodPreferences", pref)}
+                  />
+                  <Label htmlFor={pref} className="flex-1 cursor-pointer">
+                    {pref}
+                  </Label>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+
+      case 8:
+        return (
+          <div className="space-y-4">
+            <h2 className="text-2xl font-bold text-foreground">
+              How do you prefer to get around?
+            </h2>
+            <RadioGroup
+              value={data.transportMode}
+              onValueChange={(value) => setData({ ...data, transportMode: value })}
+              className="space-y-3"
+            >
+              {TRANSPORT_MODES.map((option) => (
+                <div
+                  key={option.value}
+                  className="flex items-center space-x-3 p-3 rounded-lg border-2 border-foreground bg-background hover:bg-secondary transition-colors cursor-pointer"
+                  onClick={() => setData({ ...data, transportMode: option.value })}
+                >
+                  <RadioGroupItem value={option.value} id={option.value} />
+                  <Label htmlFor={option.value} className="flex-1 cursor-pointer">
+                    <span className="font-medium">{option.label}</span>
+                    <span className="text-sm text-muted-foreground ml-2">
+                      {option.description}
+                    </span>
+                  </Label>
+                </div>
+              ))}
+            </RadioGroup>
+          </div>
+        );
+
+      case 9:
+        return (
+          <div className="space-y-4">
+            <h2 className="text-2xl font-bold text-foreground">
+              Any mobility considerations?
+            </h2>
+            <RadioGroup
+              value={data.mobility}
+              onValueChange={(value) => setData({ ...data, mobility: value })}
+              className="space-y-3"
+            >
+              {MOBILITY_OPTIONS.map((option) => (
+                <div
+                  key={option.value}
+                  className="flex items-center space-x-3 p-3 rounded-lg border-2 border-foreground bg-background hover:bg-secondary transition-colors cursor-pointer"
+                  onClick={() => setData({ ...data, mobility: option.value })}
+                >
+                  <RadioGroupItem value={option.value} id={option.value} />
+                  <Label htmlFor={option.value} className="flex-1 cursor-pointer">
+                    <span className="font-medium">{option.label}</span>
+                    <span className="text-sm text-muted-foreground ml-2">
+                      {option.description}
+                    </span>
+                  </Label>
+                </div>
+              ))}
+            </RadioGroup>
+          </div>
+        );
+
       default:
-        return false;
+        return null;
     }
   };
 
@@ -101,121 +326,7 @@ const Onboarding = () => {
 
           {/* Question Content */}
           <div className="bg-card border-2 border-foreground rounded-2xl p-6 shadow-brutal-lg space-y-6">
-            {step === 1 && (
-              <div className="space-y-4">
-                <h2 className="text-2xl font-bold text-foreground">
-                  How long are you staying in Da Nang?
-                </h2>
-                <div className="space-y-2">
-                  <Label htmlFor="duration">Number of days</Label>
-                  <Input
-                    id="duration"
-                    type="number"
-                    min="1"
-                    placeholder="e.g., 3"
-                    value={data.duration}
-                    onChange={(e) =>
-                      setData({ ...data, duration: e.target.value })
-                    }
-                    className="border-2 border-foreground shadow-brutal-sm focus:shadow-brutal"
-                  />
-                </div>
-              </div>
-            )}
-
-            {step === 2 && (
-              <div className="space-y-4">
-                <h2 className="text-2xl font-bold text-foreground">
-                  How many people are you traveling with?
-                </h2>
-                <div className="space-y-2">
-                  <Label htmlFor="groupSize">Number of travelers</Label>
-                  <Input
-                    id="groupSize"
-                    type="number"
-                    min="1"
-                    placeholder="e.g., 2"
-                    value={data.groupSize}
-                    onChange={(e) =>
-                      setData({ ...data, groupSize: e.target.value })
-                    }
-                    className="border-2 border-foreground shadow-brutal-sm focus:shadow-brutal"
-                  />
-                </div>
-              </div>
-            )}
-
-            {step === 3 && (
-              <div className="space-y-4">
-                <h2 className="text-2xl font-bold text-foreground">
-                  What time do you prefer to start your day?
-                </h2>
-                <div className="space-y-2">
-                  <Label htmlFor="startTime">Start time</Label>
-                  <Input
-                    id="startTime"
-                    type="time"
-                    value={data.startTime}
-                    onChange={(e) =>
-                      setData({ ...data, startTime: e.target.value })
-                    }
-                    className="border-2 border-foreground shadow-brutal-sm focus:shadow-brutal"
-                  />
-                </div>
-              </div>
-            )}
-
-            {step === 4 && (
-              <div className="space-y-4">
-                <h2 className="text-2xl font-bold text-foreground">
-                  What time do you prefer to end your day?
-                </h2>
-                <div className="space-y-2">
-                  <Label htmlFor="endTime">End time</Label>
-                  <Input
-                    id="endTime"
-                    type="time"
-                    value={data.endTime}
-                    onChange={(e) =>
-                      setData({ ...data, endTime: e.target.value })
-                    }
-                    className="border-2 border-foreground shadow-brutal-sm focus:shadow-brutal"
-                  />
-                </div>
-              </div>
-            )}
-
-            {step === 5 && (
-              <div className="space-y-4">
-                <h2 className="text-2xl font-bold text-foreground">
-                  What are you interested in?
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  Select all that apply
-                </p>
-                <div className="space-y-3">
-                  {INTERESTS.map((interest) => (
-                    <div
-                      key={interest}
-                      className="flex items-center space-x-3 p-3 rounded-lg border-2 border-foreground bg-background hover:bg-secondary transition-colors cursor-pointer"
-                      onClick={() => toggleInterest(interest)}
-                    >
-                      <Checkbox
-                        id={interest}
-                        checked={data.interests.includes(interest)}
-                        onCheckedChange={() => toggleInterest(interest)}
-                      />
-                      <Label
-                        htmlFor={interest}
-                        className="flex-1 cursor-pointer"
-                      >
-                        {interest}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            {renderStep()}
           </div>
 
           {/* Navigation Buttons */}
