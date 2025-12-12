@@ -2,23 +2,19 @@ import { Routes, Route } from 'react-router-dom';
 import { useEffect } from 'react';
 import { useAuthStore } from '@/stores/authStore';
 
-// Layouts
-import MainLayout from '@/components/layouts/MainLayout';
-import AuthLayout from '@/components/layouts/AuthLayout';
-
 // Pages
-import LandingPage from '@/pages/LandingPage';
-import DiscoverPage from '@/pages/DiscoverPage';
-import ResultsPage from '@/pages/ResultsPage';
-import ItineraryPage from '@/pages/ItineraryPage';
-import LoginPage from '@/pages/LoginPage';
-import RegisterPage from '@/pages/RegisterPage';
-import AuthCallbackPage from '@/pages/AuthCallbackPage';
-import DashboardPage from '@/pages/DashboardPage';
-import PlanPage from '@/pages/PlanPage';
-import TripPage from '@/pages/TripPage';
-import AdminPage from '@/pages/AdminPage';
-import NotFoundPage from '@/pages/NotFoundPage';
+import Landing from '@/pages/Landing';
+import Discover from '@/pages/Discover';
+import Results from '@/pages/Results';
+import Itinerary from '@/pages/Itinerary';
+import Login from '@/pages/Login';
+import Register from '@/pages/Register';
+import Dashboard from '@/pages/Dashboard';
+import Plan from '@/pages/Plan';
+import Trip from '@/pages/Trip';
+import Admin from '@/pages/Admin';
+import NotFound from '@/pages/NotFound';
+import AuthCallback from '@/pages/AuthCallback';
 
 // Route guards
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
@@ -45,42 +41,33 @@ function App() {
 
   return (
     <Routes>
-      {/* Public routes */}
-      <Route element={<MainLayout />}>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/discover" element={<DiscoverPage />} />
-        <Route path="/discover/results" element={<ResultsPage />} />
-        <Route path="/itinerary/:id" element={<ItineraryPage />} />
-      </Route>
+      {/* Public routes - no layout wrapper, pages handle their own layout */}
+      <Route path="/" element={<Landing />} />
+      <Route path="/discover" element={<Discover />} />
+      <Route path="/results" element={<Results />} />
+      <Route path="/itinerary/:id" element={<Itinerary />} />
 
       {/* Auth routes */}
-      <Route element={<AuthLayout />}>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-      </Route>
-      <Route path="/auth/callback" element={<AuthCallbackPage />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/auth/callback" element={<AuthCallback />} />
 
       {/* Protected routes */}
       <Route element={<ProtectedRoute />}>
-        <Route element={<MainLayout />}>
-          <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/plan/:id" element={<PlanPage />} />
-          <Route path="/trip/:id" element={<TripPage />} />
-        </Route>
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/plan/:id" element={<Plan />} />
+        <Route path="/trip/:id" element={<Trip />} />
       </Route>
 
       {/* Admin routes */}
       <Route element={<AdminRoute />}>
-        <Route element={<MainLayout />}>
-          <Route path="/admin" element={<AdminPage />} />
-        </Route>
+        <Route path="/admin" element={<Admin />} />
       </Route>
 
       {/* 404 */}
-      <Route path="*" element={<NotFoundPage />} />
+      <Route path="*" element={<NotFound />} />
     </Routes>
   );
 }
 
 export default App;
-
