@@ -66,7 +66,7 @@ export default function DestinationStep() {
               padding="none"
               className={`overflow-hidden cursor-pointer transition-all ${
                 selected === dest.id
-                  ? 'ring-4 ring-[#4FC3F7] ring-offset-2'
+                  ? 'bg-[#4FC3F7]/5'
                   : ''
               } ${!dest.available ? 'opacity-60 cursor-not-allowed' : ''}`}
               onClick={() => dest.available && setAnswer('destination', dest.id)}

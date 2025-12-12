@@ -123,7 +123,7 @@ export default function PersonaStep() {
                 hoverable={!isDisabled}
                 className={`cursor-pointer text-center relative overflow-hidden transition-all ${
                   isSelected
-                    ? 'ring-4 ring-[#4FC3F7] ring-offset-2'
+                    ? 'bg-[#4FC3F7]/10'
                     : ''
                 } ${isDisabled ? 'opacity-40 cursor-not-allowed' : ''}`}
                 onClick={() => !isDisabled && handleSelect(persona.id)}

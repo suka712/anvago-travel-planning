@@ -73,7 +73,7 @@ export default function ActivityLevelStep() {
               <Card
                 hoverable
                 className={`cursor-pointer text-center relative overflow-hidden h-full ${
-                  isSelected ? 'ring-4 ring-[#4FC3F7] ring-offset-2' : ''
+                  isSelected ? 'bg-[#4FC3F7]/5' : ''
                 }`}
                 onClick={() => setAnswer('activityLevel', level.id)}
               >

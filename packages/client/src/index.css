@@ -37,10 +37,16 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Focus styles */
+/* Focus styles - using subtle background instead of outline for minimal look */
 *:focus-visible {
-  outline: 2px solid var(--color-sky-primary);
-  outline-offset: 2px;
+  outline: none;
+}
+
+/* Keep focus visible for accessibility on form inputs */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: none;
 }
 
 /* Scrollbar styling */

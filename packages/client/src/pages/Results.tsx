@@ -273,7 +273,7 @@ export default function Results() {
                   hoverable
                   padding="none"
                   className={`cursor-pointer overflow-hidden ${
-                    selectedItinerary?.id === itinerary.id ? 'ring-4 ring-[#4FC3F7]' : ''
+                    selectedItinerary?.id === itinerary.id ? 'bg-[#4FC3F7]/5' : ''
                   }`}
                   onClick={() => setSelectedItinerary(itinerary)}
                 >

@@ -90,7 +90,7 @@ export default function InterestsStep() {
                     onClick={() => toggleInArray('interests', item.id)}
                     className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-all text-left ${
                       isSelected
-                        ? 'border-[#4FC3F7] bg-[#4FC3F7]/10 shadow-[3px_3px_0px_#4FC3F7]'
+                        ? 'border-[#4FC3F7] bg-[#4FC3F7]/15'
                         : 'border-gray-200 hover:border-gray-300 bg-white'
                     }`}
                   >

@@ -56,7 +56,7 @@ export default function DurationStep() {
               hoverable
               className={`cursor-pointer text-center relative ${
                 selected === duration.value && isPreset
-                  ? 'ring-4 ring-[#4FC3F7] ring-offset-2 bg-[#4FC3F7]/10'
+                  ? 'bg-[#4FC3F7]/10'
                   : ''
               }`}
               onClick={() => {
