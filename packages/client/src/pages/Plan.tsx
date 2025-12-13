@@ -265,7 +265,7 @@ export default function Plan() {
             >
               <Card className="overflow-hidden">
                 {/* Day Header */}
-                <div className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
+                <div className="flex items-center justify-between p-4 transition-colors">
                   <button
                     onClick={() => toggleDay(day.day)}
                     className="flex items-center gap-4 flex-1"
