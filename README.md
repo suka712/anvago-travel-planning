@@ -2,7 +2,7 @@
 
 > AI-powered travel planning with live routing and seamless transportation integration
 
-[![Made for Grab Hackathon](https://img.shields.io/badge/Made%20for-Grab%20Hackathon-00b14f?style=for-the-badge)](https://grab.com)
+[![Made to win](https://img.shields.io/badge/Made%20to-%20Win-00b14f?style=for-the-badge)](https://grab.com)
 
 ## 🎯 Overview
 
