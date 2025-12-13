@@ -31,7 +31,7 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
       <div
         ref={ref}
         className={`
-          bg-white rounded-xl border-2 border-black shadow-[6px_6px_0px_#000]
+          rounded-xl border-2 border-black shadow-[6px_6px_0px_#000]
           ${paddingStyles[padding]}
           ${shouldHover ? 'transition-all duration-200 hover:-translate-x-[2px] hover:-translate-y-[2px] hover:shadow-[8px_8px_0px_#000] cursor-pointer' : ''}
           ${className}

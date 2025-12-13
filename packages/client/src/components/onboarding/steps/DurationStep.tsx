@@ -56,7 +56,7 @@ export default function DurationStep() {
               hoverable
               className={`cursor-pointer text-center relative ${
                 selected === duration.value && isPreset
-                  ? 'bg-[#4FC3F7]/10'
+                  ? 'bg-sky-300'
                   : ''
               }`}
               onClick={() => {
@@ -65,7 +65,7 @@ export default function DurationStep() {
               }}
             >
               {duration.recommended && (
-                <span className="absolute -top-2 -right-2 px-2 py-0.5 bg-green-500 text-white text-xs font-bold rounded-full border-2 border-black">
+                <span className="absolute -top-2 -right-2 px-2 py-0.5 bg-teal-400 text-white text-xs font-bold rounded-full border-2 border-black">
                   ⭐ Best
                 </span>
               )}

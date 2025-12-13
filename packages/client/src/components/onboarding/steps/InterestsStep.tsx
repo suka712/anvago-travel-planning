@@ -59,7 +59,7 @@ export default function InterestsStep() {
         <p className="text-gray-600 text-lg">
           Select as many as you'd like
         </p>
-        {selected.length > 0 && (
+        {(
           <p className="text-sm text-[#2196F3] mt-2">
             {selected.length} selected
           </p>
@@ -114,16 +114,7 @@ export default function InterestsStep() {
         ))}
       </div>
 
-      {selected.length === 0 && (
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-          className="mt-8 text-sm text-gray-500"
-        >
-          💡 Select interests for better recommendations, or skip to continue
-        </motion.p>
-      )}
+      
     </div>
   );
 }

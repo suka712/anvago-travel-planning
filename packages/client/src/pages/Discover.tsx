@@ -59,7 +59,7 @@ export default function Discover() {
       onSkip={canSkip ? handleSkip : undefined}
       canGoBack={currentStep > 0}
       canSkip={canSkip}
-      nextLabel={isLastStep ? "Generate My Trip" : "Continue"}
+      nextLabel={isLastStep ? "Generate" : "Continue"}
       isLoading={isSubmitting}
     >
       {CurrentStepComponent && <CurrentStepComponent />}

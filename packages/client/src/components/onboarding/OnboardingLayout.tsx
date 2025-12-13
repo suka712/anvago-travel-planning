@@ -77,7 +77,7 @@ export default function OnboardingLayout({
                 onClick={onSkip}
                 className="text-gray-500 hover:text-gray-700 text-sm font-medium flex items-center gap-1 transition-colors"
               >
-                Skip this step
+                Skip
                 <SkipForward className="w-4 h-4" />
               </button>
             )}
