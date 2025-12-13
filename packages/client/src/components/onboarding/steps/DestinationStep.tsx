@@ -17,16 +17,16 @@ const destinations = [
     name: 'Hoi An',
     country: 'Vietnam',
     available: false,
-    image: 'https://images.unsplash.com/photo-1536086845232-a47565ff3b61?w=400',
-    description: 'Ancient town charm',
+    image: 'https://images.unsplash.com/photo-1701397955118-79059690ef50?w=400',
+    description: 'Ancient town charm, Streets of old',
   },
   {
     id: 'hue',
     name: 'Huế',
     country: 'Vietnam',
     available: false,
-    image: 'https://images.unsplash.com/photo-1583149354430-5a0e42e32d6c?w=400',
-    description: 'Imperial heritage',
+    image: 'https://images.unsplash.com/photo-1664333039578-28ad613ee536?w=400',
+    description: 'Imperial heritage, Breathtaking landmarks',
   },
 ];
 
