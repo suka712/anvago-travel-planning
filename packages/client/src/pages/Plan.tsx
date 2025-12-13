@@ -112,7 +112,6 @@ export default function Plan() {
   const [showOptimizeModal, setShowOptimizeModal] = useState(false);
   const [showPremiumModal, setShowPremiumModal] = useState(false);
   const [premiumFeature, setPremiumFeature] = useState('');
-  const [showSidePanel, setShowSidePanel] = useState(true);
   // For replace search: track which item is being replaced
   const [replaceTarget, setReplaceTarget] = useState<{ dayIndex: number; itemId: string; itemName: string } | null>(null);
 
