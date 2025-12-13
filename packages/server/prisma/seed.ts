@@ -33,9 +33,10 @@ async function main() {
     },
   });
 
-  // Create demo user
-  console.log('👤 Creating demo user...');
+  // Create demo users with different personas
+  console.log('👤 Creating demo users...');
   const demoPassword = await bcrypt.hash('demo123', 12);
+
   const demoUser = await prisma.user.create({
     data: {
       email: 'demo@anvago.com',
@@ -54,6 +55,108 @@ async function main() {
       },
     },
   });
+
+  // Foodie Explorer
+  const foodieUser = await prisma.user.create({
+    data: {
+      email: 'foodie@anvago.com',
+      passwordHash: demoPassword,
+      name: 'Sarah Chen',
+      isPremium: true,
+      preferences: {
+        create: {
+          personas: ['foodie', 'culture_seeker'],
+          vibePreferences: ['local', 'authentic'],
+          interests: ['street_food', 'cooking_classes', 'markets', 'local_cuisine'],
+          budgetLevel: 'moderate',
+          mobilityLevel: 'active',
+          groupSize: 2,
+        },
+      },
+    },
+  });
+
+  // Adventure Seeker
+  const adventureUser = await prisma.user.create({
+    data: {
+      email: 'adventure@anvago.com',
+      passwordHash: demoPassword,
+      name: 'Mike Thompson',
+      isPremium: false,
+      preferences: {
+        create: {
+          personas: ['adventurer', 'nature_lover'],
+          vibePreferences: ['adventure', 'nature', 'outdoors'],
+          interests: ['hiking', 'diving', 'surfing', 'wildlife'],
+          budgetLevel: 'moderate',
+          mobilityLevel: 'active',
+          groupSize: 1,
+        },
+      },
+    },
+  });
+
+  // Budget Backpacker
+  const budgetUser = await prisma.user.create({
+    data: {
+      email: 'backpacker@anvago.com',
+      passwordHash: demoPassword,
+      name: 'Emma Wilson',
+      isPremium: false,
+      preferences: {
+        create: {
+          personas: ['backpacker', 'culture_seeker'],
+          vibePreferences: ['budget', 'authentic', 'local'],
+          interests: ['street_food', 'temples', 'markets', 'hostels'],
+          budgetLevel: 'budget',
+          mobilityLevel: 'active',
+          groupSize: 1,
+        },
+      },
+    },
+  });
+
+  // Luxury Traveler
+  const luxuryUser = await prisma.user.create({
+    data: {
+      email: 'luxury@anvago.com',
+      passwordHash: demoPassword,
+      name: 'James & Victoria Park',
+      isPremium: true,
+      preferences: {
+        create: {
+          personas: ['luxury', 'romantic'],
+          vibePreferences: ['luxury', 'relaxation', 'romantic'],
+          interests: ['spa', 'fine_dining', 'sunset', 'beach'],
+          budgetLevel: 'luxury',
+          mobilityLevel: 'relaxed',
+          groupSize: 2,
+        },
+      },
+    },
+  });
+
+  // Photographer
+  const photographerUser = await prisma.user.create({
+    data: {
+      email: 'photographer@anvago.com',
+      passwordHash: demoPassword,
+      name: 'Alex Kim',
+      isPremium: true,
+      preferences: {
+        create: {
+          personas: ['photographer', 'adventurer'],
+          vibePreferences: ['nature', 'culture', 'sunrise'],
+          interests: ['photography', 'sunrise', 'sunset', 'architecture', 'landscapes'],
+          budgetLevel: 'moderate',
+          mobilityLevel: 'active',
+          groupSize: 1,
+        },
+      },
+    },
+  });
+
+  console.log('✅ Created 6 demo users');
 
   // Create Danang locations
   console.log('📍 Creating Danang locations...');
@@ -782,6 +885,1113 @@ async function main() {
         isAnvaVerified: true,
       },
     }),
+
+    // ===== ADDITIONAL LOCATIONS =====
+
+    // MORE RESTAURANTS & STREET FOOD
+    prisma.location.create({
+      data: {
+        name: 'Pho Hung',
+        nameLocal: 'Phở Hưng',
+        description: 'Family-run pho restaurant serving authentic Northern-style pho since 1975. Known for rich, aromatic broth simmered for 12 hours.',
+        descriptionShort: 'Legendary pho since 1975',
+        latitude: 16.0678,
+        longitude: 108.2123,
+        address: '45 Phan Dinh Phung, Hai Chau, Da Nang',
+        city: 'Danang',
+        category: 'restaurant',
+        tags: ['breakfast', 'pho', 'local', 'authentic', 'budget'],
+        imageUrl: 'https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43?w=800',
+        images: [],
+        priceLevel: 1,
+        rating: 4.7,
+        reviewCount: 1823,
+        avgDurationMins: 40,
+        isAnvaVerified: true,
+        isPopular: true,
+      },
+    }),
+    prisma.location.create({
+      data: {
+        name: 'Nem Nuong Ba Hung',
+        nameLocal: 'Nem Nướng Bà Hùng',
+        description: 'Famous for grilled pork rolls served with fresh herbs and rice paper. A Da Nang specialty you cannot miss.',
+        descriptionShort: 'Famous grilled pork rolls',
+        latitude: 16.0598,
+        longitude: 108.2156,
+        address: '2 Nguyen Van Thoai, Son Tra, Da Nang',
+        city: 'Danang',
+        category: 'restaurant',
+        tags: ['lunch', 'local', 'nem_nuong', 'authentic', 'budget'],
+        imageUrl: 'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=800',
+        images: [],
+        priceLevel: 1,
+        rating: 4.6,
+        reviewCount: 1234,
+        avgDurationMins: 45,
+        isAnvaVerified: true,
+        isHiddenGem: true,
+      },
+    }),
+    prisma.location.create({
+      data: {
+        name: 'Com Ga A Hai',
+        nameLocal: 'Cơm Gà A Hải',
+        description: 'Hoi An-style chicken rice with tender poached chicken, fragrant rice, and traditional dipping sauces. A local lunchtime favorite.',
+        descriptionShort: 'Hoi An-style chicken rice',
+        latitude: 16.0623,
+        longitude: 108.2189,
+        address: '100A Thai Phien, Hai Chau, Da Nang',
+        city: 'Danang',
+        category: 'restaurant',
+        tags: ['lunch', 'local', 'chicken_rice', 'authentic', 'budget'],
+        imageUrl: 'https://images.unsplash.com/photo-1569058242567-93de6f36f8e5?w=800',
+        images: [],
+        priceLevel: 1,
+        rating: 4.5,
+        reviewCount: 987,
+        avgDurationMins: 40,
+        isAnvaVerified: true,
+      },
+    }),
+    prisma.location.create({
+      data: {
+        name: 'Waterfront Restaurant',
+        nameLocal: 'Waterfront Restaurant',
+        description: 'Upscale riverside dining with panoramic views of the Dragon Bridge. International and Vietnamese fusion cuisine with wine pairing.',
+        descriptionShort: 'Upscale riverside dining',
+        latitude: 16.0612,
+        longitude: 108.2256,
+        address: '150-152 Bach Dang, Hai Chau, Da Nang',
+        city: 'Danang',
+        category: 'restaurant',
+        tags: ['dinner', 'romantic', 'views', 'fine_dining', 'wine'],
+        imageUrl: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800',
+        images: [],
+        priceLevel: 4,
+        rating: 4.6,
+        reviewCount: 654,
+        avgDurationMins: 120,
+        isPopular: true,
+      },
+    }),
+    prisma.location.create({
+      data: {
+        name: 'Banh Xeo Ba Duong',
+        nameLocal: 'Bánh Xèo Bà Dưỡng',
+        description: 'The most famous banh xeo (crispy pancake) spot in Da Nang. Thin, crispy pancakes stuffed with shrimp, pork, and bean sprouts.',
+        descriptionShort: 'Famous crispy pancakes',
+        latitude: 16.0534,
+        longitude: 108.2134,
+        address: '23 Hoang Dieu, Hai Chau, Da Nang',
+        city: 'Danang',
+        category: 'restaurant',
+        tags: ['lunch', 'dinner', 'local', 'banh_xeo', 'authentic', 'budget'],
+        imageUrl: 'https://images.unsplash.com/photo-1562967916-eb82221dfb44?w=800',
+        images: [],
+        priceLevel: 1,
+        rating: 4.8,
+        reviewCount: 2567,
+        avgDurationMins: 50,
+        isAnvaVerified: true,
+        isPopular: true,
+      },
+    }),
+
+    // MORE CAFES
+    prisma.location.create({
+      data: {
+        name: 'Hideaway Coffee',
+        nameLocal: 'Hideaway Coffee',
+        description: 'Secret garden cafe hidden in an alley. Known for Vietnamese egg coffee and peaceful atmosphere away from the busy streets.',
+        descriptionShort: 'Secret garden cafe',
+        latitude: 16.0589,
+        longitude: 108.2178,
+        address: 'K23/5 Le Duan, Hai Chau, Da Nang',
+        city: 'Danang',
+        category: 'cafe',
+        tags: ['coffee', 'garden', 'peaceful', 'egg_coffee', 'hidden_gem'],
+        imageUrl: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=800',
+        images: [],
+        priceLevel: 2,
+        rating: 4.7,
+        reviewCount: 432,
+        avgDurationMins: 60,
+        isHiddenGem: true,
+        isAnvaVerified: true,
+      },
+    }),
+    prisma.location.create({
+      data: {
+        name: 'Danang Souvenirs Coffee',
+        nameLocal: 'Danang Souvenirs & Coffee',
+        description: 'Coffee shop with a curated selection of local souvenirs and crafts. Great salt coffee and friendly English-speaking staff.',
+        descriptionShort: 'Coffee and local souvenirs',
+        latitude: 16.0678,
+        longitude: 108.2212,
+        address: '68 Bach Dang, Hai Chau, Da Nang',
+        city: 'Danang',
+        category: 'cafe',
+        tags: ['coffee', 'souvenirs', 'shopping', 'tourist_friendly'],
+        imageUrl: 'https://images.unsplash.com/photo-1442512595331-e89e73853f31?w=800',
+        images: [],
+        priceLevel: 2,
+        rating: 4.4,
+        reviewCount: 345,
+        avgDurationMins: 45,
+        isPopular: true,
+      },
+    }),
+
+    // MORE ACTIVITIES
+    prisma.location.create({
+      data: {
+        name: 'Vietnamese Cooking Class',
+        nameLocal: 'Lớp Nấu Ăn Việt Nam',
+        description: 'Hands-on cooking class starting with a market tour. Learn to make pho, banh mi, and spring rolls with a local chef.',
+        descriptionShort: 'Learn Vietnamese cooking',
+        latitude: 16.0678,
+        longitude: 108.2234,
+        address: '8 Tran Quoc Toan, Hai Chau, Da Nang',
+        city: 'Danang',
+        category: 'activity',
+        tags: ['cooking', 'food', 'cultural', 'hands_on', 'local'],
+        imageUrl: 'https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=800',
+        images: [],
+        priceLevel: 2,
+        rating: 4.9,
+        reviewCount: 678,
+        avgDurationMins: 240,
+        isAnvaVerified: true,
+        isPopular: true,
+      },
+    }),
+    prisma.location.create({
+      data: {
+        name: 'Kayak Son Tra',
+        nameLocal: 'Chèo Kayak Sơn Trà',
+        description: 'Sunset kayaking along Son Tra Peninsula. Paddle through mangroves, spot wildlife, and watch the sunset from the water.',
+        descriptionShort: 'Sunset kayaking adventure',
+        latitude: 16.1056,
+        longitude: 108.2812,
+        address: 'Son Tra Marina, Da Nang',
+        city: 'Danang',
+        category: 'activity',
+        tags: ['kayaking', 'sunset', 'nature', 'adventure', 'wildlife'],
+        imageUrl: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800',
+        images: [],
+        priceLevel: 2,
+        rating: 4.7,
+        reviewCount: 234,
+        avgDurationMins: 150,
+        isAnvaVerified: true,
+      },
+    }),
+    prisma.location.create({
+      data: {
+        name: 'Hoi An Day Trip',
+        nameLocal: 'Tour Hội An',
+        description: 'Full-day trip to the ancient town of Hoi An. Includes walking tour, lantern making, and traditional lunch.',
+        descriptionShort: 'Ancient town day trip',
+        latitude: 15.8801,
+        longitude: 108.3380,
+        address: 'Hoi An (pickup from Da Nang)',
+        city: 'Danang',
+        category: 'activity',
+        tags: ['day_trip', 'cultural', 'unesco', 'history', 'photography'],
+        imageUrl: 'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=800',
+        images: [],
+        priceLevel: 3,
+        rating: 4.8,
+        reviewCount: 1234,
+        avgDurationMins: 540,
+        isAnvaVerified: true,
+        isPopular: true,
+      },
+    }),
+    prisma.location.create({
+      data: {
+        name: 'Marble Carving Workshop',
+        nameLocal: 'Xưởng Điêu Khắc Đá',
+        description: 'Learn traditional marble carving from local artisans at Marble Mountains village. Take home your own small creation.',
+        descriptionShort: 'Traditional marble carving',
+        latitude: 16.0023,
+        longitude: 108.2612,
+        address: 'Non Nuoc Village, Ngu Hanh Son, Da Nang',
+        city: 'Danang',
+        category: 'activity',
+        tags: ['crafts', 'cultural', 'hands_on', 'art', 'local'],
+        imageUrl: 'https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=800',
+        images: [],
+        priceLevel: 2,
+        rating: 4.6,
+        reviewCount: 187,
+        avgDurationMins: 180,
+        isHiddenGem: true,
+        isAnvaVerified: true,
+      },
+    }),
+
+    // MORE TEMPLES & SPIRITUAL
+    prisma.location.create({
+      data: {
+        name: 'Phap Lam Pagoda',
+        nameLocal: 'Chùa Pháp Lâm',
+        description: 'One of the largest and most beautiful pagodas in Da Nang. Features stunning architecture and peaceful gardens.',
+        descriptionShort: 'Large ornate Buddhist pagoda',
+        latitude: 16.0567,
+        longitude: 108.2178,
+        address: '574 Ong Ich Khiem, Hai Chau, Da Nang',
+        city: 'Danang',
+        category: 'temple',
+        tags: ['spiritual', 'peaceful', 'architecture', 'photography', 'free'],
+        imageUrl: 'https://images.unsplash.com/photo-1528127269322-539801943592?w=800',
+        images: [],
+        priceLevel: 1,
+        rating: 4.5,
+        reviewCount: 567,
+        avgDurationMins: 60,
+        isAnvaVerified: true,
+      },
+    }),
+    prisma.location.create({
+      data: {
+        name: 'Tam Thai Pagoda',
+        nameLocal: 'Chùa Tam Thai',
+        description: 'Historic pagoda inside Marble Mountains caves. Features ancient Buddha statues and mystical cave atmosphere.',
+        descriptionShort: 'Cave pagoda in Marble Mountains',
+        latitude: 16.0034,
+        longitude: 108.2631,
+        address: 'Inside Marble Mountains, Da Nang',
+        city: 'Danang',
+        category: 'temple',
+        tags: ['spiritual', 'cave', 'history', 'photography', 'mystical'],
+        imageUrl: 'https://images.unsplash.com/photo-1548919973-5cef591cdbc9?w=800',
+        images: [],
+        priceLevel: 2,
+        rating: 4.7,
+        reviewCount: 876,
+        avgDurationMins: 45,
+        isAnvaVerified: true,
+      },
+    }),
+
+    // MORE BEACHES
+    prisma.location.create({
+      data: {
+        name: 'Bac My An Beach',
+        nameLocal: 'Bãi biển Bắc Mỹ An',
+        description: 'Quieter stretch of beach between My Khe and Non Nuoc. Less crowded with several beachfront resorts.',
+        descriptionShort: 'Quiet beach with resorts',
+        latitude: 16.0234,
+        longitude: 108.2534,
+        address: 'Bac My An, Ngu Hanh Son, Da Nang',
+        city: 'Danang',
+        category: 'beach',
+        tags: ['beach', 'quiet', 'resorts', 'swimming', 'relaxation'],
+        imageUrl: 'https://images.unsplash.com/photo-1506929562872-bb421503ef21?w=800',
+        images: [],
+        priceLevel: 1,
+        rating: 4.4,
+        reviewCount: 432,
+        avgDurationMins: 120,
+        isHiddenGem: true,
+      },
+    }),
+    prisma.location.create({
+      data: {
+        name: 'Tien Sa Beach',
+        nameLocal: 'Bãi biển Tiên Sa',
+        description: 'Secluded beach on Son Tra Peninsula accessible by motorbike. Crystal clear waters and minimal crowds.',
+        descriptionShort: 'Secluded peninsula beach',
+        latitude: 16.1156,
+        longitude: 108.3234,
+        address: 'Son Tra Peninsula, Da Nang',
+        city: 'Danang',
+        category: 'beach',
+        tags: ['beach', 'secluded', 'snorkeling', 'nature', 'hidden_gem'],
+        imageUrl: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800',
+        images: [],
+        priceLevel: 1,
+        rating: 4.6,
+        reviewCount: 234,
+        avgDurationMins: 180,
+        isHiddenGem: true,
+        isAnvaVerified: true,
+      },
+    }),
+
+    // SHOPPING
+    prisma.location.create({
+      data: {
+        name: 'Vincom Plaza',
+        nameLocal: 'Vincom Plaza Đà Nẵng',
+        description: 'Modern shopping mall with international brands, food court, cinema, and air-conditioned comfort.',
+        descriptionShort: 'Modern shopping mall',
+        latitude: 16.0567,
+        longitude: 108.2234,
+        address: '910 Ngo Quyen, Son Tra, Da Nang',
+        city: 'Danang',
+        category: 'shopping',
+        tags: ['shopping', 'mall', 'air_con', 'food_court', 'cinema'],
+        imageUrl: 'https://images.unsplash.com/photo-1519566335946-e6f65f0f4fdf?w=800',
+        images: [],
+        priceLevel: 3,
+        rating: 4.2,
+        reviewCount: 876,
+        avgDurationMins: 120,
+        isPopular: true,
+      },
+    }),
+    prisma.location.create({
+      data: {
+        name: 'An Thuong Walking Street',
+        nameLocal: 'Phố đi bộ An Thượng',
+        description: 'Lively pedestrian street near My Khe Beach with restaurants, bars, and souvenir shops. Great for evening strolls.',
+        descriptionShort: 'Beach area walking street',
+        latitude: 16.0512,
+        longitude: 108.2445,
+        address: 'An Thuong Area, Son Tra, Da Nang',
+        city: 'Danang',
+        category: 'shopping',
+        tags: ['walking_street', 'nightlife', 'shopping', 'food', 'bars'],
+        imageUrl: 'https://images.unsplash.com/photo-1555529771-7888783a18d3?w=800',
+        images: [],
+        priceLevel: 2,
+        rating: 4.3,
+        reviewCount: 543,
+        avgDurationMins: 90,
+        isPopular: true,
+      },
+    }),
+
+    // MORE NATURE
+    prisma.location.create({
+      data: {
+        name: 'Hai Van Pass',
+        nameLocal: 'Đèo Hải Vân',
+        description: 'Legendary mountain pass with breathtaking coastal views. Made famous by Top Gear as one of the best coastal roads in the world.',
+        descriptionShort: 'Famous scenic mountain pass',
+        latitude: 16.1989,
+        longitude: 108.1234,
+        address: 'Hai Van Pass, between Da Nang and Hue',
+        city: 'Danang',
+        category: 'nature',
+        tags: ['scenic_drive', 'photography', 'views', 'motorbike', 'adventure'],
+        imageUrl: 'https://images.unsplash.com/photo-1528127269322-539801943592?w=800',
+        images: [],
+        priceLevel: 1,
+        rating: 4.9,
+        reviewCount: 2345,
+        avgDurationMins: 180,
+        isAnvaVerified: true,
+        isPopular: true,
+      },
+    }),
+    prisma.location.create({
+      data: {
+        name: 'Red Shanked Douc Langur Spot',
+        nameLocal: 'Điểm Quan Sát Voọc',
+        description: 'Prime location on Son Tra to spot the endangered red-shanked douc langurs, considered the most beautiful primates.',
+        descriptionShort: 'Rare primate watching spot',
+        latitude: 16.1123,
+        longitude: 108.2912,
+        address: 'Son Tra Nature Reserve, Da Nang',
+        city: 'Danang',
+        category: 'nature',
+        tags: ['wildlife', 'photography', 'nature', 'rare_animals', 'conservation'],
+        imageUrl: 'https://images.unsplash.com/photo-1540573133985-87b6da6d54a9?w=800',
+        images: [],
+        priceLevel: 1,
+        rating: 4.8,
+        reviewCount: 345,
+        avgDurationMins: 120,
+        isHiddenGem: true,
+        isAnvaVerified: true,
+      },
+    }),
+
+    // ===== BATCH 2 - MORE LOCATIONS =====
+
+    // MORE RESTAURANTS
+    prisma.location.create({
+      data: {
+        name: 'Quan Com Hue Ngon',
+        nameLocal: 'Quán Cơm Huế Ngon',
+        description: 'Authentic Hue-style cuisine featuring royal court dishes. Try the bun bo Hue and banh beo for an authentic central Vietnamese experience.',
+        descriptionShort: 'Authentic Hue royal cuisine',
+        latitude: 16.0645,
+        longitude: 108.2156,
+        address: '35 Nguyen Chi Thanh, Hai Chau, Da Nang',
+        city: 'Danang',
+        category: 'restaurant',
+        tags: ['lunch', 'dinner', 'hue_cuisine', 'authentic', 'local'],
+        imageUrl: 'https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43?w=800',
+        images: [],
+        priceLevel: 2,
+        rating: 4.6,
+        reviewCount: 876,
+        avgDurationMins: 60,
+        isAnvaVerified: true,
+      },
+    }),
+    prisma.location.create({
+      data: {
+        name: 'Lien Hoa Vegetarian',
+        nameLocal: 'Nhà Hàng Chay Liên Hoa',
+        description: 'Popular Buddhist vegetarian restaurant serving creative meat-free dishes. Perfect for vegetarians and those seeking lighter fare.',
+        descriptionShort: 'Buddhist vegetarian cuisine',
+        latitude: 16.0598,
+        longitude: 108.2189,
+        address: '48 Phan Chau Trinh, Hai Chau, Da Nang',
+        city: 'Danang',
+        category: 'restaurant',
+        tags: ['vegetarian', 'vegan', 'healthy', 'budget', 'local'],
+        imageUrl: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800',
+        images: [],
+        priceLevel: 1,
+        rating: 4.5,
+        reviewCount: 543,
+        avgDurationMins: 45,
+        isAnvaVerified: true,
+      },
+    }),
+    prisma.location.create({
+      data: {
+        name: 'The Grill Da Nang',
+        nameLocal: 'The Grill',
+        description: 'Upscale steakhouse with premium imported beef and stunning river views. Perfect for special occasions and business dinners.',
+        descriptionShort: 'Premium steakhouse with views',
+        latitude: 16.0623,
+        longitude: 108.2234,
+        address: '50 Bach Dang, Hai Chau, Da Nang',
+        city: 'Danang',
+        category: 'restaurant',
+        tags: ['dinner', 'steakhouse', 'upscale', 'western', 'romantic'],
+        imageUrl: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=800',
+        images: [],
+        priceLevel: 4,
+        rating: 4.7,
+        reviewCount: 432,
+        avgDurationMins: 90,
+        isPopular: true,
+      },
+    }),
+    prisma.location.create({
+      data: {
+        name: 'Che Xuan Trang',
+        nameLocal: 'Chè Xuân Trang',
+        description: 'Famous dessert shop specializing in Vietnamese sweet soups and treats. Must-try: che ba mau (three-color dessert) and che dau xanh.',
+        descriptionShort: 'Famous Vietnamese desserts',
+        latitude: 16.0656,
+        longitude: 108.2178,
+        address: '82 Hung Vuong, Hai Chau, Da Nang',
+        city: 'Danang',
+        category: 'restaurant',
+        tags: ['dessert', 'local', 'sweet', 'budget', 'authentic'],
+        imageUrl: 'https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=800',
+        images: [],
+        priceLevel: 1,
+        rating: 4.4,
+        reviewCount: 765,
+        avgDurationMins: 30,
+        isHiddenGem: true,
+        isAnvaVerified: true,
+      },
+    }),
+    prisma.location.create({
+      data: {
+        name: 'Nen Restaurant',
+        nameLocal: 'Nhà Hàng Nén',
+        description: 'Contemporary Vietnamese fine dining with artistic presentation. Chef uses local ingredients in innovative ways.',
+        descriptionShort: 'Contemporary Vietnamese fine dining',
+        latitude: 16.0534,
+        longitude: 108.2267,
+        address: '26 Le Hong Phong, Hai Chau, Da Nang',
+        city: 'Danang',
+        category: 'restaurant',
+        tags: ['dinner', 'fine_dining', 'modern', 'romantic', 'instagram'],
+        imageUrl: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800',
+        images: [],
+        priceLevel: 4,
+        rating: 4.8,
+        reviewCount: 234,
+        avgDurationMins: 120,
+        isHiddenGem: true,
+        isAnvaVerified: true,
+      },
+    }),
+    prisma.location.create({
+      data: {
+        name: 'Banh Trang Thit Heo Tran',
+        nameLocal: 'Bánh Tráng Thịt Heo Trần',
+        description: 'Local favorite for Danang-style pork rolls with rice paper. Simple, delicious, and incredibly affordable.',
+        descriptionShort: 'Local pork rice paper rolls',
+        latitude: 16.0567,
+        longitude: 108.2134,
+        address: 'K34/15 Hoang Dieu, Hai Chau, Da Nang',
+        city: 'Danang',
+        category: 'restaurant',
+        tags: ['lunch', 'dinner', 'local', 'budget', 'authentic', 'hidden_gem'],
+        imageUrl: 'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=800',
+        images: [],
+        priceLevel: 1,
+        rating: 4.7,
+        reviewCount: 1234,
+        avgDurationMins: 40,
+        isHiddenGem: true,
+        isAnvaVerified: true,
+      },
+    }),
+
+    // MORE CAFES
+    prisma.location.create({
+      data: {
+        name: 'Maison Marou',
+        nameLocal: 'Maison Marou',
+        description: 'Premium Vietnamese chocolate cafe by the famous Marou brand. Try their hot chocolate and chocolate desserts.',
+        descriptionShort: 'Premium Vietnamese chocolate',
+        latitude: 16.0612,
+        longitude: 108.2212,
+        address: '45 Bach Dang, Hai Chau, Da Nang',
+        city: 'Danang',
+        category: 'cafe',
+        tags: ['chocolate', 'dessert', 'instagram', 'premium', 'gifts'],
+        imageUrl: 'https://images.unsplash.com/photo-1511920170033-f8396924c348?w=800',
+        images: [],
+        priceLevel: 3,
+        rating: 4.7,
+        reviewCount: 456,
+        avgDurationMins: 45,
+        isPopular: true,
+        isAnvaVerified: true,
+      },
+    }),
+    prisma.location.create({
+      data: {
+        name: 'Tam House Coffee',
+        nameLocal: 'Tâm House Coffee',
+        description: 'Artsy cafe in a renovated colonial house. Known for creative drinks and photogenic interiors.',
+        descriptionShort: 'Artsy colonial house cafe',
+        latitude: 16.0578,
+        longitude: 108.2189,
+        address: '29 Ly Tu Trong, Hai Chau, Da Nang',
+        city: 'Danang',
+        category: 'cafe',
+        tags: ['coffee', 'instagram', 'art', 'work_friendly', 'peaceful'],
+        imageUrl: 'https://images.unsplash.com/photo-1445116572660-236099ec97a0?w=800',
+        images: [],
+        priceLevel: 2,
+        rating: 4.5,
+        reviewCount: 321,
+        avgDurationMins: 60,
+        isHiddenGem: true,
+      },
+    }),
+    prisma.location.create({
+      data: {
+        name: 'Katinat Saigon Kafe',
+        nameLocal: 'Katinat Saigon Kafe',
+        description: 'Popular Vietnamese coffee chain known for salt coffee and cheese coffee. Modern, air-conditioned, and tourist-friendly.',
+        descriptionShort: 'Popular salt coffee chain',
+        latitude: 16.0689,
+        longitude: 108.2234,
+        address: '112 Nguyen Van Linh, Hai Chau, Da Nang',
+        city: 'Danang',
+        category: 'cafe',
+        tags: ['coffee', 'salt_coffee', 'air_con', 'modern', 'chain'],
+        imageUrl: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=800',
+        images: [],
+        priceLevel: 2,
+        rating: 4.3,
+        reviewCount: 654,
+        avgDurationMins: 45,
+        isPopular: true,
+      },
+    }),
+    prisma.location.create({
+      data: {
+        name: 'An Cafe',
+        nameLocal: 'An Cafe',
+        description: 'Hidden rooftop cafe with panoramic city views. Perfect for sunset drinks and photography.',
+        descriptionShort: 'Hidden rooftop with views',
+        latitude: 16.0598,
+        longitude: 108.2245,
+        address: '78 Nguyen Thai Hoc, Hai Chau, Da Nang',
+        city: 'Danang',
+        category: 'cafe',
+        tags: ['rooftop', 'views', 'sunset', 'photography', 'hidden_gem'],
+        imageUrl: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=800',
+        images: [],
+        priceLevel: 2,
+        rating: 4.6,
+        reviewCount: 287,
+        avgDurationMins: 75,
+        isHiddenGem: true,
+        isAnvaVerified: true,
+      },
+    }),
+
+    // MORE ATTRACTIONS
+    prisma.location.create({
+      data: {
+        name: 'Han River Bridge',
+        nameLocal: 'Cầu Sông Hàn',
+        description: 'Vietnam\'s first swing bridge that rotates 90 degrees to allow ships to pass. Beautiful at night with colorful lights.',
+        descriptionShort: 'Vietnam\'s first swing bridge',
+        latitude: 16.0712,
+        longitude: 108.2267,
+        address: 'Han River, Hai Chau, Da Nang',
+        city: 'Danang',
+        category: 'attraction',
+        tags: ['bridge', 'photography', 'nightlife', 'architecture', 'free'],
+        imageUrl: 'https://images.unsplash.com/photo-1555921015-5532091f6026?w=800',
+        images: [],
+        priceLevel: 1,
+        rating: 4.5,
+        reviewCount: 2345,
+        avgDurationMins: 30,
+        isPopular: true,
+      },
+    }),
+    prisma.location.create({
+      data: {
+        name: 'Tran Thi Ly Bridge',
+        nameLocal: 'Cầu Trần Thị Lý',
+        description: 'Modern cable-stayed bridge with unique sail-shaped design. Less crowded alternative for bridge photography.',
+        descriptionShort: 'Sail-shaped modern bridge',
+        latitude: 16.0534,
+        longitude: 108.2312,
+        address: 'Son Tra District, Da Nang',
+        city: 'Danang',
+        category: 'attraction',
+        tags: ['bridge', 'photography', 'architecture', 'modern', 'free'],
+        imageUrl: 'https://images.unsplash.com/photo-1516820612845-a13894592046?w=800',
+        images: [],
+        priceLevel: 1,
+        rating: 4.3,
+        reviewCount: 567,
+        avgDurationMins: 20,
+        isHiddenGem: true,
+      },
+    }),
+    prisma.location.create({
+      data: {
+        name: 'Danang Cathedral',
+        nameLocal: 'Nhà Thờ Chính Tòa Đà Nẵng',
+        description: 'Pink-colored French Gothic cathedral built in 1923. Known locally as the "Rooster Church" due to its weather vane.',
+        descriptionShort: 'Pink French Gothic cathedral',
+        latitude: 16.0678,
+        longitude: 108.2212,
+        address: '156 Tran Phu, Hai Chau, Da Nang',
+        city: 'Danang',
+        category: 'attraction',
+        tags: ['architecture', 'history', 'photography', 'free', 'spiritual'],
+        imageUrl: 'https://images.unsplash.com/photo-1548919973-5cef591cdbc9?w=800',
+        images: [],
+        priceLevel: 1,
+        rating: 4.4,
+        reviewCount: 876,
+        avgDurationMins: 30,
+        isAnvaVerified: true,
+      },
+    }),
+    prisma.location.create({
+      data: {
+        name: 'APEC Park',
+        nameLocal: 'Công Viên APEC',
+        description: 'Waterfront park built for the 2017 APEC summit. Features sculptures, gardens, and evening light shows.',
+        descriptionShort: 'Waterfront park with sculptures',
+        latitude: 16.0567,
+        longitude: 108.2289,
+        address: 'Tran Hung Dao, Son Tra, Da Nang',
+        city: 'Danang',
+        category: 'attraction',
+        tags: ['park', 'free', 'family_friendly', 'photography', 'evening'],
+        imageUrl: 'https://images.unsplash.com/photo-1565793298595-6a879b1d9492?w=800',
+        images: [],
+        priceLevel: 1,
+        rating: 4.2,
+        reviewCount: 432,
+        avgDurationMins: 45,
+        isPopular: true,
+      },
+    }),
+
+    // MORE ACTIVITIES
+    prisma.location.create({
+      data: {
+        name: 'Parasailing My Khe',
+        nameLocal: 'Dù Bay Mỹ Khê',
+        description: 'Thrilling parasailing experience over My Khe Beach. See the coastline from 100 meters in the air.',
+        descriptionShort: 'Beach parasailing adventure',
+        latitude: 16.0534,
+        longitude: 108.2467,
+        address: 'My Khe Beach, Son Tra, Da Nang',
+        city: 'Danang',
+        category: 'activity',
+        tags: ['adventure', 'beach', 'water_sports', 'views', 'thrilling'],
+        imageUrl: 'https://images.unsplash.com/photo-1507608158173-1dcec673a2e5?w=800',
+        images: [],
+        priceLevel: 3,
+        rating: 4.6,
+        reviewCount: 234,
+        avgDurationMins: 30,
+        isAnvaVerified: true,
+      },
+    }),
+    prisma.location.create({
+      data: {
+        name: 'Stand Up Paddleboard',
+        nameLocal: 'SUP Da Nang',
+        description: 'SUP lessons and rentals at My Khe Beach. Calm morning waters make it perfect for beginners.',
+        descriptionShort: 'SUP lessons and rentals',
+        latitude: 16.0512,
+        longitude: 108.2456,
+        address: 'My Khe Beach, Son Tra, Da Nang',
+        city: 'Danang',
+        category: 'activity',
+        tags: ['water_sports', 'beach', 'beginner_friendly', 'morning', 'fitness'],
+        imageUrl: 'https://images.unsplash.com/photo-1526188717906-ab4a2f949f22?w=800',
+        images: [],
+        priceLevel: 2,
+        rating: 4.5,
+        reviewCount: 167,
+        avgDurationMins: 90,
+        isAnvaVerified: true,
+      },
+    }),
+    prisma.location.create({
+      data: {
+        name: 'Motorbike Tour Son Tra',
+        nameLocal: 'Tour Xe Máy Sơn Trà',
+        description: 'Guided motorbike tour around Son Tra Peninsula. Includes multiple viewpoints, Linh Ung Pagoda, and hidden beaches.',
+        descriptionShort: 'Guided peninsula motorbike tour',
+        latitude: 16.1012,
+        longitude: 108.2834,
+        address: 'Son Tra Peninsula, Da Nang',
+        city: 'Danang',
+        category: 'activity',
+        tags: ['motorbike', 'tour', 'nature', 'photography', 'adventure'],
+        imageUrl: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800',
+        images: [],
+        priceLevel: 2,
+        rating: 4.8,
+        reviewCount: 456,
+        avgDurationMins: 240,
+        isPopular: true,
+        isAnvaVerified: true,
+      },
+    }),
+    prisma.location.create({
+      data: {
+        name: 'Lantern Making Class',
+        nameLocal: 'Lớp Làm Đèn Lồng',
+        description: 'Learn to make traditional Vietnamese silk lanterns with local artisans. Take home your handmade creation.',
+        descriptionShort: 'Traditional lantern crafting',
+        latitude: 16.0623,
+        longitude: 108.2178,
+        address: '15 Tran Quoc Toan, Hai Chau, Da Nang',
+        city: 'Danang',
+        category: 'activity',
+        tags: ['crafts', 'cultural', 'hands_on', 'souvenirs', 'family_friendly'],
+        imageUrl: 'https://images.unsplash.com/photo-1528360983277-13d401cdc186?w=800',
+        images: [],
+        priceLevel: 2,
+        rating: 4.7,
+        reviewCount: 198,
+        avgDurationMins: 120,
+        isHiddenGem: true,
+        isAnvaVerified: true,
+      },
+    }),
+    prisma.location.create({
+      data: {
+        name: 'Scuba Diving Cu Lao Cham',
+        nameLocal: 'Lặn Biển Cù Lao Chàm',
+        description: 'PADI-certified diving center offering trips to Cu Lao Cham marine reserve. See coral reefs and tropical fish.',
+        descriptionShort: 'Diving at marine reserve',
+        latitude: 15.9534,
+        longitude: 108.5089,
+        address: 'Cu Lao Cham (depart from Da Nang)',
+        city: 'Danang',
+        category: 'activity',
+        tags: ['diving', 'snorkeling', 'adventure', 'marine_life', 'unesco'],
+        imageUrl: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800',
+        images: [],
+        priceLevel: 4,
+        rating: 4.8,
+        reviewCount: 345,
+        avgDurationMins: 480,
+        isAnvaVerified: true,
+      },
+    }),
+
+    // MORE NIGHTLIFE
+    prisma.location.create({
+      data: {
+        name: 'New Phuong Dong',
+        nameLocal: 'New Phương Đông',
+        description: 'One of the largest nightclubs in central Vietnam. Multiple dance floors, international DJs on weekends.',
+        descriptionShort: 'Largest nightclub in region',
+        latitude: 16.0534,
+        longitude: 108.2234,
+        address: '118 2 Thang 9, Hai Chau, Da Nang',
+        city: 'Danang',
+        category: 'nightlife',
+        tags: ['club', 'dancing', 'dj', 'nightlife', 'young'],
+        imageUrl: 'https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?w=800',
+        images: [],
+        priceLevel: 3,
+        rating: 4.1,
+        reviewCount: 876,
+        avgDurationMins: 180,
+        openingHours: {
+          friday: { open: '21:00', close: '04:00' },
+          saturday: { open: '21:00', close: '04:00' },
+        },
+        isPopular: true,
+      },
+    }),
+    prisma.location.create({
+      data: {
+        name: 'Memory Lounge',
+        nameLocal: 'Memory Lounge',
+        description: 'Chill rooftop bar with acoustic live music most nights. Great cocktails and relaxed atmosphere.',
+        descriptionShort: 'Rooftop bar with live music',
+        latitude: 16.0567,
+        longitude: 108.2256,
+        address: '7 Bach Dang, Hai Chau, Da Nang',
+        city: 'Danang',
+        category: 'nightlife',
+        tags: ['rooftop', 'live_music', 'cocktails', 'relaxed', 'views'],
+        imageUrl: 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=800',
+        images: [],
+        priceLevel: 3,
+        rating: 4.4,
+        reviewCount: 345,
+        avgDurationMins: 120,
+        isAnvaVerified: true,
+      },
+    }),
+    prisma.location.create({
+      data: {
+        name: 'Golden Pine Pub',
+        nameLocal: 'Golden Pine Pub',
+        description: 'Irish-style pub popular with expats. Great selection of craft beers and Western pub food.',
+        descriptionShort: 'Expat-friendly Irish pub',
+        latitude: 16.0512,
+        longitude: 108.2423,
+        address: 'An Thuong 4, Son Tra, Da Nang',
+        city: 'Danang',
+        category: 'nightlife',
+        tags: ['pub', 'craft_beer', 'expat', 'sports', 'western'],
+        imageUrl: 'https://images.unsplash.com/photo-1543007630-9710e4a00a20?w=800',
+        images: [],
+        priceLevel: 2,
+        rating: 4.3,
+        reviewCount: 432,
+        avgDurationMins: 120,
+        isPopular: true,
+      },
+    }),
+
+    // MORE WELLNESS & SPA
+    prisma.location.create({
+      data: {
+        name: 'Sen Spa',
+        nameLocal: 'Sen Spa',
+        description: 'Traditional Vietnamese spa offering hot stone massage, herbal treatments, and beauty services at local prices.',
+        descriptionShort: 'Traditional spa at local prices',
+        latitude: 16.0589,
+        longitude: 108.2178,
+        address: '45 Le Loi, Hai Chau, Da Nang',
+        city: 'Danang',
+        category: 'wellness',
+        tags: ['spa', 'massage', 'budget', 'local', 'relaxation'],
+        imageUrl: 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=800',
+        images: [],
+        priceLevel: 2,
+        rating: 4.5,
+        reviewCount: 567,
+        avgDurationMins: 90,
+        isAnvaVerified: true,
+      },
+    }),
+    prisma.location.create({
+      data: {
+        name: 'Charm Spa Grand',
+        nameLocal: 'Charm Spa Grand',
+        description: 'Award-winning spa with Vietnamese-inspired treatments. Known for excellent service and tranquil environment.',
+        descriptionShort: 'Award-winning luxury spa',
+        latitude: 16.0478,
+        longitude: 108.2434,
+        address: '97 Le Quang Dao, Son Tra, Da Nang',
+        city: 'Danang',
+        category: 'wellness',
+        tags: ['spa', 'luxury', 'massage', 'premium', 'relaxation'],
+        imageUrl: 'https://images.unsplash.com/photo-1540555700478-4be289fbec5d?w=800',
+        images: [],
+        priceLevel: 3,
+        rating: 4.8,
+        reviewCount: 789,
+        avgDurationMins: 120,
+        isPopular: true,
+        isAnvaVerified: true,
+      },
+    }),
+    prisma.location.create({
+      data: {
+        name: 'Yoga on the Beach',
+        nameLocal: 'Yoga Bãi Biển',
+        description: 'Sunrise yoga sessions on My Khe Beach. Drop-in classes available, all levels welcome.',
+        descriptionShort: 'Sunrise beach yoga',
+        latitude: 16.0523,
+        longitude: 108.2456,
+        address: 'My Khe Beach, Son Tra, Da Nang',
+        city: 'Danang',
+        category: 'wellness',
+        tags: ['yoga', 'fitness', 'sunrise', 'beach', 'wellness'],
+        imageUrl: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=800',
+        images: [],
+        priceLevel: 2,
+        rating: 4.7,
+        reviewCount: 234,
+        avgDurationMins: 75,
+        isHiddenGem: true,
+      },
+    }),
+
+    // MORE NATURE
+    prisma.location.create({
+      data: {
+        name: 'Than Tai Hot Springs',
+        nameLocal: 'Suối Khoáng Nóng Thần Tài',
+        description: 'Natural hot springs resort in the mountains outside Da Nang. Features multiple pools, mud baths, and waterpark.',
+        descriptionShort: 'Mountain hot springs resort',
+        latitude: 15.9234,
+        longitude: 108.0567,
+        address: 'Hoa Phu, Hoa Vang, Da Nang',
+        city: 'Danang',
+        category: 'nature',
+        tags: ['hot_springs', 'nature', 'relaxation', 'family_friendly', 'day_trip'],
+        imageUrl: 'https://images.unsplash.com/photo-1551018612-9700e86e26c1?w=800',
+        images: [],
+        priceLevel: 3,
+        rating: 4.4,
+        reviewCount: 1234,
+        avgDurationMins: 300,
+        isPopular: true,
+      },
+    }),
+    prisma.location.create({
+      data: {
+        name: 'Ba Na Mountain Trail',
+        nameLocal: 'Đường Mòn Bà Nà',
+        description: 'Hiking trail up to Ba Na Hills through pristine forest. Challenging but rewarding alternative to the cable car.',
+        descriptionShort: 'Challenging mountain hike',
+        latitude: 15.9912,
+        longitude: 107.9867,
+        address: 'Ba Na Hills, Hoa Vang, Da Nang',
+        city: 'Danang',
+        category: 'nature',
+        tags: ['hiking', 'adventure', 'nature', 'challenging', 'forest'],
+        imageUrl: 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=800',
+        images: [],
+        priceLevel: 1,
+        rating: 4.6,
+        reviewCount: 187,
+        avgDurationMins: 360,
+        isHiddenGem: true,
+        isAnvaVerified: true,
+      },
+    }),
+    prisma.location.create({
+      data: {
+        name: 'Suoi Mo Waterfall',
+        nameLocal: 'Thác Suối Mơ',
+        description: 'Beautiful waterfall hidden in the jungle southwest of Da Nang. Less touristy and great for swimming.',
+        descriptionShort: 'Hidden jungle waterfall',
+        latitude: 15.9567,
+        longitude: 108.0234,
+        address: 'Hoa Phu, Hoa Vang, Da Nang',
+        city: 'Danang',
+        category: 'nature',
+        tags: ['waterfall', 'swimming', 'nature', 'hidden_gem', 'adventure'],
+        imageUrl: 'https://images.unsplash.com/photo-1432405972618-c60b0225b8f9?w=800',
+        images: [],
+        priceLevel: 1,
+        rating: 4.5,
+        reviewCount: 234,
+        avgDurationMins: 180,
+        isHiddenGem: true,
+        isAnvaVerified: true,
+      },
+    }),
+
+    // MORE MUSEUMS & CULTURE
+    prisma.location.create({
+      data: {
+        name: 'Da Nang Fine Arts Museum',
+        nameLocal: 'Bảo Tàng Mỹ Thuật Đà Nẵng',
+        description: 'Three floors of Vietnamese art from the 19th century to present. Includes local artists and national treasures.',
+        descriptionShort: 'Vietnamese art museum',
+        latitude: 16.0678,
+        longitude: 108.2189,
+        address: '78 Le Duan, Hai Chau, Da Nang',
+        city: 'Danang',
+        category: 'museum',
+        tags: ['art', 'museum', 'culture', 'indoor', 'educational'],
+        imageUrl: 'https://images.unsplash.com/photo-1584037281505-64a89a6c6c5c?w=800',
+        images: [],
+        priceLevel: 1,
+        rating: 4.2,
+        reviewCount: 345,
+        avgDurationMins: 75,
+        isAnvaVerified: true,
+      },
+    }),
+    prisma.location.create({
+      data: {
+        name: 'Ho Chi Minh Museum Da Nang',
+        nameLocal: 'Bảo Tàng Hồ Chí Minh',
+        description: 'Museum dedicated to Ho Chi Minh\'s connection to Da Nang. Features historical artifacts and photographs.',
+        descriptionShort: 'Ho Chi Minh historical museum',
+        latitude: 16.0623,
+        longitude: 108.2156,
+        address: '3 Le Loi, Hai Chau, Da Nang',
+        city: 'Danang',
+        category: 'museum',
+        tags: ['history', 'museum', 'culture', 'educational', 'free'],
+        imageUrl: 'https://images.unsplash.com/photo-1580418827493-e2a0f621e644?w=800',
+        images: [],
+        priceLevel: 1,
+        rating: 4.1,
+        reviewCount: 234,
+        avgDurationMins: 60,
+      },
+    }),
+    prisma.location.create({
+      data: {
+        name: '3D Art Museum',
+        nameLocal: 'Bảo Tàng Tranh 3D',
+        description: 'Interactive 3D art museum with optical illusions and trick art. Perfect for fun photos and families.',
+        descriptionShort: 'Interactive 3D trick art',
+        latitude: 16.0534,
+        longitude: 108.2234,
+        address: '35 Tran Phu, Hai Chau, Da Nang',
+        city: 'Danang',
+        category: 'museum',
+        tags: ['art', 'fun', 'family_friendly', 'instagram', 'interactive'],
+        imageUrl: 'https://images.unsplash.com/photo-1594794312433-05a69139b91e?w=800',
+        images: [],
+        priceLevel: 2,
+        rating: 4.3,
+        reviewCount: 567,
+        avgDurationMins: 90,
+        isPopular: true,
+      },
+    }),
   ]);
 
   console.log(`✅ Created ${locations.length} locations\n`);
@@ -840,6 +2050,618 @@ async function main() {
     },
   });
 
+  // Create more itinerary templates
+  console.log('📋 Creating additional itinerary templates...');
+
+  // Foodie Tour - 2 Days
+  const foodieItinerary = await prisma.itinerary.create({
+    data: {
+      title: 'Danang Foodie Paradise',
+      description: 'A culinary journey through Da Nang\'s best street food, local restaurants, and hidden gems.',
+      city: 'Danang',
+      durationDays: 2,
+      coverImage: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800',
+      isTemplate: true,
+      isPublic: true,
+      generatedBy: 'template',
+      estimatedBudget: 1500000,
+      totalDistance: 15,
+      items: {
+        create: [
+          // Day 1 - Street Food Heaven
+          { locationId: locations[31].id, dayNumber: 1, orderIndex: 0, startTime: '07:00', endTime: '08:00', transportMode: 'walk', notes: 'Start with legendary pho' },
+          { locationId: locations[9].id, dayNumber: 1, orderIndex: 1, startTime: '09:00', endTime: '10:30', transportMode: 'grab_bike', notes: 'Famous banh mi' },
+          { locationId: locations[6].id, dayNumber: 1, orderIndex: 2, startTime: '11:00', endTime: '13:00', transportMode: 'walk', notes: 'Explore Han Market food stalls' },
+          { locationId: locations[18].id, dayNumber: 1, orderIndex: 3, startTime: '14:00', endTime: '15:30', transportMode: 'grab_bike', notes: 'Mi Quang lunch' },
+          { locationId: locations[36].id, dayNumber: 1, orderIndex: 4, startTime: '17:00', endTime: '18:30', transportMode: 'grab_bike', notes: 'Banh xeo dinner' },
+          { locationId: locations[10].id, dayNumber: 1, orderIndex: 5, startTime: '19:30', endTime: '21:30', transportMode: 'grab_bike', notes: 'Seafood on the beach' },
+          // Day 2 - Cooking & Fine Dining
+          { locationId: locations[20].id, dayNumber: 2, orderIndex: 0, startTime: '07:00', endTime: '07:45', transportMode: 'grab_bike', notes: 'Fish cake noodles breakfast' },
+          { locationId: locations[40].id, dayNumber: 2, orderIndex: 1, startTime: '09:00', endTime: '13:00', transportMode: 'grab_bike', notes: 'Cooking class with market tour' },
+          { locationId: locations[21].id, dayNumber: 2, orderIndex: 2, startTime: '14:30', endTime: '16:00', transportMode: 'grab_bike', notes: 'Specialty coffee break' },
+          { locationId: locations[8].id, dayNumber: 2, orderIndex: 3, startTime: '18:00', endTime: '20:00', transportMode: 'grab_bike', notes: 'Upscale Vietnamese dinner' },
+        ],
+      },
+    },
+  });
+
+  await prisma.itineraryTemplate.create({
+    data: {
+      name: 'Danang Foodie Paradise',
+      description: 'A culinary journey through Da Nang\'s best street food, local restaurants, and hidden gems.',
+      coverImage: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800',
+      tagline: 'Eat your way through Da Nang',
+      city: 'Danang',
+      durationDays: 2,
+      targetPersonas: ['foodie', 'culture_seeker'],
+      targetVibes: ['local', 'authentic', 'culinary'],
+      targetBudget: 'moderate',
+      targetInterests: ['street_food', 'local_cuisine', 'cooking_classes', 'markets'],
+      highlights: ['Legendary street food spots', 'Hands-on cooking class', 'Fresh seafood dinner', 'Local market exploration'],
+      badges: ['foodie', 'local_favorite', 'authentic'],
+      itineraryId: foodieItinerary.id,
+      displayOrder: 2,
+    },
+  });
+
+  // Adventure Weekend - 2 Days
+  const adventureItinerary = await prisma.itinerary.create({
+    data: {
+      title: 'Adventure Weekend',
+      description: 'Action-packed weekend with surfing, hiking, kayaking, and stunning natural scenery.',
+      city: 'Danang',
+      durationDays: 2,
+      coverImage: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800',
+      isTemplate: true,
+      isPublic: true,
+      generatedBy: 'template',
+      estimatedBudget: 2500000,
+      totalDistance: 45,
+      items: {
+        create: [
+          // Day 1 - Beach & Water Sports
+          { locationId: locations[0].id, dayNumber: 1, orderIndex: 0, startTime: '05:30', endTime: '07:30', transportMode: 'grab_bike', notes: 'Sunrise swim' },
+          { locationId: locations[28].id, dayNumber: 1, orderIndex: 1, startTime: '08:00', endTime: '10:30', transportMode: 'walk', notes: 'Surfing lesson' },
+          { locationId: locations[10].id, dayNumber: 1, orderIndex: 2, startTime: '11:00', endTime: '12:30', transportMode: 'walk', notes: 'Beach lunch' },
+          { locationId: locations[14].id, dayNumber: 1, orderIndex: 3, startTime: '14:00', endTime: '17:00', transportMode: 'grab_bike', notes: 'Explore Son Tra Peninsula' },
+          { locationId: locations[41].id, dayNumber: 1, orderIndex: 4, startTime: '17:30', endTime: '20:00', transportMode: 'grab_bike', notes: 'Sunset kayaking' },
+          // Day 2 - Mountains & Nature
+          { locationId: locations[3].id, dayNumber: 2, orderIndex: 0, startTime: '06:00', endTime: '10:00', transportMode: 'grab_bike', notes: 'Marble Mountains hiking' },
+          { locationId: locations[1].id, dayNumber: 2, orderIndex: 1, startTime: '11:00', endTime: '13:00', transportMode: 'grab_bike', notes: 'Quiet beach break' },
+          { locationId: locations[47].id, dayNumber: 2, orderIndex: 2, startTime: '14:00', endTime: '17:00', transportMode: 'grab_bike', notes: 'Hai Van Pass motorbike ride' },
+          { locationId: locations[24].id, dayNumber: 2, orderIndex: 3, startTime: '19:00', endTime: '21:00', transportMode: 'grab_bike', notes: 'Beach lounge sunset' },
+        ],
+      },
+    },
+  });
+
+  await prisma.itineraryTemplate.create({
+    data: {
+      name: 'Adventure Weekend',
+      description: 'Action-packed weekend with surfing, hiking, kayaking, and stunning natural scenery.',
+      coverImage: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800',
+      tagline: 'For the thrill seekers',
+      city: 'Danang',
+      durationDays: 2,
+      targetPersonas: ['adventurer', 'nature_lover'],
+      targetVibes: ['adventure', 'nature', 'outdoors', 'active'],
+      targetBudget: 'moderate',
+      targetInterests: ['surfing', 'hiking', 'kayaking', 'wildlife', 'photography'],
+      highlights: ['Surfing at My Khe Beach', 'Marble Mountains hike', 'Hai Van Pass ride', 'Sunset kayaking'],
+      badges: ['adventure', 'active', 'nature'],
+      itineraryId: adventureItinerary.id,
+      displayOrder: 3,
+    },
+  });
+
+  // Romantic Getaway - 3 Days
+  const romanticItinerary = await prisma.itinerary.create({
+    data: {
+      title: 'Romantic Da Nang Escape',
+      description: 'Perfect couples retreat with beachside sunsets, spa treatments, fine dining, and memorable moments.',
+      city: 'Danang',
+      durationDays: 3,
+      coverImage: 'https://images.unsplash.com/photo-1540555700478-4be289fbec5d?w=800',
+      isTemplate: true,
+      isPublic: true,
+      generatedBy: 'template',
+      estimatedBudget: 8000000,
+      totalDistance: 30,
+      items: {
+        create: [
+          // Day 1 - Beach Romance
+          { locationId: locations[0].id, dayNumber: 1, orderIndex: 0, startTime: '06:00', endTime: '08:00', transportMode: 'walk', notes: 'Romantic sunrise walk' },
+          { locationId: locations[23].id, dayNumber: 1, orderIndex: 1, startTime: '09:00', endTime: '11:00', transportMode: 'grab_car', notes: 'Egg coffee with river views' },
+          { locationId: locations[27].id, dayNumber: 1, orderIndex: 2, startTime: '12:00', endTime: '15:00', transportMode: 'grab_car', notes: 'Luxury spa treatment' },
+          { locationId: locations[35].id, dayNumber: 1, orderIndex: 3, startTime: '18:00', endTime: '20:30', transportMode: 'grab_car', notes: 'Romantic riverside dinner' },
+          { locationId: locations[25].id, dayNumber: 1, orderIndex: 4, startTime: '21:00', endTime: '22:00', transportMode: 'grab_bike', notes: 'Love Lock Bridge stroll' },
+          // Day 2 - Nature & Indulgence
+          { locationId: locations[5].id, dayNumber: 2, orderIndex: 0, startTime: '07:00', endTime: '09:30', transportMode: 'grab_car', notes: 'Lady Buddha at sunrise' },
+          { locationId: locations[4].id, dayNumber: 2, orderIndex: 1, startTime: '10:30', endTime: '17:00', transportMode: 'grab_car', notes: 'Golden Bridge day trip' },
+          { locationId: locations[12].id, dayNumber: 2, orderIndex: 2, startTime: '18:30', endTime: '21:00', transportMode: 'grab_car', notes: 'Rooftop cocktails' },
+          // Day 3 - Relaxation
+          { locationId: locations[47].id, dayNumber: 3, orderIndex: 0, startTime: '08:00', endTime: '11:00', transportMode: 'grab_bike', notes: 'Secluded beach morning' },
+          { locationId: locations[8].id, dayNumber: 3, orderIndex: 1, startTime: '12:00', endTime: '14:00', transportMode: 'grab_car', notes: 'Upscale Vietnamese lunch' },
+          { locationId: locations[27].id, dayNumber: 3, orderIndex: 2, startTime: '15:00', endTime: '18:00', transportMode: 'grab_car', notes: 'Couples spa session' },
+          { locationId: locations[2].id, dayNumber: 3, orderIndex: 3, startTime: '21:00', endTime: '22:00', transportMode: 'grab_car', notes: 'Dragon Bridge show finale' },
+        ],
+      },
+    },
+  });
+
+  await prisma.itineraryTemplate.create({
+    data: {
+      name: 'Romantic Da Nang Escape',
+      description: 'Perfect couples retreat with beachside sunsets, spa treatments, fine dining, and memorable moments.',
+      coverImage: 'https://images.unsplash.com/photo-1540555700478-4be289fbec5d?w=800',
+      tagline: 'Create lasting memories together',
+      city: 'Danang',
+      durationDays: 3,
+      targetPersonas: ['romantic', 'luxury'],
+      targetVibes: ['romantic', 'relaxation', 'luxury', 'sunset'],
+      targetBudget: 'luxury',
+      targetInterests: ['spa', 'fine_dining', 'sunset', 'beach', 'photography'],
+      highlights: ['Couples spa treatments', 'Sunset at Golden Bridge', 'Rooftop cocktails', 'Dragon Bridge finale'],
+      badges: ['romantic', 'luxury', 'couples'],
+      itineraryId: romanticItinerary.id,
+      displayOrder: 4,
+    },
+  });
+
+  // Budget Explorer - 4 Days
+  const budgetItinerary = await prisma.itinerary.create({
+    data: {
+      title: 'Budget-Friendly Da Nang',
+      description: 'Experience the best of Da Nang without breaking the bank. Street food, free attractions, and local gems.',
+      city: 'Danang',
+      durationDays: 4,
+      coverImage: 'https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=800',
+      isTemplate: true,
+      isPublic: true,
+      generatedBy: 'template',
+      estimatedBudget: 1200000,
+      totalDistance: 35,
+      items: {
+        create: [
+          // Day 1 - City Exploration
+          { locationId: locations[31].id, dayNumber: 1, orderIndex: 0, startTime: '07:00', endTime: '08:00', transportMode: 'walk', notes: 'Budget pho breakfast' },
+          { locationId: locations[7].id, dayNumber: 1, orderIndex: 1, startTime: '09:00', endTime: '11:00', transportMode: 'walk', notes: 'Con Market - less touristy' },
+          { locationId: locations[9].id, dayNumber: 1, orderIndex: 2, startTime: '12:00', endTime: '12:45', transportMode: 'walk', notes: 'Cheap but legendary banh mi' },
+          { locationId: locations[16].id, dayNumber: 1, orderIndex: 3, startTime: '14:00', endTime: '15:30', transportMode: 'grab_bike', notes: 'Free museum entry' },
+          { locationId: locations[22].id, dayNumber: 1, orderIndex: 4, startTime: '16:00', endTime: '17:30', transportMode: 'grab_bike', notes: 'Affordable specialty coffee' },
+          { locationId: locations[2].id, dayNumber: 1, orderIndex: 5, startTime: '20:30', endTime: '21:30', transportMode: 'walk', notes: 'Free Dragon Bridge show' },
+          // Day 2 - Beach & Nature
+          { locationId: locations[0].id, dayNumber: 2, orderIndex: 0, startTime: '05:30', endTime: '08:00', transportMode: 'walk', notes: 'Free sunrise at beach' },
+          { locationId: locations[20].id, dayNumber: 2, orderIndex: 1, startTime: '08:30', endTime: '09:15', transportMode: 'grab_bike', notes: 'Local breakfast spot' },
+          { locationId: locations[5].id, dayNumber: 2, orderIndex: 2, startTime: '10:00', endTime: '12:30', transportMode: 'grab_bike', notes: 'Free Lady Buddha visit' },
+          { locationId: locations[14].id, dayNumber: 2, orderIndex: 3, startTime: '13:30', endTime: '17:00', transportMode: 'grab_bike', notes: 'Free peninsula exploration' },
+          { locationId: locations[36].id, dayNumber: 2, orderIndex: 4, startTime: '18:00', endTime: '19:30', transportMode: 'grab_bike', notes: 'Cheap banh xeo dinner' },
+          // Day 3 - Temples & Culture
+          { locationId: locations[33].id, dayNumber: 3, orderIndex: 0, startTime: '07:00', endTime: '07:45', transportMode: 'grab_bike', notes: 'Cheap local breakfast' },
+          { locationId: locations[3].id, dayNumber: 3, orderIndex: 1, startTime: '08:30', endTime: '12:00', transportMode: 'grab_bike', notes: 'Marble Mountains (small entry fee)' },
+          { locationId: locations[1].id, dayNumber: 3, orderIndex: 2, startTime: '13:00', endTime: '16:00', transportMode: 'grab_bike', notes: 'Free quiet beach' },
+          { locationId: locations[43].id, dayNumber: 3, orderIndex: 3, startTime: '17:00', endTime: '18:30', transportMode: 'grab_bike', notes: 'Free pagoda visit' },
+          { locationId: locations[18].id, dayNumber: 3, orderIndex: 4, startTime: '19:00', endTime: '20:00', transportMode: 'grab_bike', notes: 'Cheap authentic mi quang' },
+          // Day 4 - Hidden Gems
+          { locationId: locations[37].id, dayNumber: 4, orderIndex: 0, startTime: '08:00', endTime: '09:30', transportMode: 'grab_bike', notes: 'Hidden garden cafe' },
+          { locationId: locations[23].id, dayNumber: 4, orderIndex: 1, startTime: '10:00', endTime: '11:00', transportMode: 'walk', notes: 'River views' },
+          { locationId: locations[6].id, dayNumber: 4, orderIndex: 2, startTime: '11:30', endTime: '13:30', transportMode: 'walk', notes: 'Market food tour' },
+          { locationId: locations[25].id, dayNumber: 4, orderIndex: 3, startTime: '19:00', endTime: '20:00', transportMode: 'grab_bike', notes: 'Free Love Lock Bridge' },
+        ],
+      },
+    },
+  });
+
+  await prisma.itineraryTemplate.create({
+    data: {
+      name: 'Budget-Friendly Da Nang',
+      description: 'Experience the best of Da Nang without breaking the bank. Street food, free attractions, and local gems.',
+      coverImage: 'https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=800',
+      tagline: 'Maximum experience, minimum spend',
+      city: 'Danang',
+      durationDays: 4,
+      targetPersonas: ['backpacker', 'budget'],
+      targetVibes: ['budget', 'authentic', 'local'],
+      targetBudget: 'budget',
+      targetInterests: ['street_food', 'free_attractions', 'temples', 'beaches', 'markets'],
+      highlights: ['Free beach sunrises', 'Legendary street food', 'Free Dragon Bridge show', 'Hidden local gems'],
+      badges: ['budget', 'authentic', 'backpacker'],
+      itineraryId: budgetItinerary.id,
+      displayOrder: 5,
+    },
+  });
+
+  // Photography Tour - 2 Days
+  const photoItinerary = await prisma.itinerary.create({
+    data: {
+      title: 'Photographer\'s Da Nang',
+      description: 'Capture the most photogenic spots in Da Nang from golden hour temples to night bridges.',
+      city: 'Danang',
+      durationDays: 2,
+      coverImage: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800',
+      isTemplate: true,
+      isPublic: true,
+      generatedBy: 'template',
+      estimatedBudget: 2000000,
+      totalDistance: 40,
+      items: {
+        create: [
+          // Day 1 - Sunrise to Sunset
+          { locationId: locations[0].id, dayNumber: 1, orderIndex: 0, startTime: '05:00', endTime: '07:00', transportMode: 'grab_bike', notes: 'Golden hour beach shots' },
+          { locationId: locations[5].id, dayNumber: 1, orderIndex: 1, startTime: '08:00', endTime: '10:30', transportMode: 'grab_bike', notes: 'Lady Buddha morning light' },
+          { locationId: locations[48].id, dayNumber: 1, orderIndex: 2, startTime: '11:30', endTime: '13:30', transportMode: 'grab_bike', notes: 'Wildlife photography' },
+          { locationId: locations[15].id, dayNumber: 1, orderIndex: 3, startTime: '15:00', endTime: '17:30', transportMode: 'grab_bike', notes: 'Ban Co Peak sunset' },
+          { locationId: locations[2].id, dayNumber: 1, orderIndex: 4, startTime: '20:30', endTime: '22:00', transportMode: 'grab_bike', notes: 'Dragon Bridge night shots' },
+          // Day 2 - Mountains & Golden Bridge
+          { locationId: locations[3].id, dayNumber: 2, orderIndex: 0, startTime: '05:30', endTime: '09:00', transportMode: 'grab_bike', notes: 'Marble Mountains at sunrise' },
+          { locationId: locations[44].id, dayNumber: 2, orderIndex: 1, startTime: '10:00', endTime: '11:00', transportMode: 'grab_bike', notes: 'Cave pagoda shots' },
+          { locationId: locations[4].id, dayNumber: 2, orderIndex: 2, startTime: '12:30', endTime: '18:00', transportMode: 'grab_car', notes: 'Golden Bridge all lighting' },
+          { locationId: locations[12].id, dayNumber: 2, orderIndex: 3, startTime: '19:00', endTime: '21:00', transportMode: 'grab_car', notes: 'Cityscape from Sky36' },
+        ],
+      },
+    },
+  });
+
+  await prisma.itineraryTemplate.create({
+    data: {
+      name: 'Photographer\'s Da Nang',
+      description: 'Capture the most photogenic spots in Da Nang from golden hour temples to night bridges.',
+      coverImage: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800',
+      tagline: 'Every shot a masterpiece',
+      city: 'Danang',
+      durationDays: 2,
+      targetPersonas: ['photographer', 'adventurer'],
+      targetVibes: ['photography', 'sunrise', 'sunset', 'nature'],
+      targetBudget: 'moderate',
+      targetInterests: ['photography', 'sunrise', 'sunset', 'architecture', 'landscapes', 'wildlife'],
+      highlights: ['Golden hour beach shots', 'Wildlife at Son Tra', 'Dragon Bridge night photography', 'Golden Bridge at sunset'],
+      badges: ['photography', 'instagram', 'golden_hour'],
+      itineraryId: photoItinerary.id,
+      displayOrder: 6,
+    },
+  });
+
+  // Family Fun - 3 Days
+  const familyItinerary = await prisma.itinerary.create({
+    data: {
+      title: 'Family Fun in Da Nang',
+      description: 'Kid-friendly itinerary with beaches, theme parks, and interactive activities the whole family will love.',
+      city: 'Danang',
+      durationDays: 3,
+      coverImage: 'https://images.unsplash.com/photo-1565793298595-6a879b1d9492?w=800',
+      isTemplate: true,
+      isPublic: true,
+      generatedBy: 'template',
+      estimatedBudget: 4500000,
+      totalDistance: 35,
+      items: {
+        create: [
+          // Day 1 - Beach & Fun
+          { locationId: locations[0].id, dayNumber: 1, orderIndex: 0, startTime: '07:00', endTime: '10:00', transportMode: 'grab_car', notes: 'Morning beach play' },
+          { locationId: locations[78].id, dayNumber: 1, orderIndex: 1, startTime: '11:00', endTime: '13:00', transportMode: 'grab_car', notes: '3D museum fun' },
+          { locationId: locations[13].id, dayNumber: 1, orderIndex: 2, startTime: '14:00', endTime: '15:30', transportMode: 'grab_car', notes: 'Cong coffee break' },
+          { locationId: locations[26].id, dayNumber: 1, orderIndex: 3, startTime: '16:30', endTime: '20:00', transportMode: 'grab_car', notes: 'Asia Park rides' },
+          // Day 2 - Theme Park Day
+          { locationId: locations[4].id, dayNumber: 2, orderIndex: 0, startTime: '08:00', endTime: '17:00', transportMode: 'grab_car', notes: 'Full day at Ba Na Hills' },
+          { locationId: locations[10].id, dayNumber: 2, orderIndex: 1, startTime: '18:30', endTime: '20:30', transportMode: 'grab_car', notes: 'Seafood dinner' },
+          // Day 3 - Nature & Crafts
+          { locationId: locations[69].id, dayNumber: 3, orderIndex: 0, startTime: '08:00', endTime: '13:00', transportMode: 'grab_car', notes: 'Hot springs & waterpark' },
+          { locationId: locations[61].id, dayNumber: 3, orderIndex: 1, startTime: '14:30', endTime: '16:30', transportMode: 'grab_car', notes: 'Lantern making class' },
+          { locationId: locations[2].id, dayNumber: 3, orderIndex: 2, startTime: '21:00', endTime: '22:00', transportMode: 'grab_car', notes: 'Dragon Bridge fire show' },
+        ],
+      },
+    },
+  });
+
+  await prisma.itineraryTemplate.create({
+    data: {
+      name: 'Family Fun in Da Nang',
+      description: 'Kid-friendly itinerary with beaches, theme parks, and interactive activities the whole family will love.',
+      coverImage: 'https://images.unsplash.com/photo-1565793298595-6a879b1d9492?w=800',
+      tagline: 'Adventures for all ages',
+      city: 'Danang',
+      durationDays: 3,
+      targetPersonas: ['family', 'kids'],
+      targetVibes: ['family_friendly', 'fun', 'adventure'],
+      targetBudget: 'moderate',
+      targetInterests: ['theme_parks', 'beaches', 'activities', 'interactive'],
+      highlights: ['Ba Na Hills Golden Bridge', '3D Art Museum', 'Dragon Bridge Show', 'Hot Springs Waterpark'],
+      badges: ['family', 'kid_friendly', 'fun'],
+      itineraryId: familyItinerary.id,
+      displayOrder: 7,
+    },
+  });
+
+  // Wellness Retreat - 3 Days
+  const wellnessItinerary = await prisma.itinerary.create({
+    data: {
+      title: 'Wellness & Relaxation Retreat',
+      description: 'Rejuvenate your body and mind with spa treatments, yoga, healthy food, and peaceful temples.',
+      city: 'Danang',
+      durationDays: 3,
+      coverImage: 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=800',
+      isTemplate: true,
+      isPublic: true,
+      generatedBy: 'template',
+      estimatedBudget: 5000000,
+      totalDistance: 25,
+      items: {
+        create: [
+          // Day 1 - Spa Day
+          { locationId: locations[68].id, dayNumber: 1, orderIndex: 0, startTime: '06:00', endTime: '07:30', transportMode: 'walk', notes: 'Sunrise beach yoga' },
+          { locationId: locations[50].id, dayNumber: 1, orderIndex: 1, startTime: '08:30', endTime: '09:30', transportMode: 'grab_bike', notes: 'Healthy vegetarian breakfast' },
+          { locationId: locations[67].id, dayNumber: 1, orderIndex: 2, startTime: '10:30', endTime: '13:00', transportMode: 'grab_car', notes: 'Luxury spa treatment' },
+          { locationId: locations[37].id, dayNumber: 1, orderIndex: 3, startTime: '14:30', endTime: '16:00', transportMode: 'grab_bike', notes: 'Peaceful garden cafe' },
+          { locationId: locations[5].id, dayNumber: 1, orderIndex: 4, startTime: '17:00', endTime: '19:00', transportMode: 'grab_bike', notes: 'Sunset at Lady Buddha' },
+          // Day 2 - Nature & Mindfulness
+          { locationId: locations[69].id, dayNumber: 2, orderIndex: 0, startTime: '08:00', endTime: '14:00', transportMode: 'grab_car', notes: 'Hot springs relaxation' },
+          { locationId: locations[43].id, dayNumber: 2, orderIndex: 1, startTime: '15:30', endTime: '17:00', transportMode: 'grab_bike', notes: 'Peaceful pagoda visit' },
+          { locationId: locations[53].id, dayNumber: 2, orderIndex: 2, startTime: '18:00', endTime: '20:00', transportMode: 'grab_car', notes: 'Fine dining dinner' },
+          // Day 3 - Beach & Spa
+          { locationId: locations[46].id, dayNumber: 3, orderIndex: 0, startTime: '06:30', endTime: '09:00', transportMode: 'grab_bike', notes: 'Quiet beach morning' },
+          { locationId: locations[66].id, dayNumber: 3, orderIndex: 1, startTime: '10:00', endTime: '12:00', transportMode: 'grab_bike', notes: 'Traditional spa' },
+          { locationId: locations[27].id, dayNumber: 3, orderIndex: 2, startTime: '14:00', endTime: '17:00', transportMode: 'grab_car', notes: 'Naman Retreat spa finale' },
+        ],
+      },
+    },
+  });
+
+  await prisma.itineraryTemplate.create({
+    data: {
+      name: 'Wellness & Relaxation Retreat',
+      description: 'Rejuvenate your body and mind with spa treatments, yoga, healthy food, and peaceful temples.',
+      coverImage: 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=800',
+      tagline: 'Reset, recharge, renew',
+      city: 'Danang',
+      durationDays: 3,
+      targetPersonas: ['wellness', 'relaxation'],
+      targetVibes: ['relaxation', 'peaceful', 'wellness', 'mindfulness'],
+      targetBudget: 'luxury',
+      targetInterests: ['spa', 'yoga', 'healthy_food', 'temples', 'meditation'],
+      highlights: ['Daily yoga sessions', 'Luxury spa treatments', 'Hot springs day', 'Temple meditation'],
+      badges: ['wellness', 'spa', 'relaxation'],
+      itineraryId: wellnessItinerary.id,
+      displayOrder: 8,
+    },
+  });
+
+  // Culture Deep Dive - 4 Days
+  const cultureItinerary = await prisma.itinerary.create({
+    data: {
+      title: 'Cultural Immersion Experience',
+      description: 'Deep dive into Vietnamese culture with temples, museums, traditional crafts, and authentic local experiences.',
+      city: 'Danang',
+      durationDays: 4,
+      coverImage: 'https://images.unsplash.com/photo-1528127269322-539801943592?w=800',
+      isTemplate: true,
+      isPublic: true,
+      generatedBy: 'template',
+      estimatedBudget: 3000000,
+      totalDistance: 40,
+      items: {
+        create: [
+          // Day 1 - Temples & Spirituality
+          { locationId: locations[5].id, dayNumber: 1, orderIndex: 0, startTime: '06:00', endTime: '08:30', transportMode: 'grab_bike', notes: 'Lady Buddha at sunrise' },
+          { locationId: locations[43].id, dayNumber: 1, orderIndex: 1, startTime: '09:30', endTime: '11:00', transportMode: 'grab_bike', notes: 'Phap Lam Pagoda' },
+          { locationId: locations[49].id, dayNumber: 1, orderIndex: 2, startTime: '12:00', endTime: '13:30', transportMode: 'grab_bike', notes: 'Hue-style lunch' },
+          { locationId: locations[16].id, dayNumber: 1, orderIndex: 3, startTime: '14:30', endTime: '16:30', transportMode: 'grab_bike', notes: 'Cham Museum' },
+          { locationId: locations[57].id, dayNumber: 1, orderIndex: 4, startTime: '17:30', endTime: '18:30', transportMode: 'walk', notes: 'Danang Cathedral' },
+          // Day 2 - History & Art
+          { locationId: locations[76].id, dayNumber: 2, orderIndex: 0, startTime: '08:30', endTime: '10:00', transportMode: 'grab_bike', notes: 'Fine Arts Museum' },
+          { locationId: locations[77].id, dayNumber: 2, orderIndex: 1, startTime: '10:30', endTime: '12:00', transportMode: 'walk', notes: 'Ho Chi Minh Museum' },
+          { locationId: locations[6].id, dayNumber: 2, orderIndex: 2, startTime: '13:00', endTime: '15:00', transportMode: 'grab_bike', notes: 'Han Market exploration' },
+          { locationId: locations[61].id, dayNumber: 2, orderIndex: 3, startTime: '16:00', endTime: '18:00', transportMode: 'grab_bike', notes: 'Lantern making workshop' },
+          { locationId: locations[8].id, dayNumber: 2, orderIndex: 4, startTime: '19:00', endTime: '21:00', transportMode: 'grab_bike', notes: 'Traditional dinner' },
+          // Day 3 - Sacred Mountains
+          { locationId: locations[3].id, dayNumber: 3, orderIndex: 0, startTime: '06:30', endTime: '11:00', transportMode: 'grab_bike', notes: 'Marble Mountains exploration' },
+          { locationId: locations[44].id, dayNumber: 3, orderIndex: 1, startTime: '11:30', endTime: '12:30', transportMode: 'walk', notes: 'Cave pagoda' },
+          { locationId: locations[45].id, dayNumber: 3, orderIndex: 2, startTime: '14:00', endTime: '17:00', transportMode: 'grab_bike', notes: 'Marble carving workshop' },
+          { locationId: locations[7].id, dayNumber: 3, orderIndex: 3, startTime: '18:00', endTime: '20:00', transportMode: 'grab_bike', notes: 'Con Market local dinner' },
+          // Day 4 - Hoi An Day Trip
+          { locationId: locations[42].id, dayNumber: 4, orderIndex: 0, startTime: '08:00', endTime: '17:00', transportMode: 'grab_car', notes: 'Full day in ancient Hoi An' },
+          { locationId: locations[2].id, dayNumber: 4, orderIndex: 1, startTime: '21:00', endTime: '22:00', transportMode: 'grab_bike', notes: 'Dragon Bridge goodbye' },
+        ],
+      },
+    },
+  });
+
+  await prisma.itineraryTemplate.create({
+    data: {
+      name: 'Cultural Immersion Experience',
+      description: 'Deep dive into Vietnamese culture with temples, museums, traditional crafts, and authentic local experiences.',
+      coverImage: 'https://images.unsplash.com/photo-1528127269322-539801943592?w=800',
+      tagline: 'Discover the soul of Vietnam',
+      city: 'Danang',
+      durationDays: 4,
+      targetPersonas: ['culture_seeker', 'history_buff'],
+      targetVibes: ['cultural', 'authentic', 'historical', 'spiritual'],
+      targetBudget: 'moderate',
+      targetInterests: ['temples', 'museums', 'crafts', 'history', 'local_culture'],
+      highlights: ['Ancient temple visits', 'Traditional craft workshops', 'Museum tours', 'Hoi An day trip'],
+      badges: ['cultural', 'authentic', 'educational'],
+      itineraryId: cultureItinerary.id,
+      displayOrder: 9,
+    },
+  });
+
+  // Night Owl - 2 Days
+  const nightlifeItinerary = await prisma.itinerary.create({
+    data: {
+      title: 'Night Owl\'s Da Nang',
+      description: 'Experience Da Nang after dark with rooftop bars, nightclubs, night markets, and glowing bridges.',
+      city: 'Danang',
+      durationDays: 2,
+      coverImage: 'https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?w=800',
+      isTemplate: true,
+      isPublic: true,
+      generatedBy: 'template',
+      estimatedBudget: 3500000,
+      totalDistance: 15,
+      items: {
+        create: [
+          // Day 1
+          { locationId: locations[0].id, dayNumber: 1, orderIndex: 0, startTime: '16:00', endTime: '18:00', transportMode: 'grab_bike', notes: 'Late afternoon beach' },
+          { locationId: locations[24].id, dayNumber: 1, orderIndex: 1, startTime: '18:30', endTime: '20:30', transportMode: 'walk', notes: 'Beach lounge sunset' },
+          { locationId: locations[2].id, dayNumber: 1, orderIndex: 2, startTime: '21:00', endTime: '22:00', transportMode: 'grab_bike', notes: 'Dragon Bridge fire show' },
+          { locationId: locations[59].id, dayNumber: 1, orderIndex: 3, startTime: '22:30', endTime: '01:00', transportMode: 'grab_bike', notes: 'Rooftop lounge' },
+          { locationId: locations[63].id, dayNumber: 1, orderIndex: 4, startTime: '01:30', endTime: '04:00', transportMode: 'grab_bike', notes: 'Night club' },
+          // Day 2
+          { locationId: locations[31].id, dayNumber: 2, orderIndex: 0, startTime: '12:00', endTime: '13:00', transportMode: 'grab_bike', notes: 'Late brunch pho' },
+          { locationId: locations[55].id, dayNumber: 2, orderIndex: 1, startTime: '15:00', endTime: '16:30', transportMode: 'grab_bike', notes: 'Chocolate cafe recovery' },
+          { locationId: locations[12].id, dayNumber: 2, orderIndex: 2, startTime: '18:00', endTime: '21:00', transportMode: 'grab_car', notes: 'Sky36 sunset to night' },
+          { locationId: locations[47].id, dayNumber: 2, orderIndex: 3, startTime: '22:00', endTime: '00:00', transportMode: 'grab_bike', notes: 'Walking street bars' },
+          { locationId: locations[65].id, dayNumber: 2, orderIndex: 4, startTime: '00:30', endTime: '02:30', transportMode: 'walk', notes: 'Craft beer pub' },
+        ],
+      },
+    },
+  });
+
+  await prisma.itineraryTemplate.create({
+    data: {
+      name: 'Night Owl\'s Da Nang',
+      description: 'Experience Da Nang after dark with rooftop bars, nightclubs, night markets, and glowing bridges.',
+      coverImage: 'https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?w=800',
+      tagline: 'When the sun goes down',
+      city: 'Danang',
+      durationDays: 2,
+      targetPersonas: ['nightlife', 'party'],
+      targetVibes: ['nightlife', 'party', 'social', 'urban'],
+      targetBudget: 'moderate',
+      targetInterests: ['bars', 'clubs', 'rooftop', 'nightlife', 'dancing'],
+      highlights: ['Sky36 rooftop bar', 'Dragon Bridge show', 'Beach clubs', 'Late night clubbing'],
+      badges: ['nightlife', 'party', 'social'],
+      itineraryId: nightlifeItinerary.id,
+      displayOrder: 10,
+    },
+  });
+
+  // Solo Traveler - 5 Days
+  const soloItinerary = await prisma.itinerary.create({
+    data: {
+      title: 'Solo Explorer\'s Journey',
+      description: 'Perfect for solo travelers: flexible schedule, social spots, safe neighborhoods, and self-guided adventures.',
+      city: 'Danang',
+      durationDays: 5,
+      coverImage: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800',
+      isTemplate: true,
+      isPublic: true,
+      generatedBy: 'template',
+      estimatedBudget: 2500000,
+      totalDistance: 50,
+      items: {
+        create: [
+          // Day 1 - Orientation
+          { locationId: locations[0].id, dayNumber: 1, orderIndex: 0, startTime: '06:00', endTime: '08:00', transportMode: 'walk', notes: 'Sunrise beach walk' },
+          { locationId: locations[31].id, dayNumber: 1, orderIndex: 1, startTime: '08:30', endTime: '09:30', transportMode: 'grab_bike', notes: 'Local pho breakfast' },
+          { locationId: locations[6].id, dayNumber: 1, orderIndex: 2, startTime: '10:30', endTime: '13:00', transportMode: 'walk', notes: 'Han Market exploration' },
+          { locationId: locations[21].id, dayNumber: 1, orderIndex: 3, startTime: '14:00', endTime: '16:00', transportMode: 'grab_bike', notes: 'Work-friendly cafe' },
+          { locationId: locations[47].id, dayNumber: 1, orderIndex: 4, startTime: '18:00', endTime: '21:00', transportMode: 'grab_bike', notes: 'Walking street social' },
+          // Day 2 - Beach & Nature
+          { locationId: locations[28].id, dayNumber: 2, orderIndex: 0, startTime: '07:00', endTime: '10:00', transportMode: 'grab_bike', notes: 'Solo surf lesson' },
+          { locationId: locations[37].id, dayNumber: 2, orderIndex: 1, startTime: '11:00', endTime: '13:00', transportMode: 'grab_bike', notes: 'Hidden cafe lunch' },
+          { locationId: locations[14].id, dayNumber: 2, orderIndex: 2, startTime: '14:00', endTime: '18:00', transportMode: 'grab_bike', notes: 'Son Tra self-guided' },
+          { locationId: locations[65].id, dayNumber: 2, orderIndex: 3, startTime: '20:00', endTime: '22:00', transportMode: 'grab_bike', notes: 'Expat pub socializing' },
+          // Day 3 - Culture
+          { locationId: locations[40].id, dayNumber: 3, orderIndex: 0, startTime: '08:00', endTime: '12:00', transportMode: 'grab_bike', notes: 'Cooking class (meet others)' },
+          { locationId: locations[16].id, dayNumber: 3, orderIndex: 1, startTime: '13:30', endTime: '15:30', transportMode: 'grab_bike', notes: 'Cham Museum' },
+          { locationId: locations[56].id, dayNumber: 3, orderIndex: 2, startTime: '16:00', endTime: '17:30', transportMode: 'walk', notes: 'Colonial cafe' },
+          { locationId: locations[2].id, dayNumber: 3, orderIndex: 3, startTime: '21:00', endTime: '22:00', transportMode: 'grab_bike', notes: 'Dragon Bridge' },
+          // Day 4 - Adventure
+          { locationId: locations[63].id, dayNumber: 4, orderIndex: 0, startTime: '06:00', endTime: '10:00', transportMode: 'grab_bike', notes: 'Motorbike tour group' },
+          { locationId: locations[47].id, dayNumber: 4, orderIndex: 1, startTime: '11:00', endTime: '14:00', transportMode: 'grab_bike', notes: 'Secluded beach' },
+          { locationId: locations[41].id, dayNumber: 4, orderIndex: 2, startTime: '16:00', endTime: '18:30', transportMode: 'grab_bike', notes: 'Sunset kayaking' },
+          { locationId: locations[10].id, dayNumber: 4, orderIndex: 3, startTime: '19:30', endTime: '21:30', transportMode: 'grab_bike', notes: 'Beach seafood dinner' },
+          // Day 5 - Day Trip
+          { locationId: locations[42].id, dayNumber: 5, orderIndex: 0, startTime: '08:00', endTime: '17:00', transportMode: 'grab_car', notes: 'Hoi An solo wander' },
+          { locationId: locations[12].id, dayNumber: 5, orderIndex: 1, startTime: '19:00', endTime: '21:00', transportMode: 'grab_car', notes: 'Sky36 farewell drinks' },
+        ],
+      },
+    },
+  });
+
+  await prisma.itineraryTemplate.create({
+    data: {
+      name: 'Solo Explorer\'s Journey',
+      description: 'Perfect for solo travelers: flexible schedule, social spots, safe neighborhoods, and self-guided adventures.',
+      coverImage: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800',
+      tagline: 'Your journey, your way',
+      city: 'Danang',
+      durationDays: 5,
+      targetPersonas: ['solo', 'backpacker'],
+      targetVibes: ['adventure', 'social', 'flexible', 'independent'],
+      targetBudget: 'moderate',
+      targetInterests: ['surfing', 'cooking_classes', 'day_trips', 'social', 'self_guided'],
+      highlights: ['Solo surf lessons', 'Social cooking class', 'Motorbike exploration', 'Expat-friendly spots'],
+      badges: ['solo', 'social', 'flexible'],
+      itineraryId: soloItinerary.id,
+      displayOrder: 11,
+    },
+  });
+
+  console.log('✅ Created 11 itinerary templates');
+
+  // Create sample trips for demo users
+  console.log('🗺️  Creating sample trips...');
+
+  // Completed trip for demo user
+  await prisma.trip.create({
+    data: {
+      userId: demoUser.id,
+      itineraryId: itinerary.id,
+      status: 'completed',
+      scheduledStart: new Date('2024-12-01'),
+      actualStart: new Date('2024-12-01'),
+      completedAt: new Date('2024-12-03'),
+      currentDayNumber: 3,
+      completedItems: 11,
+      totalItems: 11,
+    },
+  });
+
+  // Active trip for foodie user
+  await prisma.trip.create({
+    data: {
+      userId: foodieUser.id,
+      itineraryId: foodieItinerary.id,
+      status: 'active',
+      scheduledStart: new Date(),
+      actualStart: new Date(),
+      currentDayNumber: 1,
+      currentItemIndex: 2,
+      completedItems: 2,
+      totalItems: 10,
+    },
+  });
+
+  // Upcoming trip for luxury user
+  await prisma.trip.create({
+    data: {
+      userId: luxuryUser.id,
+      itineraryId: romanticItinerary.id,
+      status: 'scheduled',
+      scheduledStart: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 1 week from now
+      currentDayNumber: 1,
+      totalItems: 12,
+    },
+  });
+
+  // Completed trip for photographer user
+  await prisma.trip.create({
+    data: {
+      userId: photographerUser.id,
+      itineraryId: photoItinerary.id,
+      status: 'completed',
+      scheduledStart: new Date('2024-11-15'),
+      actualStart: new Date('2024-11-15'),
+      completedAt: new Date('2024-11-16'),
+      currentDayNumber: 2,
+      completedItems: 9,
+      totalItems: 9,
+    },
+  });
+
+  console.log('✅ Created 4 sample trips');
+
   // Create demo state
   console.log('🎮 Creating demo state...');
   await prisma.demoState.create({
@@ -851,10 +2673,22 @@ async function main() {
   });
 
   console.log('\n✨ Database seeding completed!');
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log('📧 Admin login: admin@anvago.com / admin123');
-  console.log('📧 Demo login: demo@anvago.com / demo123');
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('📧 Available logins (all passwords: demo123):');
+  console.log('   • admin@anvago.com (admin)');
+  console.log('   • demo@anvago.com (general demo)');
+  console.log('   • foodie@anvago.com (food enthusiast)');
+  console.log('   • adventure@anvago.com (adventure seeker)');
+  console.log('   • backpacker@anvago.com (budget traveler)');
+  console.log('   • luxury@anvago.com (luxury traveler)');
+  console.log('   • photographer@anvago.com (photography enthusiast)');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('📍 Seeded data summary:');
+  console.log(`   • ${locations.length} locations across Da Nang`);
+  console.log('   • 6 itinerary templates (various themes)');
+  console.log('   • 7 demo users with different personas');
+  console.log('   • 4 sample trips (completed, active, planned)');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 }
 
 main()
