@@ -524,7 +524,7 @@ export default function Results() {
               exit={{ scale: 0.9, y: 20 }}
               onClick={e => e.stopPropagation()}
             >
-              <Card className="max-w-md text-center">
+              <Card className="max-w-md text-center bg-white">
                 <Lock className="w-16 h-16 text-[#4FC3F7] mx-auto mb-4" />
                 <h2 className="text-2xl font-bold mb-2">Sign in to Continue</h2>
                 <p className="text-gray-600 mb-6">
