@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
+import type { ItineraryItem } from '@prisma/client';
 import { prisma } from '../config/database.js';
 import { requireAuth } from '../middleware/auth.js';
 import { AppError } from '../middleware/errorHandler.js';
@@ -233,7 +234,7 @@ router.post('/:id/advance', requireAuth, async (req, res, next) => {
 
     const items = trip.itinerary.items;
     const currentIndex = items.findIndex(
-      item => item.dayNumber === trip.currentDayNumber && 
+      (item: ItineraryItem) => item.dayNumber === trip.currentDayNumber &&
               item.orderIndex === trip.currentItemIndex
     );
 

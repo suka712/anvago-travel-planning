@@ -2,16 +2,18 @@ import type { Request, Response, NextFunction } from 'express';
 import passport from 'passport';
 import jwt from 'jsonwebtoken';
 import { AppError } from './errorHandler.js';
-import type { User } from '@prisma/client';
+import type { User as PrismaUser } from '@prisma/client';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'anvago-secret-key';
 
 // Extend Express Request to include user
 declare global {
   namespace Express {
-    interface User extends Omit<import('@prisma/client').User, 'passwordHash'> {}
+    interface User extends Omit<PrismaUser, 'passwordHash'> {}
   }
 }
+
+type User = PrismaUser;
 
 export interface JwtPayload {
   sub: string;

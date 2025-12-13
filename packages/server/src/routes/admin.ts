@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import type { Prisma, ItineraryItem } from '@prisma/client';
 import { prisma } from '../config/database.js';
 import { requireAdmin } from '../middleware/auth.js';
 import type { AdminStats } from '@anvago/shared';
@@ -62,7 +63,7 @@ router.get('/stats', requireAdmin, async (req, res, next) => {
         total: totalLocations,
         verified: verifiedLocations,
         categories: Object.fromEntries(
-          categoryStats.map(c => [c.category, c._count.category])
+          categoryStats.map((c: { category: string; _count: { category: number } }) => [c.category, c._count.category])
         ),
       },
     };
@@ -177,13 +178,13 @@ router.get('/locations', requireAdmin, async (req, res, next) => {
 router.post('/demo/reset', requireAdmin, async (req, res, next) => {
   try {
     // Reset demo data - delete non-admin users and their data
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // Get non-admin users
       const users = await tx.user.findMany({
         where: { isAdmin: false },
         select: { id: true },
       });
-      const userIds = users.map(u => u.id);
+      const userIds = users.map((u: { id: string }) => u.id);
 
       // Delete trips and events
       await tx.tripEvent.deleteMany({
@@ -282,7 +283,7 @@ router.post('/demo/simulate', requireAdmin, async (req, res, next) => {
           if (trip) {
             const items = trip.itinerary.items;
             const currentIdx = items.findIndex(
-              i => i.dayNumber === trip.currentDayNumber && 
+              (i: ItineraryItem) => i.dayNumber === trip.currentDayNumber &&
                    i.orderIndex === trip.currentItemIndex
             );
             

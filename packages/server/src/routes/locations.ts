@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
+import type { Location } from '@prisma/client';
 import { prisma } from '../config/database.js';
 import { optionalAuth } from '../middleware/auth.js';
 import { AppError } from '../middleware/errorHandler.js';
@@ -149,11 +150,11 @@ router.get('/nearby', optionalAuth, async (req, res, next) => {
     });
 
     // Calculate actual distance and sort
-    const locationsWithDistance = locations.map(loc => ({
+    const locationsWithDistance = locations.map((loc: Location) => ({
       ...loc,
       distance: calculateDistance(query.lat, query.lng, loc.latitude, loc.longitude),
-    })).filter(loc => loc.distance <= query.radiusKm)
-      .sort((a, b) => a.distance - b.distance);
+    })).filter((loc: Location & { distance: number }) => loc.distance <= query.radiusKm)
+      .sort((a: { distance: number }, b: { distance: number }) => a.distance - b.distance);
 
     res.json({
       success: true,
@@ -175,7 +176,7 @@ router.get('/categories', async (req, res, next) => {
 
     res.json({
       success: true,
-      data: categories.map(c => ({
+      data: categories.map((c: { category: string; _count: { category: number } }) => ({
         id: c.category,
         count: c._count.category,
       })),

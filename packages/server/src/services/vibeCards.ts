@@ -1,3 +1,4 @@
+import type { Location } from '@prisma/client';
 import { prisma } from '../config/database.js';
 import type { VibeCard } from '@anvago/shared';
 
@@ -18,7 +19,7 @@ export async function getVibeCards(city: string): Promise<VibeCard[]> {
   });
 
   if (locations.length >= 10) {
-    return locations.map(loc => ({
+    return locations.map((loc: Location) => ({
       id: loc.id,
       image: loc.imageUrl,
       title: getVibeTitle(loc),

@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
+import type { ItineraryItem } from '@prisma/client';
 import { prisma } from '../config/database.js';
 import { requireAuth, optionalAuth, requirePremium } from '../middleware/auth.js';
 import { AppError } from '../middleware/errorHandler.js';
@@ -252,7 +253,7 @@ router.post('/:id/duplicate', requireAuth, async (req, res, next) => {
         userId: req.user!.id,
         generatedBy: 'user',
         items: {
-          create: original.items.map(item => ({
+          create: original.items.map((item: ItineraryItem) => ({
             locationId: item.locationId,
             dayNumber: item.dayNumber,
             orderIndex: item.orderIndex,
