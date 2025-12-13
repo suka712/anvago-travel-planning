@@ -39,7 +39,7 @@ COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 COPY packages/shared/package.json ./packages/shared/
 COPY packages/server/package.json ./packages/server/
 
-# Install pnpm and all dependencies (including devDeps for Prisma CLI)
+# Install pnpm and all dependencies (need prisma CLI for migrations)
 RUN npm install -g pnpm && \
     pnpm install --frozen-lockfile
 
@@ -52,10 +52,11 @@ COPY --from=builder /app/packages/server/prisma ./packages/server/prisma
 RUN cd packages/server && pnpm prisma generate
 
 ENV NODE_ENV=production
-ENV PORT=3001
 
-EXPOSE 3001
+# Railway provides PORT env variable
+EXPOSE ${PORT:-3001}
 
 WORKDIR /app/packages/server
 
-CMD ["node", "dist/index.js"]
+# Run migrations and start server
+CMD ["sh", "-c", "pnpm prisma migrate deploy && node dist/index.js"]

@@ -1,0 +1,9 @@
+[build]
+builder = "dockerfile"
+dockerfilePath = "packages/client/Dockerfile"
+
+[deploy]
+healthcheckPath = "/"
+healthcheckTimeout = 100
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3
