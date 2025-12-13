@@ -270,7 +270,7 @@ export default function Plan() {
                     onClick={() => toggleDay(day.day)}
                     className="flex items-center gap-4 flex-1"
                   >
-                    <div className="w-12 h-12 bg-[#4FC3F7] text-white rounded-xl flex items-center justify-center font-bold text-lg border-2 border-black">
+                    <div className="w-12 h-12 bg-sky-primary text-white rounded-xl flex items-center justify-center font-bold text-lg border-2 border-black">
                       {day.day}
                     </div>
                     <div className="text-left">
@@ -281,20 +281,20 @@ export default function Plan() {
 
                   {/* Day time summary */}
                   <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2 bg-gray-100 rounded-lg px-3 py-2">
+                    <div className="flex items-center gap-2 rounded-3xl px-3 py-2 hover:bg-sky-50">
                       <button
                         onClick={(e) => { e.stopPropagation(); handleAdjustStartTime(dayIndex, -30); }}
-                        className="w-6 h-6 flex items-center justify-center rounded bg-white border border-gray-300 hover:bg-gray-50 text-gray-600"
+                        className="w-6 h-6 flex items-center justify-center rounded-full bg-white border border-gray-300 hover:bg-sky-50 text-gray-600"
                       >
                         <Minus className="w-3 h-3" />
                       </button>
-                      <div className="text-center min-w-[100px]">
+                      <div className="text-center min-w-25">
                         <div className="text-xs text-gray-500">Start</div>
                         <div className="font-mono text-sm font-medium">{formatTime(day.startTime)}</div>
                       </div>
                       <button
                         onClick={(e) => { e.stopPropagation(); handleAdjustStartTime(dayIndex, 30); }}
-                        className="w-6 h-6 flex items-center justify-center rounded bg-white border border-gray-300 hover:bg-gray-50 text-gray-600"
+                        className="w-6 h-6 flex items-center justify-center rounded-full bg-white border border-gray-300 hover:bg-sky-50 text-gray-600"
                       >
                         <Plus className="w-3 h-3" />
                       </button>
