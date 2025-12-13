@@ -400,7 +400,7 @@ export default function Plan() {
                                     </div>
 
                                     {/* Duration Control */}
-                                    <div className="flex flex-col items-center justify-center px-2 border-l border-gray-100">
+                                    <div className="flex flex-col items-center justify-center min-w-20 px-2">
                                       <button
                                         onClick={() => handleAdjustDuration(dayIndex, item.id, 15)}
                                         className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-sky-primary/10 text-gray-400 hover:text-sky-primary transition-colors"
