@@ -6,7 +6,7 @@ import { useOnboardingStore } from '@/stores/onboardingStore';
 const personas = [
   {
     id: 'adventurer',
-    name: 'The Adventurer',
+    name: 'Adventurer',
     emoji: '🏔️',
     description: 'Thrill-seeker, off-beaten-path explorer',
     color: '#FF6B6B',
@@ -22,7 +22,7 @@ const personas = [
   },
   {
     id: 'culture_seeker',
-    name: 'The Culture Seeker',
+    name: 'Culturalist',
     emoji: '🏛️',
     description: 'History buff, temple wanderer',
     color: '#9B59B6',
@@ -30,7 +30,7 @@ const personas = [
   },
   {
     id: 'relaxer',
-    name: 'The Relaxer',
+    name: 'Relaxer',
     emoji: '🏖️',
     description: 'Beach lover, spa enthusiast',
     color: '#3498DB',
@@ -38,7 +38,7 @@ const personas = [
   },
   {
     id: 'photographer',
-    name: 'The Photographer',
+    name: 'Photographer',
     emoji: '📸',
     description: 'Golden hour chaser, view hunter',
     color: '#E91E63',
@@ -46,7 +46,7 @@ const personas = [
   },
   {
     id: 'nightowl',
-    name: 'The Night Owl',
+    name: 'Night Owl',
     emoji: '🌙',
     description: 'Bar hopper, nightlife explorer',
     color: '#2C3E50',
@@ -54,7 +54,7 @@ const personas = [
   },
   {
     id: 'wellness',
-    name: 'The Wellness Seeker',
+    name: 'The Seeker',
     emoji: '🧘',
     description: 'Yoga retreats, healthy living',
     color: '#27AE60',
@@ -62,7 +62,7 @@ const personas = [
   },
   {
     id: 'social_butterfly',
-    name: 'The Social Butterfly',
+    name: 'The Butterfly',
     emoji: '🦋',
     description: 'Hostel vibes, group tours',
     color: '#F39C12',
@@ -100,7 +100,7 @@ export default function PersonaStep() {
         <p className="text-gray-600 text-lg">
           Pick up to {maxSelections} that resonate with you
         </p>
-        {selected.length > 0 && (
+        {(
           <p className="text-sm text-[#2196F3] mt-2">
             {selected.length} of {maxSelections} selected
           </p>
@@ -161,17 +161,6 @@ export default function PersonaStep() {
           );
         })}
       </div>
-
-      {selected.length === 0 && (
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-          className="mt-6 text-sm text-gray-500"
-        >
-          💡 Select at least one persona for better recommendations, or skip to continue
-        </motion.p>
-      )}
     </div>
   );
 }

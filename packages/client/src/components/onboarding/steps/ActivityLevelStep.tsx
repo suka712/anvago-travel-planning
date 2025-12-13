@@ -9,7 +9,7 @@ const activityLevels = [
     title: 'Easy Going',
     emoji: '🐢',
     description: '2-3 activities per day, plenty of downtime',
-    detail: 'Perfect for relaxed travelers who want to savor each moment',
+    detail: 'Perfect for travelers savouring moments',
     avgLocations: 3,
     color: 'from-green-400 to-emerald-400',
   },
@@ -79,7 +79,7 @@ export default function ActivityLevelStep() {
               >
                 {/* Gradient Background */}
                 <div 
-                  className={`absolute inset-0 bg-gradient-to-br ${level.color} opacity-0 transition-opacity ${
+                  className={`absolute inset-0 bg-linear-to-br ${level.color} opacity-5 transition-opacity ${
                     isSelected ? 'opacity-10' : ''
                   }`}
                 />
@@ -134,7 +134,7 @@ export default function ActivityLevelStep() {
         transition={{ delay: 0.4 }}
       >
         <Card className="bg-gray-50">
-          <h4 className="font-medium text-gray-700 mb-3">Sample Day Timeline</h4>
+          <h4 className="font-medium text-gray-700 mb-3">Sample Timeline</h4>
           <div className="flex items-center justify-center gap-2 text-sm">
             {selected === 'chill' && (
               <>
@@ -153,7 +153,7 @@ export default function ActivityLevelStep() {
                 <span className="text-gray-400">→</span>
                 <span className="px-2 py-1 bg-white rounded border">📍 Visit</span>
                 <span className="text-gray-400">→</span>
-                <span className="px-2 py-1 bg-white rounded border">🍽️ Lunch</span>
+                <span className="px-2 py-1 bg-white rounded border">🍽️</span>
                 <span className="text-gray-400">→</span>
                 <span className="px-2 py-1 bg-white rounded border">📍 Explore</span>
                 <span className="text-gray-400">→</span>
@@ -162,19 +162,19 @@ export default function ActivityLevelStep() {
             )}
             {selected === 'packed' && (
               <>
-                <span className="px-2 py-1 bg-white rounded border text-xs">🌅</span>
+                <span className="px-2 py-1 bg-white rounded border">🌅 Riser</span>
                 <span className="text-gray-400">→</span>
-                <span className="px-2 py-1 bg-white rounded border text-xs">📍</span>
+                <span className="px-2 py-1 bg-white rounded border">📍</span>
                 <span className="text-gray-400">→</span>
-                <span className="px-2 py-1 bg-white rounded border text-xs">📍</span>
+                <span className="px-2 py-1 bg-white rounded border">📍</span>
                 <span className="text-gray-400">→</span>
-                <span className="px-2 py-1 bg-white rounded border text-xs">🍽️</span>
+                <span className="px-2 py-1 bg-white rounded border">🍽️ Lunch</span>
                 <span className="text-gray-400">→</span>
-                <span className="px-2 py-1 bg-white rounded border text-xs">📍</span>
+                <span className="px-2 py-1 bg-white rounded border">📍</span>
                 <span className="text-gray-400">→</span>
-                <span className="px-2 py-1 bg-white rounded border text-xs">📍</span>
+                <span className="px-2 py-1 bg-white rounded border">📍</span>
                 <span className="text-gray-400">→</span>
-                <span className="px-2 py-1 bg-white rounded border text-xs">🌙</span>
+                <span className="px-2 py-1 bg-white rounded border">🌙 Late</span>
               </>
             )}
           </div>

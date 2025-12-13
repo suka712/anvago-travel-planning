@@ -19,7 +19,7 @@ const interestCategories = [
     items: [
       { id: 'street_food', icon: '🍢', label: 'Street food tour' },
       { id: 'seafood', icon: '🦞', label: 'Fresh seafood' },
-      { id: 'coffee', icon: '☕', label: 'Vietnamese coffee' },
+      { id: 'coffee', icon: '☕', label: 'Local coffee' },
       { id: 'craft_beer', icon: '🍺', label: 'Craft beer scene' },
       { id: 'fine_dining', icon: '🍽️', label: 'Fine dining' },
       { id: 'rooftop', icon: '🌃', label: 'Rooftop bars' },
@@ -28,10 +28,10 @@ const interestCategories = [
   {
     name: 'Culture & History',
     items: [
-      { id: 'temples', icon: '🛕', label: 'Temples & pagodas' },
+      { id: 'temples', icon: '🛕', label: 'Temples' },
       { id: 'museums', icon: '🏛️', label: 'Museums' },
       { id: 'art', icon: '🎨', label: 'Art galleries' },
-      { id: 'local_life', icon: '🏘️', label: 'Local neighborhoods' },
+      { id: 'local_life', icon: '🏘️', label: 'Neighborhoods' },
       { id: 'markets', icon: '🛒', label: 'Local markets' },
       { id: 'festivals', icon: '🎊', label: 'Local festivals' },
     ],

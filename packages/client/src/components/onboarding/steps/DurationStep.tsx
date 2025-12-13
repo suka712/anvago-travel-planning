@@ -5,11 +5,11 @@ import { Card, Button } from '@/components/ui';
 import { useOnboardingStore } from '@/stores/onboardingStore';
 
 const presetDurations = [
-  { value: 1, label: 'Day trip', icon: '☀️', description: 'Quick highlights' },
-  { value: 2, label: 'Weekend', icon: '🌴', description: '2 days of fun' },
+  { value: 1, label: 'Day trip', icon: '☀️', description: 'One-day fun' },
+  { value: 2, label: 'Weekend', icon: '🌴', description: 'Two fun days' },
   { value: 3, label: '3 days', icon: '🎒', description: 'Perfect intro', recommended: true },
   { value: 5, label: '5 days', icon: '🧳', description: 'Deep dive' },
-  { value: 7, label: 'Week+', icon: '🌏', description: 'Full experience' },
+  { value: 7, label: 'Week+', icon: '🌏', description: 'Exhaustive' },
 ];
 
 export default function DurationStep() {
