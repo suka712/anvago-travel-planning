@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Mail, Lock, Globe, Eye, EyeOff } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { Button, Card, Input } from '@/components/ui';
 import { useAuthStore } from '@/stores/authStore';
 
@@ -23,9 +24,12 @@ export default function Login() {
 
     try {
       await login(email, password);
+      toast.success('Welcome back! 🎉');
       navigate(from, { replace: true });
     } catch (err: any) {
-      setError(err.message || 'Invalid email or password');
+      const message = err.message || 'Invalid email or password';
+      setError(message);
+      toast.error(message);
     }
   };
 

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import toast from 'react-hot-toast';
 import {
   Navigation, MapPin, Clock, ChevronRight, CheckCircle2, Circle,
   AlertTriangle, Cloud, CloudRain, Bike, Car, Footprints, Phone,
@@ -122,6 +123,7 @@ export default function Trip() {
   }, [showWeatherAlert]);
 
   const handleMarkComplete = (stopId: string) => {
+    const stop = stops.find(s => s.id === stopId);
     setStops(prev => {
       const newStops = [...prev];
       const currentIdx = newStops.findIndex(s => s.id === stopId);
@@ -129,6 +131,9 @@ export default function Trip() {
         newStops[currentIdx].status = 'completed';
         if (currentIdx + 1 < newStops.length) {
           newStops[currentIdx + 1].status = 'current';
+          toast.success(`✓ ${stop?.name} completed! Moving to next stop...`);
+        } else {
+          toast.success('🎉 Trip completed! Great adventure!');
         }
       }
       return newStops;
@@ -138,6 +143,7 @@ export default function Trip() {
   };
 
   const handleSkip = (stopId: string) => {
+    const stop = stops.find(s => s.id === stopId);
     setStops(prev => {
       const newStops = [...prev];
       const currentIdx = newStops.findIndex(s => s.id === stopId);
@@ -149,6 +155,7 @@ export default function Trip() {
       }
       return newStops;
     });
+    toast(`Skipped ${stop?.name}`, { icon: '⏭️' });
   };
 
   const getTransportIcon = (mode: string) => {

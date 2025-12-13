@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Mail, Lock, User, Globe, Eye, EyeOff, Check } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { Button, Card, Input } from '@/components/ui';
 import { useAuthStore } from '@/stores/authStore';
 
@@ -32,20 +33,27 @@ export default function Register() {
     setError('');
 
     if (!agreed) {
-      setError('Please agree to the terms and conditions');
+      const msg = 'Please agree to the terms and conditions';
+      setError(msg);
+      toast.error(msg);
       return;
     }
 
     if (!isPasswordValid) {
-      setError('Please meet all password requirements');
+      const msg = 'Please meet all password requirements';
+      setError(msg);
+      toast.error(msg);
       return;
     }
 
     try {
       await register(name, email, password);
+      toast.success('Account created! Welcome to Anvago! 🎉');
       navigate(from, { replace: true });
     } catch (err: any) {
-      setError(err.message || 'Registration failed');
+      const message = err.message || 'Registration failed';
+      setError(message);
+      toast.error(message);
     }
   };
 
