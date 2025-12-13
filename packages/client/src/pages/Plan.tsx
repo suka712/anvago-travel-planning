@@ -4,7 +4,8 @@ import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import {
   GripVertical, Plus, Minus, Trash2, Search, Clock, DollarSign,
   Sparkles, Wand2, Star, X, ChevronDown, ChevronUp,
-  Car, Footprints, Sun, Lock, Crown
+  Car, Footprints, Sun, Lock, Crown,
+  MapPin, RefreshCw, Filter, ArrowRight
 } from 'lucide-react';
 import { Button, Card, Badge } from '@/components/ui';
 import { useAuthStore } from '@/stores/authStore';
@@ -111,6 +112,9 @@ export default function Plan() {
   const [showOptimizeModal, setShowOptimizeModal] = useState(false);
   const [showPremiumModal, setShowPremiumModal] = useState(false);
   const [premiumFeature, setPremiumFeature] = useState('');
+  const [showSidePanel, setShowSidePanel] = useState(true);
+  // For replace search: track which item is being replaced
+  const [replaceTarget, setReplaceTarget] = useState<{ dayIndex: number; itemId: string; itemName: string } | null>(null);
 
   const toggleDay = (day: number) => {
     setExpandedDays(prev => 
@@ -139,6 +143,35 @@ export default function Plan() {
       idx === dayIndex ? { ...day, items: [...day.items, newItem] } : day
     ));
     setShowSearch(false);
+    setReplaceTarget(null);
+  };
+
+  // Replace an existing item with a new one
+  const handleReplaceItem = (item: typeof mockSearchResults[0]) => {
+    if (!replaceTarget) return;
+    const newItem: ItineraryItem = {
+      ...item,
+      id: `replaced-${Date.now()}`, // New unique ID
+      transitMins: 15,
+    };
+    setItinerary(prev => prev.map((day, idx) => {
+      if (idx !== replaceTarget.dayIndex) return day;
+      return {
+        ...day,
+        items: day.items.map(existingItem =>
+          existingItem.id === replaceTarget.itemId ? newItem : existingItem
+        ),
+      };
+    }));
+    setShowSearch(false);
+    setReplaceTarget(null);
+  };
+
+  // Open search modal for replacing a specific item
+  const openReplaceSearch = (dayIndex: number, itemId: string, itemName: string) => {
+    setReplaceTarget({ dayIndex, itemId, itemName });
+    setSearchQuery('');
+    setShowSearch(true);
   };
 
   // Adjust duration of an activity (in 15-minute increments)
@@ -191,7 +224,7 @@ export default function Plan() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-xl font-bold">Customize Your Trip</h1>
-              <p className="text-sm text-gray-600">Reorder activities and adjust durations to plan your perfect day</p>
+              <p className="text-sm text-gray-600">Drag to reorder, click search to replace locations</p>
             </div>
             <div className="flex items-center gap-3">
               {!isPremium && (
@@ -200,8 +233,21 @@ export default function Plan() {
                   Free Plan
                 </Badge>
               )}
-              <Button variant="ghost" onClick={() => setShowSearch(true)} leftIcon={<Plus className="w-4 h-4" />}>
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setReplaceTarget(null);
+                  setShowSearch(true);
+                }}
+                leftIcon={<Plus className="w-4 h-4" />}
+              >
                 Add Location
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => setShowSidePanel(!showSidePanel)}
+                title={showSidePanel ? 'Hide AI Tools' : 'Show AI Tools'}
+              >
               </Button>
               <Button onClick={() => navigate(`/itinerary/${id}`)}>
                 Save & Preview
@@ -209,76 +255,13 @@ export default function Plan() {
             </div>
           </div>
         </div>
-
-        {/* Premium Features Bar */}
-        <div className="bg-gradient-to-r from-[#4FC3F7]/10 to-[#81D4FA]/10 border-t border-gray-200">
-          <div className="max-w-7xl mx-auto px-4 py-2 flex items-center justify-center gap-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                if (!isPremium) {
-                  setPremiumFeature('Go AI Optimization');
-                  setShowPremiumModal(true);
-                } else {
-                  setShowOptimizeModal(true);
-                }
-              }}
-              leftIcon={<Wand2 className="w-4 h-4" />}
-              className="relative"
-            >
-              Go AI Optimize
-              {!isPremium && <Lock className="w-3 h-3 ml-1 text-gray-400" />}
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              leftIcon={<Star className="w-4 h-4" />}
-              onClick={() => {
-                if (!isPremium) {
-                  setPremiumFeature('Localize by Anva');
-                  setShowPremiumModal(true);
-                }
-              }}
-            >
-              Localize by Anva
-              {!isPremium && <Lock className="w-3 h-3 ml-1 text-gray-400" />}
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              leftIcon={<Search className="w-4 h-4" />}
-              onClick={() => {
-                if (!isPremium) {
-                  setPremiumFeature('Smart Search');
-                  setShowPremiumModal(true);
-                }
-              }}
-            >
-              Smart Search
-              {!isPremium && <Lock className="w-3 h-3 ml-1 text-gray-400" />}
-            </Button>
-            {!isPremium && (
-              <Button 
-                size="sm" 
-                variant="primary" 
-                className="ml-4"
-                onClick={() => {
-                  setPremiumFeature('');
-                  setShowPremiumModal(true);
-                }}
-              >
-                <Crown className="w-4 h-4 mr-1" />
-                Upgrade to Premium
-              </Button>
-            )}
-          </div>
-        </div>
       </header>
 
       {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-4 py-8">
-        <div className="space-y-6">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid lg:grid-cols-3 gap-6">
+          {/* Itinerary Timeline - Takes 2 columns */}
+          <div className="lg:col-span-2 space-y-6">
           {itinerary.map((day, dayIndex) => (
             <motion.div
               key={day.day}
@@ -448,17 +431,11 @@ export default function Plan() {
                                       <Button
                                         variant="ghost"
                                         size="sm"
-                                        onClick={() => {
-                                          if (!isPremium) {
-                                            setPremiumFeature('Smart Search');
-                                            setShowPremiumModal(true);
-                                          }
-                                        }}
-                                        disabled={false}
-                                        title="Find similar"
+                                        onClick={() => openReplaceSearch(dayIndex, item.id, item.name)}
+                                        title="Search & replace"
                                         className="p-2"
                                       >
-                                        <Search className="w-4 h-4" />
+                                        <RefreshCw className="w-4 h-4" />
                                       </Button>
                                       <Button
                                         variant="ghost"
@@ -511,6 +488,146 @@ export default function Plan() {
           >
             Add Another Day
           </Button>
+          </div>
+
+          {/* AI Tools Card - Sticky on right column */}
+          <div className="lg:col-span-1">
+            <div className="sticky top-24">
+              <Card>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="font-bold text-lg flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 text-[#4FC3F7]" />
+                    AI Tools
+                  </h2>
+                  {!isPremium && (
+                    <Badge variant="ghost" className="text-xs">
+                      <Lock className="w-3 h-3 mr-1" />
+                      Premium
+                    </Badge>
+                  )}
+                </div>
+
+                {/* AI Feature Cards */}
+                <div className="space-y-3">
+                  {/* Go AI Optimize */}
+                  <button
+                    onClick={() => {
+                      if (!isPremium) {
+                        setPremiumFeature('Go AI Optimization');
+                        setShowPremiumModal(true);
+                      } else {
+                        setShowOptimizeModal(true);
+                      }
+                    }}
+                    className="w-full p-3 rounded-lg border-2 border-gray-200 hover:border-[#4FC3F7] hover:bg-[#4FC3F7]/5 transition-all text-left"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center flex-shrink-0">
+                        <Wand2 className="w-4 h-4 text-white" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-semibold text-sm">Go AI Optimize</h3>
+                          {!isPremium && <Lock className="w-3 h-3 text-gray-400" />}
+                        </div>
+                        <p className="text-xs text-gray-500 truncate">Optimize route & timing</p>
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* Localize by Anva */}
+                  <button
+                    onClick={() => {
+                      if (!isPremium) {
+                        setPremiumFeature('Localize by Anva');
+                        setShowPremiumModal(true);
+                      }
+                    }}
+                    className="w-full p-3 rounded-lg border-2 border-gray-200 hover:border-[#4FC3F7] hover:bg-[#4FC3F7]/5 transition-all text-left"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center flex-shrink-0">
+                        <Star className="w-4 h-4 text-white" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-semibold text-sm">Localize by Anva</h3>
+                          {!isPremium && <Lock className="w-3 h-3 text-gray-400" />}
+                        </div>
+                        <p className="text-xs text-gray-500 truncate">Find authentic local gems</p>
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* Smart Search */}
+                  <button
+                    onClick={() => {
+                      if (!isPremium) {
+                        setPremiumFeature('Smart Search');
+                        setShowPremiumModal(true);
+                      }
+                    }}
+                    className="w-full p-3 rounded-lg border-2 border-gray-200 hover:border-[#4FC3F7] hover:bg-[#4FC3F7]/5 transition-all text-left"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center flex-shrink-0">
+                        <Search className="w-4 h-4 text-white" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-semibold text-sm">Smart Search</h3>
+                          {!isPremium && <Lock className="w-3 h-3 text-gray-400" />}
+                        </div>
+                        <p className="text-xs text-gray-500 truncate">Filter by budget, distance</p>
+                      </div>
+                    </div>
+                  </button>
+                </div>
+
+                {/* Upgrade CTA */}
+                {!isPremium && (
+                  <div className="mt-4 p-3 rounded-lg bg-gradient-to-br from-[#4FC3F7]/10 to-[#81D4FA]/10 border border-[#4FC3F7]/30">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Crown className="w-4 h-4 text-[#4FC3F7]" />
+                      <h3 className="font-semibold text-sm">Unlock AI Features</h3>
+                    </div>
+                    <p className="text-xs text-gray-600 mb-3">
+                      Smart optimization, local tips & advanced filters.
+                    </p>
+                    <Button
+                      size="sm"
+                      className="w-full"
+                      onClick={() => {
+                        setPremiumFeature('');
+                        setShowPremiumModal(true);
+                      }}
+                    >
+                      Upgrade to Premium
+                    </Button>
+                  </div>
+                )}
+
+                {/* Quick Tips */}
+                <div className="mt-4 pt-4 border-t border-gray-100">
+                  <h3 className="font-semibold text-xs text-gray-500 uppercase tracking-wide mb-2">Quick Tips</h3>
+                  <ul className="space-y-1.5 text-xs text-gray-600">
+                    <li className="flex items-center gap-2">
+                      <GripVertical className="w-3 h-3 text-gray-400 flex-shrink-0" />
+                      <span>Drag to reorder</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <RefreshCw className="w-3 h-3 text-gray-400 flex-shrink-0" />
+                      <span>Click to replace location</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Clock className="w-3 h-3 text-gray-400 flex-shrink-0" />
+                      <span>+/- to adjust duration</span>
+                    </li>
+                  </ul>
+                </div>
+              </Card>
+            </div>
+          </div>
         </div>
       </main>
 
@@ -522,7 +639,10 @@ export default function Plan() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center pt-20 px-4"
-            onClick={() => setShowSearch(false)}
+            onClick={() => {
+              setShowSearch(false);
+              setReplaceTarget(null);
+            }}
           >
             <motion.div
               initial={{ scale: 0.95, y: -20 }}
@@ -532,19 +652,78 @@ export default function Plan() {
               className="w-full max-w-2xl"
             >
               <Card>
+                {/* Header with replace context */}
+                {replaceTarget && (
+                  <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                    <div className="flex items-center gap-2 text-amber-800">
+                      <RefreshCw className="w-4 h-4" />
+                      <span className="text-sm">
+                        Replacing <strong>{replaceTarget.itemName}</strong>
+                      </span>
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex items-center gap-3 mb-4">
                   <Search className="w-5 h-5 text-gray-400" />
                   <input
                     type="text"
-                    placeholder="Search locations, restaurants, activities..."
+                    placeholder={replaceTarget ? "Search for a replacement..." : "Search locations, restaurants, activities..."}
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
                     className="flex-1 text-lg outline-none"
                     autoFocus
                   />
-                  <button onClick={() => setShowSearch(false)}>
+                  <button onClick={() => {
+                    setShowSearch(false);
+                    setReplaceTarget(null);
+                  }}>
                     <X className="w-5 h-5 text-gray-400 hover:text-gray-600" />
                   </button>
+                </div>
+
+                {/* Premium Smart Filter Hint */}
+                <div className="mb-4 p-3 bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-200 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-gray-600">
+                      <Filter className="w-4 h-4" />
+                      <span className="text-sm">Smart Filters</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          setPremiumFeature('Smart Search Filters');
+                          setShowPremiumModal(true);
+                        }}
+                        className="flex items-center gap-1 px-2 py-1 text-xs rounded-full bg-gray-200 text-gray-500 hover:bg-gray-300 transition-colors"
+                      >
+                        <MapPin className="w-3 h-3" />
+                        Within 2km
+                        <Lock className="w-3 h-3 ml-1" />
+                      </button>
+                      <button
+                        onClick={() => {
+                          setPremiumFeature('Smart Search Filters');
+                          setShowPremiumModal(true);
+                        }}
+                        className="flex items-center gap-1 px-2 py-1 text-xs rounded-full bg-gray-200 text-gray-500 hover:bg-gray-300 transition-colors"
+                      >
+                        <DollarSign className="w-3 h-3" />
+                        Similar Budget
+                        <Lock className="w-3 h-3 ml-1" />
+                      </button>
+                      <button
+                        onClick={() => {
+                          setPremiumFeature('Smart Search Filters');
+                          setShowPremiumModal(true);
+                        }}
+                        className="flex items-center gap-1 px-2 py-1 text-xs rounded-full bg-gray-200 text-gray-500 hover:bg-gray-300 transition-colors"
+                      >
+                        Same Category
+                        <Lock className="w-3 h-3 ml-1" />
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="space-y-3 max-h-96 overflow-y-auto">
@@ -552,7 +731,7 @@ export default function Plan() {
                     <div
                       key={result.id}
                       className="flex items-center gap-4 p-3 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors border border-transparent hover:border-[#4FC3F7]"
-                      onClick={() => handleAddItem(0, result)}
+                      onClick={() => replaceTarget ? handleReplaceItem(result) : handleAddItem(0, result)}
                     >
                       <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 border border-gray-200">
                         <img src={result.image} alt={result.name} className="w-full h-full object-cover" />
@@ -576,11 +755,20 @@ export default function Plan() {
                         </div>
                       </div>
                       <div className="flex items-center justify-center w-8 h-8 rounded-full bg-[#4FC3F7]/10 text-[#4FC3F7]">
-                        <Plus className="w-5 h-5" />
+                        {replaceTarget ? <ArrowRight className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
                       </div>
                     </div>
                   ))}
                 </div>
+
+                {/* No results hint */}
+                {searchQuery && mockSearchResults.length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    <Search className="w-10 h-10 mx-auto mb-2 opacity-50" />
+                    <p>No results found for "{searchQuery}"</p>
+                    <p className="text-sm mt-1">Try different keywords</p>
+                  </div>
+                )}
               </Card>
             </motion.div>
           </motion.div>

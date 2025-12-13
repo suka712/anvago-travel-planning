@@ -125,24 +125,50 @@ export const locationsAPI = {
 export const itinerariesAPI = {
   getAll: () =>
     api.get('/itineraries'),
-  
+
   getById: (id: string) =>
     api.get(`/itineraries/${id}`),
-  
+
   create: (data: any) =>
     api.post('/itineraries', data),
-  
+
   update: (id: string, data: any) =>
     api.put(`/itineraries/${id}`, data),
-  
+
   delete: (id: string) =>
     api.delete(`/itineraries/${id}`),
-  
+
   optimize: (id: string, criterion: string) =>
     api.post(`/itineraries/${id}/optimize`, { criterion }),
-  
+
   localize: (id: string) =>
     api.post(`/itineraries/${id}/localize`),
+
+  // Template methods
+  getTemplates: (city: string = 'Danang') =>
+    api.get('/itineraries/templates', { params: { city } }),
+
+  getSuggestedTemplates: (params: {
+    city?: string;
+    personas?: string[];
+    vibes?: string[];
+    budget?: string;
+    interests?: string[];
+    duration?: number;
+  }) =>
+    api.get('/itineraries/templates/suggested', {
+      params: {
+        city: params.city || 'Danang',
+        personas: params.personas?.join(','),
+        vibes: params.vibes?.join(','),
+        budget: params.budget,
+        interests: params.interests?.join(','),
+        duration: params.duration,
+      },
+    }),
+
+  duplicate: (id: string) =>
+    api.post(`/itineraries/${id}/duplicate`),
 };
 
 export const tripsAPI = {

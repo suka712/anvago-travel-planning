@@ -4,12 +4,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Sparkles, RefreshCw, Map, Clock, DollarSign, Cloud,
   ChevronRight, MapPin, Star, Calendar, Bike, Car, Footprints,
-  Lock
+  Lock, Grid, User
 } from 'lucide-react';
 import { Button, Card, Badge } from '@/components/ui';
 import { useOnboardingStore } from '@/stores/onboardingStore';
 import { useAuthStore } from '@/stores/authStore';
-import { onboardingAPI } from '@/services/api';
+import { itinerariesAPI } from '@/services/api';
 
 // Mock generated itineraries
 const mockItineraries = [
@@ -101,55 +101,117 @@ const transportOptions = [
   { id: 'walk', name: 'Walking', icon: Footprints, avgCost: 'Free' },
 ];
 
+type ItineraryDisplay = typeof mockItineraries[0] & { matchScore?: number };
+type ViewMode = 'suggested' | 'all';
+
 export default function Results() {
   const navigate = useNavigate();
   const { answers, reset } = useOnboardingStore();
   const { isAuthenticated } = useAuthStore();
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedItinerary, setSelectedItinerary] = useState<typeof mockItineraries[0] | null>(null);
+  const [selectedItinerary, setSelectedItinerary] = useState<ItineraryDisplay | null>(null);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
-  const [generatedItineraries, setGeneratedItineraries] = useState<typeof mockItineraries>([]);
+  const [suggestedItineraries, setSuggestedItineraries] = useState<ItineraryDisplay[]>([]);
+  const [allItineraries, setAllItineraries] = useState<ItineraryDisplay[]>([]);
+  const [viewMode, setViewMode] = useState<ViewMode>('suggested');
   const [_error, setError] = useState<string | null>(null);
 
+  // Map API template to display format
+  const mapTemplateToDisplay = (template: any, idx: number): ItineraryDisplay => ({
+    id: template.itinerary?.id || template.id || `template-${idx}`,
+    name: template.name || template.itinerary?.title || 'Untitled',
+    description: template.tagline || template.description || template.itinerary?.description || '',
+    matchScore: template.matchScore || 0,
+    duration: template.durationDays || template.itinerary?.durationDays || 3,
+    estimatedCost: template.itinerary?.estimatedBudget || 2500000,
+    highlights: template.highlights || [],
+    tags: template.badges || [],
+    image: template.coverImage || template.itinerary?.coverImage || mockItineraries[idx % mockItineraries.length].image,
+    days: template.itinerary?.items?.reduce((acc: any[], item: any) => {
+      const dayIdx = (item.dayNumber || 1) - 1;
+      if (!acc[dayIdx]) {
+        acc[dayIdx] = {
+          day: item.dayNumber || 1,
+          title: `Day ${item.dayNumber || 1}`,
+          activities: [],
+        };
+      }
+      acc[dayIdx].activities.push({
+        time: item.startTime || '09:00',
+        name: item.location?.name || 'Activity',
+        type: item.location?.category || 'activity',
+        duration: item.location?.avgDurationMins ? `${item.location.avgDurationMins}min` : '1h',
+      });
+      return acc;
+    }, []) || [],
+  });
+
   useEffect(() => {
-    const generateItineraries = async () => {
+    const fetchItineraries = async () => {
       setIsLoading(true);
       setError(null);
-      
+
       try {
-        // Try to call the real API
-        const response = await onboardingAPI.submit(answers);
-        const itineraries = response.data.data;
-        
-        if (itineraries && itineraries.length > 0) {
-          // Map API response to our format
-          const mapped = itineraries.map((it: any, idx: number) => ({
-            ...mockItineraries[idx % mockItineraries.length], // Use mock as base
-            id: it.id || `gen-${idx}`,
-            name: it.title || it.name,
-            description: it.tagline || it.description,
-            matchScore: it.matchScore || 85 - idx * 5,
-            highlights: it.highlights || mockItineraries[idx % mockItineraries.length].highlights,
-          }));
-          setGeneratedItineraries(mapped);
-          setSelectedItinerary(mapped[0]);
+        // Fetch both suggested and all templates in parallel
+        const city = answers.destination || 'Danang';
+        console.log('Fetching itineraries for city:', city, 'with preferences:', {
+          personas: answers.personas,
+          vibes: answers.vibesLiked,
+          budget: answers.budgetLevel,
+        });
+
+        const [suggestedRes, allRes] = await Promise.all([
+          itinerariesAPI.getSuggestedTemplates({
+            city,
+            personas: answers.personas || [],
+            vibes: answers.vibesLiked || [],
+            budget: answers.budgetLevel,
+            interests: answers.interests || [],
+            duration: answers.duration,
+          }),
+          itinerariesAPI.getTemplates(city),
+        ]);
+
+        const suggestedTemplates = suggestedRes.data.data || [];
+        const allTemplates = allRes.data.data || [];
+
+        console.log('Fetched templates:', {
+          suggested: suggestedTemplates.length,
+          all: allTemplates.length,
+        });
+
+        if (suggestedTemplates.length > 0) {
+          const mappedSuggested = suggestedTemplates.map(mapTemplateToDisplay);
+          setSuggestedItineraries(mappedSuggested);
+          setSelectedItinerary(mappedSuggested[0]);
         } else {
-          // Fallback to mock data
-          setGeneratedItineraries(mockItineraries);
+          console.log('No suggested templates, using mock data');
+          setSuggestedItineraries(mockItineraries);
           setSelectedItinerary(mockItineraries[0]);
         }
+
+        if (allTemplates.length > 0) {
+          const mappedAll = allTemplates.map(mapTemplateToDisplay);
+          setAllItineraries(mappedAll);
+        } else {
+          console.log('No templates, using mock data');
+          setAllItineraries(mockItineraries);
+        }
       } catch (err) {
-        console.error('Failed to generate itineraries:', err);
+        console.error('Failed to fetch itineraries:', err);
         // Fallback to mock data on error
-        setGeneratedItineraries(mockItineraries);
+        setSuggestedItineraries(mockItineraries);
+        setAllItineraries(mockItineraries);
         setSelectedItinerary(mockItineraries[0]);
       } finally {
         setIsLoading(false);
       }
     };
 
-    generateItineraries();
+    fetchItineraries();
   }, [answers]);
+
+  const displayedItineraries = viewMode === 'suggested' ? suggestedItineraries : allItineraries;
 
   const handleReroll = () => {
     reset();
@@ -257,12 +319,51 @@ export default function Results() {
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Itinerary Options */}
           <div className="lg:col-span-1 space-y-4">
+            {/* View Mode Tabs */}
+            <div className="flex gap-2 p-1 bg-gray-100 rounded-lg">
+              <button
+                onClick={() => {
+                  setViewMode('suggested');
+                  if (suggestedItineraries.length > 0) {
+                    setSelectedItinerary(suggestedItineraries[0]);
+                  }
+                }}
+                className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  viewMode === 'suggested'
+                    ? 'bg-white text-gray-900 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <User className="w-4 h-4" />
+                For You
+              </button>
+              <button
+                onClick={() => {
+                  setViewMode('all');
+                  if (allItineraries.length > 0) {
+                    setSelectedItinerary(allItineraries[0]);
+                  }
+                }}
+                className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  viewMode === 'all'
+                    ? 'bg-white text-gray-900 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <Grid className="w-4 h-4" />
+                All Trips
+              </button>
+            </div>
+
             <h2 className="font-bold text-lg flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-[#4FC3F7]" />
-              Generated Trips
+              {viewMode === 'suggested' ? 'Recommended for You' : 'All Available Trips'}
+              <span className="text-sm font-normal text-gray-500">
+                ({displayedItineraries.length})
+              </span>
             </h2>
-            
-            {(generatedItineraries.length > 0 ? generatedItineraries : mockItineraries).map((itinerary, idx) => (
+
+            {displayedItineraries.map((itinerary, idx) => (
               <motion.div
                 key={itinerary.id}
                 initial={{ opacity: 0, x: -20 }}
@@ -279,11 +380,13 @@ export default function Results() {
                 >
                   <div className="relative h-32">
                     <img src={itinerary.image} alt={itinerary.name} className="w-full h-full object-cover" />
-                    <div className="absolute top-2 right-2">
-                      <Badge variant={itinerary.matchScore >= 90 ? 'success' : 'primary'}>
-                        {itinerary.matchScore}% match
-                      </Badge>
-                    </div>
+                    {viewMode === 'suggested' && itinerary.matchScore !== undefined && itinerary.matchScore > 0 && (
+                      <div className="absolute top-2 right-2">
+                        <Badge variant={itinerary.matchScore >= 90 ? 'success' : 'primary'}>
+                          {itinerary.matchScore}% match
+                        </Badge>
+                      </div>
+                    )}
                   </div>
                   <div className="p-4">
                     <h3 className="font-bold">{itinerary.name}</h3>
@@ -320,10 +423,12 @@ export default function Results() {
                         <h2 className="text-2xl font-bold mb-1">{selectedItinerary.name}</h2>
                         <p className="text-gray-600">{selectedItinerary.description}</p>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" />
-                        <span className="font-bold">{selectedItinerary.matchScore}%</span>
-                      </div>
+                      {viewMode === 'suggested' && selectedItinerary.matchScore !== undefined && selectedItinerary.matchScore > 0 && (
+                        <div className="flex items-center gap-1">
+                          <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" />
+                          <span className="font-bold">{selectedItinerary.matchScore}% match</span>
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex flex-wrap gap-2 mb-6">

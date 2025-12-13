@@ -38,8 +38,10 @@ const reorderItemsSchema = z.object({
 // GET /itineraries/templates
 router.get('/templates', async (req, res, next) => {
   try {
-    const city = (req.query.city as string) || 'Danang';
-    
+    const cityParam = (req.query.city as string) || 'Danang';
+    // Normalize city to match database format (capitalize first letter)
+    const city = cityParam.charAt(0).toUpperCase() + cityParam.slice(1).toLowerCase();
+
     const templates = await prisma.itineraryTemplate.findMany({
       where: { city, isActive: true },
       include: {
@@ -58,6 +60,118 @@ router.get('/templates', async (req, res, next) => {
     res.json({
       success: true,
       data: templates,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// GET /itineraries/templates/suggested - Get personalized template suggestions
+router.get('/templates/suggested', optionalAuth, async (req, res, next) => {
+  try {
+    const cityParam = (req.query.city as string) || 'Danang';
+    // Normalize city to match database format (capitalize first letter)
+    const city = cityParam.charAt(0).toUpperCase() + cityParam.slice(1).toLowerCase();
+    const personas = (req.query.personas as string)?.split(',').filter(Boolean) || [];
+    const vibes = (req.query.vibes as string)?.split(',').filter(Boolean) || [];
+    const budget = req.query.budget as string;
+    const interests = (req.query.interests as string)?.split(',').filter(Boolean) || [];
+    const duration = req.query.duration ? parseInt(req.query.duration as string, 10) : undefined;
+
+    // Get all active templates for the city
+    const allTemplates = await prisma.itineraryTemplate.findMany({
+      where: { city, isActive: true },
+      include: {
+        itinerary: {
+          include: {
+            items: {
+              include: { location: true },
+              orderBy: [{ dayNumber: 'asc' }, { orderIndex: 'asc' }],
+            },
+          },
+        },
+      },
+      orderBy: { displayOrder: 'asc' },
+    });
+
+    // Score and rank templates based on user preferences
+    const scoredTemplates = allTemplates.map((template) => {
+      let score = 0;
+      let matchedCriteria: string[] = [];
+
+      // Match personas (high weight)
+      if (personas.length > 0 && template.targetPersonas) {
+        const matchedPersonas = personas.filter((p) =>
+          (template.targetPersonas as string[]).includes(p)
+        );
+        score += matchedPersonas.length * 25;
+        if (matchedPersonas.length > 0) {
+          matchedCriteria.push(`persona: ${matchedPersonas.join(', ')}`);
+        }
+      }
+
+      // Match vibes (high weight)
+      if (vibes.length > 0 && template.targetVibes) {
+        const matchedVibes = vibes.filter((v) =>
+          (template.targetVibes as string[]).includes(v)
+        );
+        score += matchedVibes.length * 20;
+        if (matchedVibes.length > 0) {
+          matchedCriteria.push(`vibe: ${matchedVibes.join(', ')}`);
+        }
+      }
+
+      // Match budget (medium weight)
+      if (budget && template.targetBudget) {
+        if (template.targetBudget === budget) {
+          score += 15;
+          matchedCriteria.push(`budget: ${budget}`);
+        }
+      }
+
+      // Match interests (medium weight)
+      if (interests.length > 0 && template.targetInterests) {
+        const matchedInterests = interests.filter((i) =>
+          (template.targetInterests as string[]).includes(i)
+        );
+        score += matchedInterests.length * 10;
+        if (matchedInterests.length > 0) {
+          matchedCriteria.push(`interests: ${matchedInterests.join(', ')}`);
+        }
+      }
+
+      // Match duration (bonus)
+      if (duration && template.durationDays) {
+        if (template.durationDays === duration) {
+          score += 10;
+          matchedCriteria.push(`duration: ${duration} days`);
+        } else if (Math.abs(template.durationDays - duration) <= 1) {
+          score += 5;
+        }
+      }
+
+      // Calculate match percentage (normalize to 0-100)
+      const maxPossibleScore =
+        (personas.length || 1) * 25 +
+        (vibes.length || 1) * 20 +
+        15 +
+        (interests.length || 1) * 10 +
+        10;
+      const matchPercentage = Math.min(100, Math.round((score / maxPossibleScore) * 100));
+
+      return {
+        ...template,
+        matchScore: matchPercentage,
+        matchedCriteria,
+      };
+    });
+
+    // Sort by score (descending) and return
+    const sortedTemplates = scoredTemplates.sort((a, b) => b.matchScore - a.matchScore);
+
+    res.json({
+      success: true,
+      data: sortedTemplates,
     });
   } catch (error) {
     next(error);
