@@ -456,7 +456,6 @@ export default function Itinerary() {
 
         {/* Summary Card */}
         <Card className="mt-8 bg-gradient-to-br from-[#4FC3F7]/10 to-[#81D4FA]/10">
-          <h3 className="font-bold text-lg mb-4">Trip Summary</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
             <div>
               <p className="text-2xl font-bold text-[#2196F3]">{mockItinerary.duration}</p>
@@ -499,7 +498,7 @@ export default function Itinerary() {
             onClick={() => navigate(`/trip/${id}`)}
             rightIcon={<ChevronRight className="w-4 h-4" />}
           >
-            Start This Trip
+            Start Trip
           </Button>
         </div>
       </div>
