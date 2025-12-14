@@ -13,7 +13,7 @@ const budgetLevels = [
     dailyUSD: '~$20',
     avgDaily: 400000,
     examples: ['Street food meals', 'Local buses', 'Free beaches', 'Budget hostels'],
-    color: 'from-green-400 to-emerald-500',
+    color: 'from-green-500 to-green-200',
   },
   {
     id: 'moderate',
@@ -25,18 +25,18 @@ const budgetLevels = [
     avgDaily: 1000000,
     recommended: true,
     examples: ['Nice restaurants', 'Grab rides', 'Guided tours', '3-star hotels'],
-    color: 'from-blue-400 to-cyan-500',
+    color: 'from-blue-600 to-blue-200',
   },
   {
     id: 'luxury',
     title: 'Treat Yourself',
     emoji: '✨',
     description: 'Fine dining, premium experiences',
-    dailyRange: '1.5M+ VND',
+    dailyRange: 'Beyond 1.5M VND',
     dailyUSD: '~$60+',
     avgDaily: 2500000,
     examples: ['Fine dining', 'Private tours', 'Spa treatments', '5-star resorts'],
-    color: 'from-purple-400 to-pink-500',
+    color: 'from-purple-600 to-purple-200',
   },
 ];
 
@@ -88,7 +88,7 @@ export default function BudgetStep() {
                 {/* Gradient Background */}
                 <div 
                   className={`absolute inset-0 bg-gradient-to-br ${level.color} opacity-0 transition-opacity ${
-                    isSelected ? 'opacity-10' : ''
+                    isSelected ? 'opacity-30' : ''
                   }`}
                 />
                 

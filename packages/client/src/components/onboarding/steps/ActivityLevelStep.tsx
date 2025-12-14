@@ -11,7 +11,7 @@ const activityLevels = [
     description: '2-3 activities per day, plenty of downtime',
     detail: 'Perfect for travelers savouring moments',
     avgLocations: 3,
-    color: 'from-green-400 to-emerald-400',
+    color: 'from-green-500 to-green-200',
   },
   {
     id: 'balanced',
@@ -21,16 +21,16 @@ const activityLevels = [
     detail: 'The sweet spot for most travelers',
     avgLocations: 5,
     recommended: true,
-    color: 'from-blue-400 to-cyan-400',
+    color: 'from-blue-600 to-blue-300',
   },
   {
     id: 'packed',
-    title: 'Adventure Packed',
+    title: 'Adventurous',
     emoji: '⚡',
     description: '6+ activities, maximize every moment',
     detail: 'For those who want to see it all',
     avgLocations: 7,
-    color: 'from-orange-400 to-red-400',
+    color: 'from-purple-500 to-purple-200',
   },
 ];
 
@@ -80,7 +80,7 @@ export default function ActivityLevelStep() {
                 {/* Gradient Background */}
                 <div 
                   className={`absolute inset-0 bg-linear-to-br ${level.color} opacity-5 transition-opacity ${
-                    isSelected ? 'opacity-10' : ''
+                    isSelected ? 'opacity-40' : ''
                   }`}
                 />
                 
@@ -113,7 +113,7 @@ export default function ActivityLevelStep() {
                   
                   {/* Activity Preview */}
                   <div className={`p-3 rounded-lg transition-colors ${
-                    isSelected ? 'bg-[#4FC3F7]/20' : 'bg-gray-100'
+                    isSelected && 'bg-[#4FC3F7]/20'
                   }`}>
                     <p className="text-sm">
                       <span className="font-bold text-lg">{totalActivities}</span>
