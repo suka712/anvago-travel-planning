@@ -18,7 +18,7 @@ export default function Register() {
   const [error, setError] = useState('');
   const [agreed, setAgreed] = useState(false);
 
-  const from = (location.state as any)?.from || '/';
+  const from = (location.state as any)?.from || '/dashboard';
 
   const passwordRequirements = [
     { text: 'At least 8 characters', met: password.length >= 8 },
