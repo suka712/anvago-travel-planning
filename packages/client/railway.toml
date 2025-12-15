@@ -3,6 +3,10 @@ builder = "dockerfile"
 dockerfilePath = "packages/client/Dockerfile"
 watchPatterns = ["packages/client/**", "packages/shared/**"]
 
+# Pass VITE_API_URL as build argument from Railway environment variable
+[build.args]
+VITE_API_URL = "${{ VITE_API_URL }}"
+
 [deploy]
 healthcheckPath = "/"
 healthcheckTimeout = 100
