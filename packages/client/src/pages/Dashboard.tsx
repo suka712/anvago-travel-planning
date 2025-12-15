@@ -199,10 +199,10 @@ const getStatusIcon = (status: TripStatus) => {
 
 const getStatusColor = (status: TripStatus) => {
   switch (status) {
-    case 'active': return 'bg-green-500';
-    case 'upcoming': return 'bg-blue-500';
-    case 'planning': return 'bg-amber-500';
-    case 'completed': return 'bg-gray-500';
+    case 'active': return 'bg-sky-primary';
+    case 'upcoming': return 'bg-cyan-400';
+    case 'planning': return 'bg-blue-400';
+    case 'completed': return 'bg-teal-300';
   }
 };
 
@@ -470,7 +470,7 @@ export default function Dashboard() {
                             {trip.progress !== undefined && (
                               <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/20">
                                 <div
-                                  className="h-full bg-green-500 transition-all"
+                                  className="h-full bg-sky-500 transition-all"
                                   style={{ width: `${trip.progress}%` }}
                                 />
                               </div>
