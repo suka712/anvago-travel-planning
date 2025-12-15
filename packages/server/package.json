@@ -5,8 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "prisma generate && tsc",
-    "start": "prisma migrate deploy && node dist/index.js",
+    "build": "prisma generate && tsc && tsc prisma/seed.ts --outDir dist/prisma --esModuleInterop --module NodeNext --moduleResolution NodeNext --skipLibCheck",
+    "start": "prisma migrate deploy && sh -c 'if [ \"$RUN_SEED\" = \"true\" ]; then node dist/prisma/seed.js; fi' && node dist/index.js",
+    "seed": "node dist/prisma/seed.js",
     "lint": "eslint src/",
     "typecheck": "tsc --noEmit",
     "db:generate": "prisma generate",
