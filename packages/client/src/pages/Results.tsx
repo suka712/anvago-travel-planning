@@ -3,9 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import {
-  Sparkles, RefreshCw, Map, Clock, DollarSign, Cloud, Sun, CloudRain,
-  MapPin, Star, Calendar, Bike, Heart, Share2, Link2, Twitter, Facebook,
-  Lock, User, LayoutGrid, Check, ArrowRight, X
+  Sparkles, Map, Clock, DollarSign, Cloud, Sun, CloudRain,
+  MapPin, Star, Calendar, Heart, Share2, Link2, Twitter, Facebook,
+  Lock, User, LayoutGrid, Check, ArrowRight, X, ChevronRight,
+  Shuffle, TrendingUp
 } from 'lucide-react';
 import { Button, Card, Badge } from '@/components/ui';
 import Header from '@/components/layouts/Header';
@@ -115,12 +116,12 @@ export default function Results() {
   const [viewMode, setViewMode] = useState<ViewMode>('suggested');
   const [_error, setError] = useState<string | null>(null);
   const [expandedDay, setExpandedDay] = useState<number>(1);
+  const [isRerolling, setIsRerolling] = useState(false);
 
   // Weather data
   const weather = {
     condition: 'Partly Cloudy',
     temp: 28,
-    advisory: 'Great for outdoor activities',
   };
   const WeatherIcon = getWeatherIcon(weather.condition);
 
@@ -206,7 +207,9 @@ export default function Results() {
 
   const displayedItineraries = viewMode === 'suggested' ? suggestedItineraries : allItineraries;
 
-  const handleReroll = () => {
+  const handleReroll = async () => {
+    setIsRerolling(true);
+    await new Promise(resolve => setTimeout(resolve, 600));
     reset();
     navigate('/discover');
   };
@@ -274,7 +277,7 @@ export default function Results() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[#FAFAF8] flex items-center justify-center">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -312,51 +315,82 @@ export default function Results() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Global Header */}
+    <div className="min-h-screen bg-[#FAFAF8]">
       <Header />
 
-      {/* Trip Info Bar */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-6xl mx-auto px-4 py-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div>
-                <h1 className="text-lg font-bold">{answers.destination || 'Danang'}</h1>
-                <p className="text-sm text-gray-500">
-                  {answers.duration || 3} days • {answers.activityLevel || 'balanced'} pace
-                </p>
+      <main className="max-w-6xl mx-auto px-4 py-6">
+        {/* Trip Context Card - Destination, Weather & Reroll */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-6"
+        >
+          <Card className="p-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              {/* Left: Destination & Trip Info */}
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-sky-primary rounded-xl border-2 border-black shadow-[3px_3px_0px_#000] flex items-center justify-center">
+                  <MapPin className="w-6 h-6" />
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold">{answers.destination || 'Danang'}</h1>
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <span>{answers.duration || 3} days</span>
+                    <span>•</span>
+                    <span className="capitalize">{answers.activityLevel || 'balanced'} pace</span>
+                    <span>•</span>
+                    <span className="capitalize">{answers.budgetLevel || 'mid-range'}</span>
+                  </div>
+                </div>
               </div>
-              {/* Compact Weather Indicator */}
-              <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-sky-primary/10 rounded-full">
-                <WeatherIcon className="w-4 h-4 text-sky-primary" />
-                <span className="text-sm font-medium">{weather.temp}°C</span>
-                <span className="text-xs text-gray-500">{weather.advisory}</span>
+
+              {/* Center: Weather */}
+              <div className="flex items-center gap-3 px-4 py-2 bg-sky-primary/10 rounded-lg">
+                <WeatherIcon className="w-5 h-5 text-sky-dark" />
+                <div className="text-sm">
+                  <span className="font-bold">{weather.temp}°C</span>
+                  <span className="text-gray-600 ml-2">{weather.condition}</span>
+                </div>
+                <Badge variant="success" className="text-xs ml-2">
+                  Great for outdoors
+                </Badge>
               </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Badge variant="success" className="hidden sm:flex">
-                <Bike className="w-3 h-3 mr-1" />
-                Grab Bike recommended
-              </Badge>
+
+              {/* Right: Reroll Button */}
               <Button
-                variant="ghost"
-                size="sm"
+                variant="secondary"
                 onClick={handleReroll}
-                leftIcon={<RefreshCw className="w-4 h-4" />}
+                disabled={isRerolling}
+                leftIcon={
+                  <motion.div
+                    animate={isRerolling ? { rotate: 360 } : {}}
+                    transition={{ duration: 0.5, repeat: isRerolling ? Infinity : 0 }}
+                  >
+                    <Shuffle className="w-4 h-4" />
+                  </motion.div>
+                }
               >
-                Reroll
+                {isRerolling ? 'Rerolling...' : 'Reroll'}
               </Button>
             </div>
-          </div>
-        </div>
-      </div>
+          </Card>
+        </motion.div>
 
-      <main className="max-w-6xl mx-auto px-4 py-6">
+        {/* Results Header */}
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-bold flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-sky-primary" />
+            {viewMode === 'suggested' ? 'Recommended for You' : 'All Itineraries'}
+          </h2>
+          <span className="text-sm text-gray-500">
+            {displayedItineraries.length} {displayedItineraries.length === 1 ? 'trip' : 'trips'}
+          </span>
+        </div>
+
         <div className="grid lg:grid-cols-5 gap-6">
           {/* Left Column - Itinerary List */}
           <div className="lg:col-span-2 space-y-4">
-            {/* Styled Tabs */}
+            {/* Tabs */}
             <Card className="p-1.5">
               <div className="flex gap-1">
                 <button
@@ -394,17 +428,6 @@ export default function Results() {
               </div>
             </Card>
 
-            {/* Section Header */}
-            <div className="flex items-center justify-between">
-              <h2 className="font-bold text-lg flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-sky-primary" />
-                {viewMode === 'suggested' ? 'Recommended' : 'All Trips'}
-              </h2>
-              <span className="text-sm text-gray-500">
-                {displayedItineraries.length} {displayedItineraries.length === 1 ? 'trip' : 'trips'}
-              </span>
-            </div>
-
             {/* Itinerary Cards */}
             <div className="space-y-3">
               {displayedItineraries.map((itinerary, idx) => (
@@ -426,7 +449,7 @@ export default function Results() {
                   >
                     <div className="flex">
                       {/* Thumbnail */}
-                      <div className="relative w-28 h-28 flex-shrink-0">
+                      <div className="relative w-28 h-28 shrink-0 overflow-hidden">
                         <img
                           src={itinerary.image}
                           alt={itinerary.name}
@@ -438,6 +461,7 @@ export default function Results() {
                               variant={itinerary.matchScore >= 90 ? 'success' : 'primary'}
                               className="text-[10px] px-1.5 py-0.5"
                             >
+                              <TrendingUp className="w-3 h-3 mr-0.5" />
                               {itinerary.matchScore}%
                             </Badge>
                           </div>
@@ -459,7 +483,18 @@ export default function Results() {
                             <DollarSign className="w-3 h-3" />
                             {(itinerary.estimatedCost / 1000000).toFixed(1)}M
                           </span>
+                          <span className="flex items-center gap-1">
+                            <MapPin className="w-3 h-3" />
+                            {itinerary.days.reduce((sum, d) => sum + d.activities.length, 0)} stops
+                          </span>
                         </div>
+                      </div>
+
+                      {/* Arrow */}
+                      <div className="flex items-center pr-2">
+                        <ChevronRight className={`w-4 h-4 transition-colors ${
+                          selectedItinerary?.id === itinerary.id ? 'text-sky-primary' : 'text-gray-300'
+                        }`} />
                       </div>
                     </div>
                   </Card>
@@ -468,7 +503,7 @@ export default function Results() {
             </div>
           </div>
 
-          {/* Right Column - Detail View (Sticky) */}
+          {/* Right Column - Detail View */}
           <div className="lg:col-span-3">
             <div className="lg:sticky lg:top-24">
               <AnimatePresence mode="wait">
@@ -482,7 +517,7 @@ export default function Results() {
                   >
                     <Card className="overflow-hidden">
                       {/* Hero Image */}
-                      <div className="relative h-48 -m-5 mb-4">
+                      <div className="relative h-44 -m-5 mb-4">
                         <img
                           src={selectedItinerary.image}
                           alt={selectedItinerary.name}
@@ -490,7 +525,7 @@ export default function Results() {
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
 
-                        {/* Favorite & Share Buttons */}
+                        {/* Actions */}
                         <div className="absolute top-3 right-3 flex gap-2">
                           <button
                             onClick={handleToggleFavorite}
@@ -500,9 +535,7 @@ export default function Results() {
                                 : 'bg-white text-gray-700'
                             }`}
                           >
-                            <Heart
-                              className={`w-4 h-4 ${isFavorite(selectedItinerary.id) ? 'fill-white' : ''}`}
-                            />
+                            <Heart className={`w-4 h-4 ${isFavorite(selectedItinerary.id) ? 'fill-white' : ''}`} />
                           </button>
                           <button
                             onClick={() => setShowShareModal(true)}
@@ -512,23 +545,24 @@ export default function Results() {
                           </button>
                         </div>
 
-                        <div className="absolute bottom-4 left-5 right-5 text-white">
-                          <div className="flex items-start justify-between">
+                        {/* Title */}
+                        <div className="absolute bottom-3 left-5 right-5 text-white">
+                          <div className="flex items-end justify-between gap-3">
                             <div>
-                              <h2 className="text-2xl font-bold mb-1">{selectedItinerary.name}</h2>
-                              <p className="text-sm opacity-90">{selectedItinerary.description}</p>
+                              <h2 className="text-xl font-bold mb-0.5">{selectedItinerary.name}</h2>
+                              <p className="text-sm text-white/80">{selectedItinerary.description}</p>
                             </div>
                             {viewMode === 'suggested' && selectedItinerary.matchScore !== undefined && selectedItinerary.matchScore > 0 && (
-                              <div className="flex items-center gap-1 bg-white/20 backdrop-blur-sm px-2 py-1 rounded-full">
-                                <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                                <span className="font-bold text-sm">{selectedItinerary.matchScore}%</span>
+                              <div className="flex items-center gap-1 bg-white/20 backdrop-blur-sm px-2 py-1 rounded-full shrink-0">
+                                <Star className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" />
+                                <span className="font-bold text-xs">{selectedItinerary.matchScore}%</span>
                               </div>
                             )}
                           </div>
                         </div>
                       </div>
 
-                      {/* Quick Stats */}
+                      {/* Stats Row */}
                       <div className="flex items-center gap-4 mb-4 text-sm">
                         <div className="flex items-center gap-1.5 text-gray-600">
                           <Clock className="w-4 h-4 text-sky-primary" />
@@ -536,15 +570,11 @@ export default function Results() {
                         </div>
                         <div className="flex items-center gap-1.5 text-gray-600">
                           <DollarSign className="w-4 h-4 text-sky-primary" />
-                          <span className="font-medium">
-                            {(selectedItinerary.estimatedCost / 1000000).toFixed(1)}M VND
-                          </span>
+                          <span className="font-medium">{(selectedItinerary.estimatedCost / 1000000).toFixed(1)}M VND</span>
                         </div>
                         <div className="flex items-center gap-1.5 text-gray-600">
                           <MapPin className="w-4 h-4 text-sky-primary" />
-                          <span className="font-medium">
-                            {selectedItinerary.days.reduce((sum, d) => sum + d.activities.length, 0)} stops
-                          </span>
+                          <span className="font-medium">{selectedItinerary.days.reduce((sum, d) => sum + d.activities.length, 0)} stops</span>
                         </div>
                       </div>
 
@@ -559,15 +589,15 @@ export default function Results() {
                         </div>
                       )}
 
-                      {/* Day Tabs */}
+                      {/* Day Tabs & Activities */}
                       {selectedItinerary.days.length > 0 && (
                         <>
-                          <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
+                          <div className="flex gap-2 mb-3 overflow-x-auto pb-1">
                             {selectedItinerary.days.map((day) => (
                               <button
                                 key={day.day}
                                 onClick={() => setExpandedDay(day.day)}
-                                className={`flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                                className={`shrink-0 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                                   expandedDay === day.day
                                     ? 'bg-sky-primary text-black border-2 border-black shadow-[2px_2px_0px_#000]'
                                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200 border-2 border-transparent'
@@ -578,7 +608,6 @@ export default function Results() {
                             ))}
                           </div>
 
-                          {/* Activities for Selected Day */}
                           <AnimatePresence mode="wait">
                             {selectedItinerary.days.filter(d => d.day === expandedDay).map((day) => (
                               <motion.div
@@ -588,20 +617,18 @@ export default function Results() {
                                 exit={{ opacity: 0, y: -10 }}
                                 className="mb-4"
                               >
-                                <p className="text-sm font-medium text-gray-500 mb-3">{day.title}</p>
-                                <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                                <p className="text-sm font-medium text-gray-500 mb-2">{day.title}</p>
+                                <div className="space-y-1.5 max-h-48 overflow-y-auto">
                                   {day.activities.map((activity, idx) => (
                                     <motion.div
                                       key={idx}
                                       initial={{ opacity: 0, x: -10 }}
                                       animate={{ opacity: 1, x: 0 }}
                                       transition={{ delay: idx * 0.03 }}
-                                      className="flex items-center gap-3 p-2.5 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
+                                      className="flex items-center gap-3 p-2 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
                                     >
-                                      <span className="font-mono text-xs text-gray-500 w-10">
-                                        {activity.time}
-                                      </span>
-                                      <div className="w-2 h-2 rounded-full bg-sky-primary flex-shrink-0" />
+                                      <span className="font-mono text-xs text-gray-500 w-10">{activity.time}</span>
+                                      <div className="w-2 h-2 rounded-full bg-sky-primary shrink-0" />
                                       <span className="flex-1 text-sm truncate">{activity.name}</span>
                                       <span className="text-xs text-gray-400">{activity.duration}</span>
                                     </motion.div>
@@ -621,7 +648,7 @@ export default function Results() {
                           className="flex-col h-auto py-3"
                         >
                           <Map className="w-5 h-5 mb-1" />
-                          <span className="text-xs font-semibold">Customize</span>
+                          <span className="text-xs font-medium">Customize</span>
                         </Button>
                         <Button
                           variant="secondary"
@@ -629,14 +656,14 @@ export default function Results() {
                           className="flex-col h-auto py-3"
                         >
                           <Calendar className="w-5 h-5 mb-1" />
-                          <span className="text-xs font-semibold">Schedule</span>
+                          <span className="text-xs font-medium">Schedule</span>
                         </Button>
                         <Button
                           onClick={() => handleAction('go')}
                           className="flex-col h-auto py-3"
                         >
                           <ArrowRight className="w-5 h-5 mb-1" />
-                          <span className="text-xs font-semibold">Start Trip</span>
+                          <span className="text-xs font-medium">Start Trip</span>
                         </Button>
                       </div>
                     </Card>
@@ -673,17 +700,10 @@ export default function Results() {
                   Create a free account to save your itinerary and start your adventure.
                 </p>
                 <div className="space-y-3">
-                  <Button
-                    fullWidth
-                    onClick={() => navigate('/login', { state: { from: '/results' } })}
-                  >
+                  <Button fullWidth onClick={() => navigate('/login', { state: { from: '/results' } })}>
                     Sign In
                   </Button>
-                  <Button
-                    variant="secondary"
-                    fullWidth
-                    onClick={() => navigate('/register', { state: { from: '/results' } })}
-                  >
+                  <Button variant="secondary" fullWidth onClick={() => navigate('/register', { state: { from: '/results' } })}>
                     Create Free Account
                   </Button>
                 </div>
@@ -718,25 +738,16 @@ export default function Results() {
               <Card className="w-full max-w-sm">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-lg font-bold">Share Itinerary</h2>
-                  <button
-                    onClick={() => setShowShareModal(false)}
-                    className="p-1 hover:bg-gray-100 rounded-lg"
-                  >
+                  <button onClick={() => setShowShareModal(false)} className="p-1 hover:bg-gray-100 rounded-lg">
                     <X className="w-5 h-5 text-gray-500" />
                   </button>
                 </div>
 
                 <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg mb-4">
-                  <img
-                    src={selectedItinerary.image}
-                    alt={selectedItinerary.name}
-                    className="w-12 h-12 rounded-lg object-cover"
-                  />
+                  <img src={selectedItinerary.image} alt={selectedItinerary.name} className="w-12 h-12 rounded-lg object-cover" />
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-sm truncate">{selectedItinerary.name}</p>
-                    <p className="text-xs text-gray-500">
-                      {selectedItinerary.duration} days • {answers.destination || 'Danang'}
-                    </p>
+                    <p className="text-xs text-gray-500">{selectedItinerary.duration} days • {answers.destination || 'Danang'}</p>
                   </div>
                 </div>
 
@@ -763,7 +774,7 @@ export default function Results() {
                     </div>
                     <div className="text-left">
                       <p className="font-medium text-sm">Twitter / X</p>
-                      <p className="text-xs text-gray-500">Share with your followers</p>
+                      <p className="text-xs text-gray-500">Share with followers</p>
                     </div>
                   </button>
 

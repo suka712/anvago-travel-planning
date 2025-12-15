@@ -248,13 +248,6 @@ export default function Dashboard() {
     vibeFilter === 'all' || it.targetVibes.includes(vibeFilter)
   );
 
-  const stats = {
-    totalTrips: trips.length,
-    activeTrips: trips.filter(t => t.status === 'active').length,
-    upcomingTrips: trips.filter(t => t.status === 'upcoming').length,
-    placesVisited: trips.filter(t => t.status === 'completed').reduce((acc, t) => acc + t.stops, 0),
-  };
-
   const handleToggleFavorite = (itinerary: ItineraryTemplate) => {
     const wasFavorite = isFavorite(itinerary.id);
     toggleFavorite({
