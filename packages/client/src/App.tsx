@@ -5,6 +5,7 @@ import { useAuthStore } from '@/stores/authStore';
 // Pages
 import Landing from '@/pages/Landing';
 import Discover from '@/pages/Discover';
+import Generating from '@/pages/Generating';
 import Results from '@/pages/Results';
 import Itinerary from '@/pages/Itinerary';
 import Login from '@/pages/Login';
@@ -45,6 +46,7 @@ function App() {
       {/* Public routes - no layout wrapper, pages handle their own layout */}
       <Route path="/" element={<Landing />} />
       <Route path="/discover" element={<Discover />} />
+      <Route path="/generating" element={<Generating />} />
       <Route path="/results" element={<Results />} />
       <Route path="/itinerary/:id" element={<Itinerary />} />
 

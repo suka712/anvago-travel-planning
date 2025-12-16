@@ -29,11 +29,11 @@ export default function Discover() {
 
   const handleNext = async () => {
     if (currentStep === totalSteps - 1) {
-      // Final step - generate itinerary
+      // Final step - navigate to generating screen
       setSubmitting(true);
       try {
-        // Navigate to results page which will handle the API call
-        navigate('/results');
+        // Navigate to generating page which shows loading animation then redirects to results
+        navigate('/generating');
       } finally {
         setSubmitting(false);
       }

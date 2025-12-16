@@ -238,217 +238,200 @@ export default function Itinerary() {
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Header />
 
-      {/* Main Content - Split Layout */}
-      <main className="flex-1 flex flex-col lg:flex-row">
-        {/* Mobile Map - Shows at top on mobile */}
-        <div className="lg:hidden h-48 bg-gray-100">
-          <TripMap
-            locations={mapLocations}
-            showRoute
-            currentLocationId={currentLocationId || undefined}
-            onLocationClick={(loc) => setCurrentLocationId(loc.id)}
-            className="h-full"
-          />
-        </div>
-
-        {/* Left Side - Itinerary Content */}
-        <div className="flex-1 lg:max-w-[55%] overflow-y-auto pb-24">
+      {/* Main Content */}
+      <main className="flex-1 pb-24">
+        <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
           {/* Header Section */}
-          <div className="bg-white border-b">
-            <div className="px-4 py-6">
-              {/* Trip Info */}
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <h1 className="text-2xl font-bold mb-1">{itinerary.title}</h1>
-                  <div className="flex items-center gap-3 text-sm text-gray-600">
-                    <span className="flex items-center gap-1">
-                      <MapPin className="w-4 h-4" />
-                      {itinerary.city}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Calendar className="w-4 h-4" />
-                      {itinerary.durationDays} days
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <DollarSign className="w-4 h-4" />
-                      {totals.estimatedCost}
-                    </span>
-                  </div>
-                  {itinerary.description && (
-                    <p className="text-sm text-gray-500 mt-2">{itinerary.description}</p>
-                  )}
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setIsSaved(!isSaved)}
-                    className={`p-2 rounded-full transition-colors ${
-                      isSaved ? 'bg-red-100 text-red-500' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                  >
-                    <Heart className={`w-5 h-5 ${isSaved ? 'fill-current' : ''}`} />
-                  </button>
-                  <button
-                    onClick={() => setShowShareModal(true)}
-                    className="p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors"
-                  >
-                    <Share2 className="w-5 h-5 text-gray-600" />
-                  </button>
-                </div>
+          <div className="flex items-start justify-between">
+            <div>
+              <h1 className="text-2xl font-bold mb-1">{itinerary.title}</h1>
+              <div className="flex items-center gap-3 text-sm text-gray-600">
+                <span className="flex items-center gap-1">
+                  <MapPin className="w-4 h-4" />
+                  {itinerary.city}
+                </span>
+                <span className="flex items-center gap-1">
+                  <Calendar className="w-4 h-4" />
+                  {itinerary.durationDays} days
+                </span>
+                <span className="flex items-center gap-1">
+                  <DollarSign className="w-4 h-4" />
+                  {totals.estimatedCost}
+                </span>
               </div>
-
-              {/* Day Tabs */}
-              <div className="flex gap-2 overflow-x-auto pb-1">
-                {dayGroups.map(({ day }) => (
-                  <button
-                    key={day}
-                    onClick={() => setActiveDay(day)}
-                    className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-colors ${
-                      activeDay === day
-                        ? 'bg-sky-primary text-white'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                  >
-                    Day {day}
-                  </button>
-                ))}
-              </div>
+              {itinerary.description && (
+                <p className="text-sm text-gray-500 mt-2">{itinerary.description}</p>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setIsSaved(!isSaved)}
+                className={`p-2 rounded-full transition-colors ${
+                  isSaved ? 'bg-red-100 text-red-500' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                <Heart className={`w-5 h-5 ${isSaved ? 'fill-current' : ''}`} />
+              </button>
+              <button
+                onClick={() => setShowShareModal(true)}
+                className="p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors"
+              >
+                <Share2 className="w-5 h-5 text-gray-600" />
+              </button>
             </div>
           </div>
 
-          {/* Day Activities */}
-          <div className="px-4 py-6">
-            {activeDayData && (
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h2 className="text-lg font-bold">Day {activeDayData.day}</h2>
-                    <p className="text-sm text-gray-600">
-                      {activeDayData.items.length} activities
-                    </p>
-                  </div>
-                </div>
+          {/* Map Card */}
+          <Card padding="none" className="overflow-hidden">
+            <div className="h-64">
+              <TripMap
+                locations={mapLocations}
+                showRoute
+                currentLocationId={currentLocationId || undefined}
+                onLocationClick={(loc) => setCurrentLocationId(loc.id)}
+                className="h-full"
+              />
+            </div>
+          </Card>
 
-                <div className="space-y-3">
-                  {activeDayData.items.map((item, idx) => {
-                    const TransportIcon = getTransportIcon(item.transportMode);
-                    const startMinutes = 360 + idx * 120; // Default: start at 6am, 2h spacing
-
-                    return (
-                      <motion.div
-                        key={item.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: idx * 0.05 }}
-                      >
-                        {/* Transport connector */}
-                        {idx > 0 && item.transportDuration && (
-                          <div className="flex items-center gap-2 py-2 px-4 text-xs text-gray-500">
-                            <TransportIcon className="w-3 h-3" />
-                            <span>{item.transportDuration} min travel</span>
-                            {item.transportCost && (
-                              <span>• ~{(item.transportCost / 1000).toFixed(0)}k VND</span>
-                            )}
-                          </div>
-                        )}
-
-                        <Card
-                          className={`overflow-hidden cursor-pointer transition-all ${
-                            currentLocationId === item.location.id ? 'ring-2 ring-sky-primary' : ''
-                          }`}
-                          onClick={() => setCurrentLocationId(item.location.id)}
-                        >
-                          <div className="flex gap-3">
-                            {/* Timeline */}
-                            <div className="flex flex-col items-center w-14 shrink-0">
-                              <span className="font-mono text-xs font-medium text-sky-primary">
-                                {formatTime(item.startTime, startMinutes)}
-                              </span>
-                              <div className="w-2 h-2 rounded-full bg-sky-primary my-1" />
-                              <div className="w-0.5 flex-1 bg-sky-primary/30" />
-                            </div>
-
-                            {/* Image */}
-                            <div className="w-20 h-20 rounded-lg overflow-hidden shrink-0 border border-gray-200">
-                              <img
-                                src={item.location.imageUrl || 'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=200'}
-                                alt={item.location.name}
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-
-                            {/* Content */}
-                            <div className="flex-1 min-w-0 py-1">
-                              <div className="flex items-center gap-2 mb-1">
-                                <h3 className="font-semibold text-sm truncate">{item.location.name}</h3>
-                                {item.location.isLocalGem && (
-                                  <Badge variant="warning" className="text-xs shrink-0">
-                                    <Star className="w-3 h-3 mr-0.5" />
-                                    Local Gem
-                                  </Badge>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-2 text-xs text-gray-500">
-                                <span className="flex items-center gap-0.5">
-                                  <Clock className="w-3 h-3" />
-                                  {formatDuration(item.location.estimatedDuration)}
-                                </span>
-                                <span>•</span>
-                                <span className="flex items-center gap-0.5">
-                                  <DollarSign className="w-3 h-3" />
-                                  {formatCost(item.location.priceLevel)}
-                                </span>
-                                {item.location.rating && (
-                                  <>
-                                    <span>•</span>
-                                    <span className="flex items-center gap-0.5">
-                                      <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                                      {item.location.rating.toFixed(1)}
-                                    </span>
-                                  </>
-                                )}
-                              </div>
-                              <Badge variant="ghost" className="text-xs mt-1 capitalize">
-                                {item.location.category}
-                              </Badge>
-                            </div>
-                          </div>
-                        </Card>
-                      </motion.div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Summary Stats */}
-            <Card className="mt-6 bg-gradient-to-br from-sky-primary/10 to-sky-light/10">
-              <div className="grid grid-cols-3 gap-4 text-center">
-                <div>
-                  <p className="text-xl font-bold text-sky-primary">{itinerary.durationDays}</p>
-                  <p className="text-xs text-gray-600">Days</p>
-                </div>
-                <div>
-                  <p className="text-xl font-bold text-sky-primary">{totals.activities}</p>
-                  <p className="text-xs text-gray-600">Activities</p>
-                </div>
-                <div>
-                  <p className="text-xl font-bold text-sky-primary">{totals.estimatedCost}</p>
-                  <p className="text-xs text-gray-600">Est. Cost</p>
-                </div>
-              </div>
-            </Card>
+          {/* Day Tabs */}
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {dayGroups.map(({ day }) => (
+              <button
+                key={day}
+                onClick={() => setActiveDay(day)}
+                className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-colors ${
+                  activeDay === day
+                    ? 'bg-sky-primary text-white'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                Day {day}
+              </button>
+            ))}
           </div>
-        </div>
 
-        {/* Right Side - Map (Always Visible on Desktop) */}
-        <div className="hidden lg:block lg:flex-1 lg:sticky lg:top-16 lg:h-[calc(100vh-4rem)] bg-gray-100">
-          <TripMap
-            locations={mapLocations}
-            showRoute
-            currentLocationId={currentLocationId || undefined}
-            onLocationClick={(loc) => setCurrentLocationId(loc.id)}
-            className="h-full"
-          />
+          {/* Day Activities */}
+          {activeDayData && (
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-lg font-bold">Day {activeDayData.day}</h2>
+                  <p className="text-sm text-gray-600">
+                    {activeDayData.items.length} activities
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                {activeDayData.items.map((item, idx) => {
+                  const TransportIcon = getTransportIcon(item.transportMode);
+                  const startMinutes = 360 + idx * 120; // Default: start at 6am, 2h spacing
+
+                  return (
+                    <motion.div
+                      key={item.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: idx * 0.05 }}
+                    >
+                      {/* Transport connector */}
+                      {idx > 0 && item.transportDuration && (
+                        <div className="flex items-center gap-2 py-2 px-4 text-xs text-gray-500">
+                          <TransportIcon className="w-3 h-3" />
+                          <span>{item.transportDuration} min travel</span>
+                          {item.transportCost && (
+                            <span>• ~{(item.transportCost / 1000).toFixed(0)}k VND</span>
+                          )}
+                        </div>
+                      )}
+
+                      <Card
+                        className={`overflow-hidden cursor-pointer transition-all ${
+                          currentLocationId === item.location.id ? 'ring-2 ring-sky-primary' : ''
+                        }`}
+                        onClick={() => setCurrentLocationId(item.location.id)}
+                      >
+                        <div className="flex gap-3">
+                          {/* Timeline */}
+                          <div className="flex flex-col items-center w-14 shrink-0">
+                            <span className="font-mono text-xs font-medium text-sky-primary">
+                              {formatTime(item.startTime, startMinutes)}
+                            </span>
+                            <div className="w-2 h-2 rounded-full bg-sky-primary my-1" />
+                            <div className="w-0.5 flex-1 bg-sky-primary/30" />
+                          </div>
+
+                          {/* Image */}
+                          <div className="w-20 h-20 rounded-lg overflow-hidden shrink-0 border border-gray-200">
+                            <img
+                              src={item.location.imageUrl || 'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=200'}
+                              alt={item.location.name}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+
+                          {/* Content */}
+                          <div className="flex-1 min-w-0 py-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h3 className="font-semibold text-sm truncate">{item.location.name}</h3>
+                              {item.location.isLocalGem && (
+                                <Badge variant="warning" className="text-xs shrink-0">
+                                  <Star className="w-3 h-3 mr-0.5" />
+                                  Local Gem
+                                </Badge>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 text-xs text-gray-500">
+                              <span className="flex items-center gap-0.5">
+                                <Clock className="w-3 h-3" />
+                                {formatDuration(item.location.estimatedDuration)}
+                              </span>
+                              <span>•</span>
+                              <span className="flex items-center gap-0.5">
+                                <DollarSign className="w-3 h-3" />
+                                {formatCost(item.location.priceLevel)}
+                              </span>
+                              {item.location.rating && (
+                                <>
+                                  <span>•</span>
+                                  <span className="flex items-center gap-0.5">
+                                    <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                                    {item.location.rating.toFixed(1)}
+                                  </span>
+                                </>
+                              )}
+                            </div>
+                            <Badge variant="ghost" className="text-xs mt-1 capitalize">
+                              {item.location.category}
+                            </Badge>
+                          </div>
+                        </div>
+                      </Card>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Summary Stats */}
+          <Card className="bg-gradient-to-br from-sky-primary/10 to-sky-light/10">
+            <div className="grid grid-cols-3 gap-4 text-center">
+              <div>
+                <p className="text-xl font-bold text-sky-primary">{itinerary.durationDays}</p>
+                <p className="text-xs text-gray-600">Days</p>
+              </div>
+              <div>
+                <p className="text-xl font-bold text-sky-primary">{totals.activities}</p>
+                <p className="text-xs text-gray-600">Activities</p>
+              </div>
+              <div>
+                <p className="text-xl font-bold text-sky-primary">{totals.estimatedCost}</p>
+                <p className="text-xs text-gray-600">Est. Cost</p>
+              </div>
+            </div>
+          </Card>
         </div>
       </main>
 
