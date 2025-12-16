@@ -6,7 +6,7 @@ import {
   Navigation, MapPin, Clock, ChevronRight, CheckCircle2, Circle,
   CloudRain, Bike, Car, Footprints, Map, Maximize2, Minimize2,
   X, Play, Pause, SkipForward, RefreshCw, Coffee, ChevronDown,
-  Sunrise, PartyPopper, Loader2
+  Sunrise, PartyPopper, Loader2, Sparkles
 } from 'lucide-react';
 import { Button, Card, Badge } from '@/components/ui';
 import Header from '@/components/layouts/Header';
@@ -248,15 +248,94 @@ export default function Trip() {
   const totalDays = apiTrip?.itinerary?.durationDays || tripProgress?.totalDays || 3;
   const currentDay = apiTrip?.currentDayNumber || tripProgress?.currentDay || 1;
 
-  // Loading state
-  if (isLoading) {
+  // Loading messages for the preparation screen
+  const loadingMessages = [
+    { icon: CloudRain, text: 'Checking weather conditions...', color: 'text-sky-500' },
+    { icon: Car, text: 'Analyzing traffic patterns...', color: 'text-amber-500' },
+    { icon: MapPin, text: 'Optimizing your route...', color: 'text-green-500' },
+    { icon: Sparkles, text: 'Preparing your adventure...', color: 'text-purple-500' },
+  ];
+
+  const [loadingStep, setLoadingStep] = useState(0);
+  const [showPreparing, setShowPreparing] = useState(true);
+
+  // Cycle through loading messages
+  useEffect(() => {
+    if (!isLoading && showPreparing) {
+      const interval = setInterval(() => {
+        setLoadingStep(prev => {
+          if (prev >= loadingMessages.length - 1) {
+            clearInterval(interval);
+            setTimeout(() => setShowPreparing(false), 500);
+            return prev;
+          }
+          return prev + 1;
+        });
+      }, 500);
+
+      // Ensure minimum 2 second display
+      const timer = setTimeout(() => {
+        setShowPreparing(false);
+      }, 2000);
+
+      return () => {
+        clearInterval(interval);
+        clearTimeout(timer);
+      };
+    }
+  }, [isLoading, showPreparing, loadingMessages.length]);
+
+  // Loading/Preparing state
+  if (isLoading || showPreparing) {
+    const currentMessage = loadingMessages[Math.min(loadingStep, loadingMessages.length - 1)];
+    const CurrentIcon = currentMessage.icon;
+
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
         <div className="flex items-center justify-center h-[calc(100vh-64px)]">
-          <div className="text-center">
-            <Loader2 className="w-8 h-8 animate-spin text-sky-primary mx-auto mb-4" />
-            <p className="text-gray-500">Loading your trip...</p>
+          <div className="text-center max-w-sm px-4">
+            {/* Animated icon container */}
+            <motion.div
+              key={loadingStep}
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="w-20 h-20 bg-white rounded-2xl border-2 border-black shadow-[4px_4px_0px_#000] mx-auto mb-6 flex items-center justify-center"
+            >
+              <CurrentIcon className={`w-10 h-10 ${currentMessage.color}`} />
+            </motion.div>
+
+            {/* Loading message */}
+            <motion.p
+              key={`text-${loadingStep}`}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-lg font-medium text-gray-700 mb-4"
+            >
+              {currentMessage.text}
+            </motion.p>
+
+            {/* Progress dots */}
+            <div className="flex justify-center gap-2">
+              {loadingMessages.map((_, idx) => (
+                <motion.div
+                  key={idx}
+                  className={`w-2 h-2 rounded-full ${
+                    idx <= loadingStep ? 'bg-sky-primary' : 'bg-gray-200'
+                  }`}
+                  initial={false}
+                  animate={{
+                    scale: idx === loadingStep ? [1, 1.3, 1] : 1,
+                  }}
+                  transition={{ duration: 0.3 }}
+                />
+              ))}
+            </div>
+
+            {/* Subtitle */}
+            <p className="text-sm text-gray-400 mt-6">
+              Personalizing your {localTripName}
+            </p>
           </div>
         </div>
       </div>

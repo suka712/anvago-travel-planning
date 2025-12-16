@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import {
@@ -11,6 +11,7 @@ import { Button, Card, Badge } from '@/components/ui';
 import Header from '@/components/layouts/Header';
 import { useAuthStore } from '@/stores/authStore';
 import { PremiumModal } from '@/components/modals';
+import { locationsAPI } from '@/services/api';
 
 interface ItineraryItem {
   id: string;
@@ -115,9 +116,57 @@ export default function Plan() {
   const [premiumFeature, setPremiumFeature] = useState('');
   // For replace search: track which item is being replaced
   const [replaceTarget, setReplaceTarget] = useState<{ dayIndex: number; itemId: string; itemName: string } | null>(null);
+  // Search card state
+  const [cardSearchQuery, setCardSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<Array<{
+    id: string;
+    name: string;
+    type: string;
+    durationMins: number;
+    cost?: number;
+    rating?: number;
+    image: string;
+    isLocalGem?: boolean;
+  }>>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [selectedDayForAdd, setSelectedDayForAdd] = useState(0);
+
+  // Fetch locations when search query changes
+  useEffect(() => {
+    const searchLocations = async () => {
+      if (cardSearchQuery.length < 2) {
+        setSearchResults([]);
+        return;
+      }
+
+      setIsSearching(true);
+      try {
+        const response = await locationsAPI.search(cardSearchQuery, 'Danang');
+        const locations = response.data?.data || [];
+        setSearchResults(locations.map((loc: any) => ({
+          id: loc.id,
+          name: loc.name,
+          type: loc.category || 'attraction',
+          durationMins: loc.estimatedDuration || 60,
+          cost: loc.priceRange === 'free' ? 0 : loc.priceRange === 'budget' ? 50000 : loc.priceRange === 'moderate' ? 150000 : 300000,
+          rating: loc.rating || 4.5,
+          image: loc.imageUrl || 'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=200',
+          isLocalGem: loc.isLocalGem || false,
+        })));
+      } catch (error) {
+        console.error('Search failed:', error);
+        setSearchResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    };
+
+    const debounce = setTimeout(searchLocations, 300);
+    return () => clearTimeout(debounce);
+  }, [cardSearchQuery]);
 
   const toggleDay = (day: number) => {
-    setExpandedDays(prev => 
+    setExpandedDays(prev =>
       prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]
     );
   };
@@ -236,16 +285,6 @@ export default function Plan() {
                   Free Plan
                 </Badge>
               )}
-              <Button
-                variant="ghost"
-                onClick={() => {
-                  setReplaceTarget(null);
-                  setShowSearch(true);
-                }}
-                leftIcon={<Plus className="w-4 h-4" />}
-              >
-                Add Location
-              </Button>
               <Button onClick={() => navigate(`/itinerary/${id}`)}>
                 Complete
               </Button>
@@ -622,6 +661,103 @@ export default function Plan() {
                     </li>
                   </ul>
                 </div>
+              </Card>
+
+              {/* Add Location Card */}
+              <Card className="mt-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="font-bold text-lg flex items-center gap-2">
+                    <Plus className="w-5 h-5 text-sky-primary" />
+                    Add Location
+                  </h2>
+                </div>
+
+                {/* Day Selector */}
+                <div className="flex gap-2 mb-4">
+                  {itinerary.map((day, idx) => (
+                    <button
+                      key={day.day}
+                      onClick={() => setSelectedDayForAdd(idx)}
+                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                        selectedDayForAdd === idx
+                          ? 'bg-sky-primary text-white'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                    >
+                      Day {day.day}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Search Input */}
+                <div className="relative mb-4">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search cafes, restaurants, attractions..."
+                    value={cardSearchQuery}
+                    onChange={e => setCardSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2.5 rounded-lg border-2 border-gray-200 focus:border-sky-primary focus:outline-none transition-colors"
+                  />
+                  {isSearching && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                      <div className="w-4 h-4 border-2 border-sky-primary border-t-transparent rounded-full animate-spin" />
+                    </div>
+                  )}
+                </div>
+
+                {/* Search Results */}
+                {cardSearchQuery.length >= 2 && (
+                  <div className="space-y-2 max-h-64 overflow-y-auto">
+                    {searchResults.length === 0 && !isSearching && (
+                      <div className="text-center py-4 text-gray-500 text-sm">
+                        No locations found for "{cardSearchQuery}"
+                      </div>
+                    )}
+                    {searchResults.map((result) => (
+                      <div
+                        key={result.id}
+                        onClick={() => {
+                          handleAddItem(selectedDayForAdd, {
+                            ...result,
+                            cost: result.cost ?? 0,
+                            rating: result.rating ?? 4.5,
+                          });
+                          setCardSearchQuery('');
+                          setSearchResults([]);
+                        }}
+                        className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors border border-transparent hover:border-sky-primary"
+                      >
+                        <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0 border border-gray-200">
+                          <img src={result.image} alt={result.name} className="w-full h-full object-cover" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-medium text-sm truncate">{result.name}</h4>
+                            {result.isLocalGem && (
+                              <Badge variant="warning" className="text-xs shrink-0">Gem</Badge>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 text-xs text-gray-500">
+                            <span className="capitalize">{result.type}</span>
+                            <span>•</span>
+                            <span>{formatDuration(result.durationMins)}</span>
+                            <span>•</span>
+                            <span>{formatCost(result.cost)}</span>
+                          </div>
+                        </div>
+                        <Plus className="w-5 h-5 text-sky-primary shrink-0" />
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Empty state hint */}
+                {cardSearchQuery.length < 2 && (
+                  <p className="text-xs text-gray-400 text-center">
+                    Type at least 2 characters to search
+                  </p>
+                )}
               </Card>
             </div>
           </div>
