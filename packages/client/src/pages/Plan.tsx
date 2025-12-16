@@ -1,10 +1,21 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import {
+  DndContext,
+  DragOverlay,
+  useDraggable,
+  useDroppable,
+  DragStartEvent,
+  DragEndEvent,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
   GripVertical, Plus, Minus, Trash2, Search, Clock, DollarSign,
   Sparkles, Wand2, Star, X, ChevronDown, ChevronUp,
-  Car, Footprints, Sun, Lock, Crown,
+  Car, Footprints, Sun, Lock, Crown, Heart,
   MapPin, RefreshCw, Filter, ArrowRight
 } from 'lucide-react';
 import { Button, Card, Badge } from '@/components/ui';
@@ -116,7 +127,7 @@ export default function Plan() {
   const [premiumFeature, setPremiumFeature] = useState('');
   // For replace search: track which item is being replaced
   const [replaceTarget, setReplaceTarget] = useState<{ dayIndex: number; itemId: string; itemName: string } | null>(null);
-  // Search card state
+  // Search card state (right panel)
   const [cardSearchQuery, setCardSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Array<{
     id: string;
@@ -129,13 +140,66 @@ export default function Plan() {
     isLocalGem?: boolean;
   }>>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [selectedDayForAdd, setSelectedDayForAdd] = useState(0);
+
+  // Modal search state
+  const [modalSearchResults, setModalSearchResults] = useState<typeof searchResults>([]);
+  const [isModalSearching, setIsModalSearching] = useState(false);
+  const [modalDayIndex, setModalDayIndex] = useState(0); // Which day opened the modal
+
+  // Drag and drop state (using @dnd-kit)
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [activeCard, setActiveCard] = useState<typeof searchResults[0] | null>(null);
+  // Store expanded days before drag to restore after
+  const expandedDaysBeforeDrag = useRef<number[]>([]);
+
+  // Configure pointer sensor with activation constraint to distinguish click from drag
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // 8px movement required to start drag
+      },
+    })
+  );
+
+  // Map API location to our format
+  const mapLocationToResult = (loc: any) => ({
+    id: loc.id,
+    name: loc.name,
+    type: loc.category || 'attraction',
+    durationMins: loc.estimatedDuration || 60,
+    cost: loc.priceRange === 'free' ? 0 : loc.priceRange === 'budget' ? 50000 : loc.priceRange === 'moderate' ? 150000 : 300000,
+    rating: loc.rating || 4.5,
+    image: loc.imageUrl || 'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=200',
+    isLocalGem: loc.isLocalGem || false,
+  });
+
+  // Load default locations on mount
+  useEffect(() => {
+    const loadDefaultLocations = async () => {
+      try {
+        const response = await locationsAPI.getAll({ city: 'Danang' });
+        const locations = response.data?.data || [];
+        // Take first 8 locations as defaults
+        setSearchResults(locations.slice(0, 8).map(mapLocationToResult));
+      } catch (error) {
+        console.error('Failed to load default locations:', error);
+      }
+    };
+    loadDefaultLocations();
+  }, []);
 
   // Fetch locations when search query changes
   useEffect(() => {
     const searchLocations = async () => {
       if (cardSearchQuery.length < 2) {
-        setSearchResults([]);
+        // Reload defaults when search is cleared
+        try {
+          const response = await locationsAPI.getAll({ city: 'Danang' });
+          const locations = response.data?.data || [];
+          setSearchResults(locations.slice(0, 8).map(mapLocationToResult));
+        } catch (error) {
+          console.error('Failed to load locations:', error);
+        }
         return;
       }
 
@@ -143,16 +207,7 @@ export default function Plan() {
       try {
         const response = await locationsAPI.search(cardSearchQuery, 'Danang');
         const locations = response.data?.data || [];
-        setSearchResults(locations.map((loc: any) => ({
-          id: loc.id,
-          name: loc.name,
-          type: loc.category || 'attraction',
-          durationMins: loc.estimatedDuration || 60,
-          cost: loc.priceRange === 'free' ? 0 : loc.priceRange === 'budget' ? 50000 : loc.priceRange === 'moderate' ? 150000 : 300000,
-          rating: loc.rating || 4.5,
-          image: loc.imageUrl || 'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=200',
-          isLocalGem: loc.isLocalGem || false,
-        })));
+        setSearchResults(locations.map(mapLocationToResult));
       } catch (error) {
         console.error('Search failed:', error);
         setSearchResults([]);
@@ -164,6 +219,43 @@ export default function Plan() {
     const debounce = setTimeout(searchLocations, 300);
     return () => clearTimeout(debounce);
   }, [cardSearchQuery]);
+
+  // Fetch locations for modal search
+  useEffect(() => {
+    const searchModalLocations = async () => {
+      if (!showSearch) {
+        setModalSearchResults([]);
+        return;
+      }
+
+      if (searchQuery.length < 2) {
+        // Load defaults when modal opens or search is cleared
+        try {
+          const response = await locationsAPI.getAll({ city: 'Danang' });
+          const locations = response.data?.data || [];
+          setModalSearchResults(locations.slice(0, 8).map(mapLocationToResult));
+        } catch (error) {
+          console.error('Failed to load locations:', error);
+        }
+        return;
+      }
+
+      setIsModalSearching(true);
+      try {
+        const response = await locationsAPI.search(searchQuery, 'Danang');
+        const locations = response.data?.data || [];
+        setModalSearchResults(locations.map(mapLocationToResult));
+      } catch (error) {
+        console.error('Modal search failed:', error);
+        setModalSearchResults([]);
+      } finally {
+        setIsModalSearching(false);
+      }
+    };
+
+    const debounce = setTimeout(searchModalLocations, 300);
+    return () => clearTimeout(debounce);
+  }, [searchQuery, showSearch]);
 
   const toggleDay = (day: number) => {
     setExpandedDays(prev =>
@@ -193,6 +285,21 @@ export default function Plan() {
     ));
     setShowSearch(false);
     setReplaceTarget(null);
+  };
+
+  // Insert item at a specific position within a day
+  const handleInsertItem = (dayIndex: number, position: number, item: typeof mockSearchResults[0]) => {
+    const newItem: ItineraryItem = {
+      ...item,
+      id: `inserted-${Date.now()}`, // Ensure unique ID
+      transitMins: 15,
+    };
+    setItinerary(prev => prev.map((day, idx) => {
+      if (idx !== dayIndex) return day;
+      const newItems = [...day.items];
+      newItems.splice(position, 0, newItem);
+      return { ...day, items: newItems };
+    }));
   };
 
   // Replace an existing item with a new one
@@ -252,6 +359,45 @@ export default function Plan() {
     return `${(cost / 1000).toFixed(0)}k VND`;
   };
 
+  // Helper to get drop zone ID
+  const getDropZoneId = (dayIndex: number, position: number) => `dropzone-${dayIndex}-${position}`;
+
+  // @dnd-kit drag handlers
+  const handleDragStart = (event: DragStartEvent) => {
+    const { active } = event;
+    setActiveId(active.id as string);
+    // Find the card data from search results
+    const card = searchResults.find(r => r.id === active.id);
+    setActiveCard(card || null);
+    // Save current expanded state and expand all days
+    expandedDaysBeforeDrag.current = [...expandedDays];
+    setExpandedDays(itinerary.map(day => day.day));
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { over } = event;
+
+    if (over && activeCard) {
+      // Parse the drop zone ID to get dayIndex and position
+      const match = (over.id as string).match(/dropzone-(\d+)-(\d+)/);
+      if (match) {
+        const dayIndex = parseInt(match[1], 10);
+        const position = parseInt(match[2], 10);
+        handleInsertItem(dayIndex, position, {
+          ...activeCard,
+          cost: activeCard.cost ?? 0,
+          rating: activeCard.rating ?? 4.5,
+        });
+      }
+    }
+
+    // Reset drag state
+    setActiveId(null);
+    setActiveCard(null);
+    // Restore expanded days to previous state
+    setExpandedDays(expandedDaysBeforeDrag.current);
+  };
+
   // Calculate total day duration including transit
   const getTotalDayDuration = (day: DayPlan) => {
     return day.items.reduce((total, item, idx) => {
@@ -265,36 +411,91 @@ export default function Plan() {
     return day.startTime + getTotalDayDuration(day);
   };
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Global Header */}
-      <Header />
+  // Draggable search result card component
+  const DraggableCard = ({ result }: { result: typeof searchResults[0] }) => {
+    const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+      id: result.id,
+    });
 
-      {/* Page Info Bar */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 py-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-lg font-bold">Customize Your Trip</h1>
-              <p className="text-sm text-gray-600">Drag to reorder, click search to replace locations</p>
-            </div>
-            <div className="flex items-center gap-3">
-              {!isPremium && (
-                <Badge variant="primary" className="flex items-center gap-1 bg-sky-300">
-                  <Crown className="w-3 h-3" />
-                  Free Plan
-                </Badge>
-              )}
-              <Button onClick={() => navigate(`/itinerary/${id}`)}>
-                Complete
-              </Button>
-            </div>
+    const style = transform ? {
+      transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+    } : undefined;
+
+    return (
+      <div
+        ref={setNodeRef}
+        style={style}
+        {...listeners}
+        {...attributes}
+        onClick={() => {
+          if (!isDragging) {
+            handleAddItem(0, {
+              ...result,
+              cost: result.cost ?? 0,
+              rating: result.rating ?? 4.5,
+            });
+          }
+        }}
+        className={`flex items-center gap-2 p-2 rounded-lg bg-white hover:bg-gray-50 cursor-grab active:cursor-grabbing transition-colors border-2 border-gray-100 hover:border-sky-primary ${
+          isDragging ? 'opacity-50' : ''
+        }`}
+      >
+        <GripVertical className="w-4 h-4 text-gray-300 shrink-0" />
+        <div className="w-10 h-10 rounded-lg overflow-hidden shrink-0 border border-gray-200">
+          <img src={result.image} alt={result.name} className="w-full h-full object-cover" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1">
+            <h4 className="font-medium text-sm truncate">{result.name}</h4>
+            {result.isLocalGem && (
+              <Star className="w-3 h-3 text-amber-400 fill-amber-400 shrink-0" />
+            )}
+          </div>
+          <div className="flex items-center gap-1.5 text-xs text-gray-500">
+            <span className="capitalize">{result.type}</span>
+            <span>•</span>
+            <span>{formatDuration(result.durationMins)}</span>
           </div>
         </div>
+        <Plus className="w-4 h-4 text-sky-primary shrink-0" />
       </div>
+    );
+  };
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  // Droppable zone component
+  const DropZone = ({ dayIndex, position }: { dayIndex: number; position: number }) => {
+    const { isOver, setNodeRef } = useDroppable({
+      id: getDropZoneId(dayIndex, position),
+    });
+
+    return (
+      <div
+        ref={setNodeRef}
+        className={`mx-4 transition-all duration-200 ${
+          activeId
+            ? isOver
+              ? 'h-16 border-2 border-dashed border-sky-primary bg-sky-primary/10 rounded-lg flex items-center justify-center'
+              : 'h-8 border-2 border-dashed border-gray-200 rounded-lg my-1'
+            : 'h-0'
+        }`}
+      >
+        {activeId && isOver && (
+          <span className="text-sky-primary text-sm font-medium flex items-center gap-1">
+            <Plus className="w-4 h-4" /> Drop here
+          </span>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+      <div className="min-h-screen bg-gray-50">
+        {/* Global Header */}
+        <Header />
+
+        {/* Main Content */}
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Itinerary Timeline - Takes 2 columns */}
           <div className="lg:col-span-2 space-y-6">
@@ -370,16 +571,19 @@ export default function Plan() {
                         onReorder={(newItems) => handleReorder(dayIndex, newItems)}
                         className=""
                       >
+                        {/* Drop zone before first item */}
+                        <DropZone dayIndex={dayIndex} position={0} />
+
                         {day.items.map((item, itemIndex) => {
                           const times = calculateActivityTime(day.items, itemIndex, day.startTime);
                           const isLast = itemIndex === day.items.length - 1;
 
                           return (
-                            <Reorder.Item
-                              key={item.id}
-                              value={item}
-                              className="bg-white"
-                            >
+                            <div key={item.id}>
+                              <Reorder.Item
+                                value={item}
+                                className="bg-white"
+                              >
                               <div className="flex group">
                                 {/* Timeline Column */}
                                 <div className="flex flex-col items-center w-20 shrink-0 py-3">
@@ -494,6 +698,10 @@ export default function Plan() {
                                 </div>
                               </div>
                             </Reorder.Item>
+
+                              {/* Drop zone after this item */}
+                              <DropZone dayIndex={dayIndex} position={itemIndex + 1} />
+                            </div>
                           );
                         })}
                       </Reorder.Group>
@@ -502,7 +710,10 @@ export default function Plan() {
                       <div className="p-4 border-t">
                         <Button
                           variant="ghost"
-                          onClick={() => setShowSearch(true)}
+                          onClick={() => {
+                            setModalDayIndex(dayIndex);
+                            setShowSearch(true);
+                          }}
                           leftIcon={<Plus className="w-4 h-4" />}
                           className="w-full border-2 border-dashed border-gray-300 hover:border-sky-primary"
                         >
@@ -526,9 +737,27 @@ export default function Plan() {
           </Button>
           </div>
 
-          {/* AI Tools Card - Sticky on right column */}
+          {/* Right Column - Sticky */}
           <div className="lg:col-span-1">
-            <div className="sticky top-24">
+            <div className="sticky top-24 space-y-4">
+              {/* Complete Trip Card */}
+              <Card>
+                <Button
+                  onClick={() => navigate(`/itinerary/${id}`)}
+                  className="w-full"
+                  size="lg"
+                >
+                  Complete Trip
+                </Button>
+                <div className="mt-4 flex gap-3 p-3 bg-amber-50 rounded-lg border border-amber-200">
+                  <Heart className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                  <p className="text-xs text-amber-800">
+                    Wherever you go, we encourage supporting local businesses and vendors. Your purchase means a lot to the community.
+                  </p>
+                </div>
+              </Card>
+
+              {/* Optimizations Card */}
               <Card>
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="font-bold text-lg flex items-center gap-2">
@@ -644,23 +873,6 @@ export default function Plan() {
                 )}
 
                 {/* Quick Tips */}
-                <div className="mt-4 pt-4 border-t border-gray-100">
-                  <h3 className="font-semibold text-xs text-gray-500 uppercase tracking-wide mb-2">Quick Tips</h3>
-                  <ul className="space-y-1.5 text-xs text-gray-600">
-                    <li className="flex items-center gap-2">
-                      <GripVertical className="w-3 h-3 text-gray-400 shrink-0" />
-                      <span>Drag to reorder</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <RefreshCw className="w-3 h-3 text-gray-400 shrink-0" />
-                      <span>Click to replace location</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Clock className="w-3 h-3 text-gray-400 shrink-0" />
-                      <span>+/- to adjust duration</span>
-                    </li>
-                  </ul>
-                </div>
               </Card>
 
               {/* Add Location Card */}
@@ -670,23 +882,6 @@ export default function Plan() {
                     <Plus className="w-5 h-5 text-sky-primary" />
                     Add Location
                   </h2>
-                </div>
-
-                {/* Day Selector */}
-                <div className="flex gap-2 mb-4">
-                  {itinerary.map((day, idx) => (
-                    <button
-                      key={day.day}
-                      onClick={() => setSelectedDayForAdd(idx)}
-                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                        selectedDayForAdd === idx
-                          ? 'bg-sky-primary text-white'
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                      }`}
-                    >
-                      Day {day.day}
-                    </button>
-                  ))}
                 </div>
 
                 {/* Search Input */}
@@ -707,55 +902,28 @@ export default function Plan() {
                 </div>
 
                 {/* Search Results */}
-                {cardSearchQuery.length >= 2 && (
-                  <div className="space-y-2 max-h-64 overflow-y-auto">
-                    {searchResults.length === 0 && !isSearching && (
-                      <div className="text-center py-4 text-gray-500 text-sm">
-                        No locations found for "{cardSearchQuery}"
-                      </div>
-                    )}
-                    {searchResults.map((result) => (
-                      <div
-                        key={result.id}
-                        onClick={() => {
-                          handleAddItem(selectedDayForAdd, {
-                            ...result,
-                            cost: result.cost ?? 0,
-                            rating: result.rating ?? 4.5,
-                          });
-                          setCardSearchQuery('');
-                          setSearchResults([]);
-                        }}
-                        className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors border border-transparent hover:border-sky-primary"
-                      >
-                        <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0 border border-gray-200">
-                          <img src={result.image} alt={result.name} className="w-full h-full object-cover" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-medium text-sm truncate">{result.name}</h4>
-                            {result.isLocalGem && (
-                              <Badge variant="warning" className="text-xs shrink-0">Gem</Badge>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2 text-xs text-gray-500">
-                            <span className="capitalize">{result.type}</span>
-                            <span>•</span>
-                            <span>{formatDuration(result.durationMins)}</span>
-                            <span>•</span>
-                            <span>{formatCost(result.cost)}</span>
-                          </div>
-                        </div>
-                        <Plus className="w-5 h-5 text-sky-primary shrink-0" />
-                      </div>
-                    ))}
-                  </div>
-                )}
+                <div className="space-y-2 max-h-72 overflow-y-auto">
+                  {searchResults.length === 0 && !isSearching && cardSearchQuery.length >= 2 && (
+                    <div className="text-center py-4 text-gray-500 text-sm">
+                      No locations found for "{cardSearchQuery}"
+                    </div>
+                  )}
+                  {searchResults.length === 0 && !isSearching && cardSearchQuery.length < 2 && (
+                    <div className="text-center py-4 text-gray-400 text-sm">
+                      Loading suggestions...
+                    </div>
+                  )}
+                  {searchResults.map((result) => (
+                    <DraggableCard key={result.id} result={result} />
+                  ))}
+                </div>
 
-                {/* Empty state hint */}
-                {cardSearchQuery.length < 2 && (
-                  <p className="text-xs text-gray-400 text-center">
-                    Type at least 2 characters to search
+                {/* Drag hint */}
+                {searchResults.length > 0 && (
+                  <p className="text-xs text-gray-400 text-center mt-3">
+                    {activeId
+                      ? 'Drop on a highlighted zone to add'
+                      : 'Click to add or drag to place anywhere'}
                   </p>
                 )}
               </Card>
@@ -860,11 +1028,31 @@ export default function Plan() {
                 </div>
 
                 <div className="space-y-3 max-h-96 overflow-y-auto">
-                  {mockSearchResults.map((result) => (
+                  {isModalSearching && (
+                    <div className="text-center py-4 text-gray-400">
+                      <div className="w-6 h-6 border-2 border-sky-primary border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                      Searching...
+                    </div>
+                  )}
+                  {!isModalSearching && modalSearchResults.length === 0 && searchQuery.length >= 2 && (
+                    <div className="text-center py-8 text-gray-500">
+                      <Search className="w-10 h-10 mx-auto mb-2 opacity-50" />
+                      <p>No results found for "{searchQuery}"</p>
+                      <p className="text-sm mt-1">Try different keywords</p>
+                    </div>
+                  )}
+                  {modalSearchResults.map((result) => (
                     <div
                       key={result.id}
                       className="flex items-center gap-4 p-3 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors border border-transparent hover:border-sky-primary"
-                      onClick={() => replaceTarget ? handleReplaceItem(result) : handleAddItem(0, result)}
+                      onClick={() => {
+                        const itemWithDefaults = {
+                          ...result,
+                          cost: result.cost ?? 0,
+                          rating: result.rating ?? 4.5,
+                        };
+                        replaceTarget ? handleReplaceItem(itemWithDefaults) : handleAddItem(modalDayIndex, itemWithDefaults);
+                      }}
                     >
                       <div className="w-16 h-16 rounded-lg overflow-hidden shrink-0 border border-gray-200">
                         <img src={result.image} alt={result.name} className="w-full h-full object-cover" />
@@ -893,15 +1081,6 @@ export default function Plan() {
                     </div>
                   ))}
                 </div>
-
-                {/* No results hint */}
-                {searchQuery && mockSearchResults.length === 0 && (
-                  <div className="text-center py-8 text-gray-500">
-                    <Search className="w-10 h-10 mx-auto mb-2 opacity-50" />
-                    <p>No results found for "{searchQuery}"</p>
-                    <p className="text-sm mt-1">Try different keywords</p>
-                  </div>
-                )}
               </Card>
             </motion.div>
           </motion.div>
@@ -969,7 +1148,33 @@ export default function Plan() {
         onClose={() => setShowPremiumModal(false)}
         feature={premiumFeature}
       />
-    </div>
+
+      {/* Drag Overlay - Renders in a portal, appears on top of everything */}
+      <DragOverlay>
+        {activeCard ? (
+          <div className="flex items-center gap-2 p-2 rounded-lg bg-white border-2 border-sky-primary shadow-xl w-[240px] cursor-grabbing">
+            <GripVertical className="w-4 h-4 text-gray-300 shrink-0" />
+            <div className="w-10 h-10 rounded-lg overflow-hidden shrink-0 border border-gray-200">
+              <img src={activeCard.image} alt={activeCard.name} className="w-full h-full object-cover" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1">
+                <h4 className="font-medium text-sm truncate">{activeCard.name}</h4>
+                {activeCard.isLocalGem && (
+                  <Star className="w-3 h-3 text-amber-400 fill-amber-400 shrink-0" />
+                )}
+              </div>
+              <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                <span className="capitalize">{activeCard.type}</span>
+                <span>•</span>
+                <span>{formatDuration(activeCard.durationMins)}</span>
+              </div>
+            </div>
+          </div>
+        ) : null}
+      </DragOverlay>
+      </div>
+    </DndContext>
   );
 }
 
