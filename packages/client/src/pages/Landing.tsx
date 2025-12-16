@@ -423,7 +423,7 @@ export default function Landing() {
               <span className="text-xl font-black">Anvago</span>
             </div>
             <p className="text-gray-600 text-sm">
-              © 2024 Anvago. Travel the world your way.
+              © 2026 Anvago. Explore Danang your way.
             </p>
             <div className="flex items-center gap-4 text-sm text-gray-600">
               <a href="#" className="hover:text-[#2196F3]">Privacy</a>
