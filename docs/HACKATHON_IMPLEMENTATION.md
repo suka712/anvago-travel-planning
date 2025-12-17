@@ -1,432 +1,377 @@
-# 3. Implementation
+# Implementation
 
-## 3.0 Current Prototype Walkthrough
-
-### User Journey Flow
+## System Architecture
 
 ```
-Landing Page → Discover (Preferences) → Generating → Results → Plan → Trip (Live) → Itinerary (Complete)
-```
-
-| Stage | Description | Key Features |
-|-------|-------------|--------------|
-| **Discover** | 8-step onboarding quiz | Destination, Duration, Dates, Persona, Vibe, Interests, Activity Level, Budget |
-| **Generating** | AI processing animation | Animated loading with contextual messages (2-3 seconds) |
-| **Results** | Curated itinerary templates | Multiple trip options with different vibes, swipe to explore |
-| **Plan** | Trip customization | Drag-and-drop editing, AI Optimize, Smart Replace, duration adjustments |
-| **Trip** | Live trip tracking | Current stop, next stop, progress bar, smart rerouting, weather alerts |
-| **Itinerary** | Post-trip view | Completed trip summary, map view, day-by-day breakdown |
-
-### Demo Script (3-5 minutes)
-1. **Start at Landing** → Click "Discover" to begin
-2. **Onboarding Flow** → Select "Danang", 3 days, Solo Traveler, "Chill & Relax" vibe
-3. **Watch Generation** → AI processes preferences with animated feedback
-4. **Results Page** → Show multiple trip options, select one
-5. **Plan Page** → Demonstrate drag-and-drop, AI Optimize modal, Smart Replace
-6. **Start Trip** → Show live tracking with current stop, complete a few stops
-7. **Day Complete** → Show rating modal for feedback
-8. **Trip Complete** → Show overall trip rating
-
----
-
-## 3.1 UX/UI Implementations
-
-### 3.1.1 Gamified Experience
-
-**Swipe-Based Selection**
-- Results page uses card-based browsing similar to dating apps
-- Users swipe through trip options rather than scrolling lists
-- Instant visual feedback on selection
-
-**Persona & Vibe Selection**
-```
-Personas: Solo Explorer, Couple, Family, Friends Group, Business
-Vibes: Adventure, Chill & Relax, Cultural, Foodie, Nightlife, Photography
-```
-- Large, tappable cards with icons and minimal text
-- Single-tap selection, no forms to fill
-- Visual confirmation with animations
-
-**Keyword & Image Oriented**
-- Each location card shows:
-  - Hero image (primary decision factor)
-  - 2-3 word category tag (e.g., "Local Gem", "Must Visit")
-  - Star rating and price indicator
-  - Duration estimate
-- Users make decisions based on visuals, not text descriptions
-
-**Rerolling Mechanism**
-- "Regenerate" button on Results page for new suggestions
-- "Smart Replace" on individual items for alternatives
-- "AI Optimize" for full itinerary reshuffling
-- Never stuck with unwanted options
-
-### 3.1.2 Drag-and-Drop Design
-
-**Card-Based Architecture**
-```tsx
-// Every interactive element is a card
-<Card>
-  <CardImage />
-  <CardContent>
-    <Title />
-    <Metadata /> {/* time, cost, rating */}
-  </CardContent>
-  <CardActions /> {/* buttons appear on hover/tap */}
-</Card>
-```
-
-**Drag-and-Drop Implementation**
-- Built with `@dnd-kit/core` for accessibility and mobile support
-- Visual drop zones appear when dragging
-- Cards can be:
-  - Reordered within a day
-  - Moved between days
-  - Dropped from search results into itinerary
-- Automatic time recalculation on drop
-
-**Slide-Based Modals**
-- Modals slide up from bottom (mobile-native feel)
-- Multi-step flows with progress indicators
-- Swipe to dismiss
-
-### 3.1.3 One-Touch Optimizations
-
-**Surface-Level Controls**
-| User Sees | What It Does |
-|-----------|--------------|
-| "AI Optimize" button | Opens optimization options modal |
-| "Replace" icon | Opens Smart Replace with AI suggestions |
-| "Complete" button | Marks stop done, advances trip |
-| "+/-" on duration | Adjusts time in 15-min increments |
-
-**Hidden Complexity**
-- Route optimization algorithms run server-side
-- Weather data fetched and processed automatically
-- Cost calculations aggregated from multiple sources
-- Opening hours validation happens silently
-- Users never see: API calls, database queries, ML inference
-
-**Progressive Disclosure**
-```
-Primary Action → Secondary Options → Advanced Settings (hidden)
-
-Example:
-[AI Optimize] → Select optimization type → (Advanced: custom weights, constraints)
+┌─────────────────────────────────────────────────────────────────────────┐
+│                              CLIENTS                                     │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐                      │
+│  │   React     │  │   React     │  │  Business   │                      │
+│  │   Web App   │  │   Native    │  │   Portal    │                      │
+│  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘                      │
+└─────────┼────────────────┼────────────────┼─────────────────────────────┘
+          │                │                │
+          └────────────────┼────────────────┘
+                           │ HTTPS/WebSocket
+                           ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                           API GATEWAY                                    │
+│                     (Rate Limiting, Auth, Routing)                       │
+└─────────────────────────────────────────────────────────────────────────┘
+                           │
+          ┌────────────────┼────────────────┐
+          ▼                ▼                ▼
+┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐
+│   Core API      │ │   AI Service    │ │  Real-time      │
+│   (Go)          │ │   (Go)          │ │  Service (Go)   │
+│                 │ │                 │ │                 │
+│ • Users         │ │ • Itinerary     │ │ • Trip State    │
+│ • Itineraries   │ │   Generation    │ │ • Location      │
+│ • Locations     │ │ • Optimization  │ │   Updates       │
+│ • Trips         │ │ • Smart Replace │ │ • Notifications │
+└────────┬────────┘ └────────┬────────┘ └────────┬────────┘
+         │                   │                   │
+         │                   ▼                   │
+         │          ┌─────────────────┐          │
+         │          │  Claude API     │          │
+         │          │  (Anthropic)    │          │
+         │          └─────────────────┘          │
+         │                                       │
+         └───────────────────┬───────────────────┘
+                             ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                          DATA LAYER                                      │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐          │
+│  │   PostgreSQL    │  │     Redis       │  │   Object Store  │          │
+│  │                 │  │                 │  │   (S3/R2)       │          │
+│  │ • Users         │  │ • Session Cache │  │                 │          │
+│  │ • Itineraries   │  │ • Trip State    │  │ • Images        │          │
+│  │ • Locations     │  │ • Rate Limits   │  │ • User Uploads  │          │
+│  │ • Trips         │  │                 │  │                 │          │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘          │
+└─────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 3.2 Application Layer
+## Tech Stack
 
-### 3.2.1 Two-App Architecture
+### Why Go for Backend?
 
-**Consumer App (Anvago)**
-- Target: Tourists and travelers
-- Features: Trip discovery, planning, live tracking, ratings
-- Platforms: Web (React), Mobile (React Native - planned)
+| Factor | Go | Node.js |
+|--------|-----|---------|
+| **Performance** | Compiled, 10-40x faster | Interpreted, V8 overhead |
+| **Concurrency** | Native goroutines | Event loop, callback-based |
+| **Memory** | ~10MB per service | ~50-100MB per service |
+| **Type Safety** | Compile-time errors | Runtime errors |
+| **Deployment** | Single binary | Node modules + runtime |
 
-**Business App (Anvago Business) - Planned**
-- Target: Local businesses, tour operators, restaurants
-- Features:
-  - Listing management
-  - Analytics dashboard (views, bookings, ratings)
-  - Promotion tools
-  - Real-time availability updates
-- Revenue model: Subscription + commission on bookings
+**For Anvago specifically:**
+- Route optimization requires heavy computation → Go excels
+- Real-time trip tracking needs concurrent connections → goroutines handle thousands easily
+- AI API calls benefit from Go's HTTP client performance
 
-### 3.2.2 Backend Architecture
+### Why React?
 
-**Current: Node.js + Express (Prototyping)**
-```
-packages/server/
-├── src/
-│   ├── routes/          # API endpoints
-│   │   ├── auth.ts
-│   │   ├── itineraries.ts
-│   │   ├── locations.ts
-│   │   ├── trips.ts
-│   │   └── users.ts
-│   ├── services/        # Business logic
-│   │   ├── optimizationService.ts
-│   │   └── weatherService.ts
-│   ├── middleware/      # Auth, validation
-│   └── utils/           # Helpers
-```
+- **Component reuse**: Same UI components across web and mobile (React Native)
+- **Ecosystem**: Rich library support for maps, animations, drag-and-drop
+- **Developer velocity**: Fast iteration for hackathon timeline
+- **TypeScript**: Catch frontend bugs before runtime
 
-**Production: Go (Planned)**
-- Why Go?
-  - 10-40x faster than Node.js for compute-heavy operations
-  - Native concurrency for handling multiple optimization requests
-  - Lower memory footprint for scaling
-  - Strong typing catches bugs at compile time
+### Why PostgreSQL?
 
-**API Design**
-```
-REST Endpoints:
-POST   /api/auth/register
-POST   /api/auth/login
-GET    /api/itineraries
-POST   /api/itineraries
-GET    /api/itineraries/:id
-POST   /api/itineraries/:id/optimize    ← AI optimization
-GET    /api/locations
-GET    /api/locations/search
-POST   /api/trips
-GET    /api/trips/:id
-POST   /api/trips/:id/advance           ← Live tracking
-```
-
-### 3.2.3 Database: PostgreSQL + PostGIS
-
-**Why PostgreSQL?**
-- ACID compliance for transaction safety
-- JSON support for flexible schema (user preferences, AI responses)
-- Excellent query performance with proper indexing
-
-**Why PostGIS?**
-- Geospatial queries are core to travel planning:
-  ```sql
-  -- Find locations within 2km of user's current position
-  SELECT * FROM locations
-  WHERE ST_DWithin(
-    geom,
-    ST_MakePoint(108.2208, 16.0544)::geography,
-    2000
-  );
-
-  -- Calculate optimal route order (nearest neighbor)
-  SELECT * FROM locations
-  ORDER BY geom <-> ST_MakePoint(108.2208, 16.0544);
-  ```
-- Native support for:
-  - Distance calculations
-  - Polygon containment (city boundaries)
-  - Route optimization
-  - Clustering nearby locations
-
-**Schema Overview**
-```prisma
-model User {
-  id              String   @id @default(uuid())
-  email           String   @unique
-  subscriptionTier String  @default("free")
-  preferences     Json?    // Stored vibe/persona preferences
-}
-
-model Itinerary {
-  id           String   @id @default(uuid())
-  title        String
-  city         String
-  durationDays Int
-  items        ItineraryItem[]
-}
-
-model Location {
-  id           String   @id @default(uuid())
-  name         String
-  category     String
-  latitude     Float
-  longitude    Float
-  rating       Float?
-  priceLevel   Int?
-  isLocalGem   Boolean  @default(false)
-  // PostGIS: geom GEOGRAPHY(Point, 4326)
-}
-```
-
-### 3.2.4 Frontend: React + React Native
-
-**Web (React + Vite + TypeScript)**
-```
-packages/client/
-├── src/
-│   ├── components/
-│   │   ├── ui/              # Reusable: Button, Card, Badge, Modal
-│   │   ├── layouts/         # Header, Footer, Navigation
-│   │   ├── onboarding/      # Step components for Discover flow
-│   │   └── modals/          # PremiumModal, etc.
-│   ├── pages/               # Route components
-│   ├── stores/              # Zustand state management
-│   ├── services/            # API client
-│   └── hooks/               # Custom React hooks
-```
-
-**Key Libraries**
-| Library | Purpose |
-|---------|---------|
-| `@dnd-kit/core` | Drag and drop |
-| `framer-motion` | Animations |
-| `zustand` | State management |
-| `react-router-dom` | Routing |
-| `tailwindcss` | Styling |
-| `lucide-react` | Icons |
-
-**Mobile (React Native - Planned)**
-- 90% code sharing with web via shared components
-- Platform-specific: Maps, Push notifications, Offline storage
-- Expo for rapid development
-
-**Repository**
-- GitHub: https://github.com/suka712/anvago-travel-planning-v2
-- Monorepo structure with pnpm workspaces
+- **Reliability**: ACID transactions for booking and payment safety
+- **JSON support**: Store flexible data (user preferences, AI responses) without schema changes
+- **Geospatial**: Native support for location queries (latitude/longitude indexing)
+- **Scalability**: Proven at scale (Instagram, Spotify, Uber)
 
 ---
 
-## 3.3 AI Implementation
+## Core Features Implementation
 
-### Current: Mock Implementation (Prototype)
+### 1. AI-Powered Itinerary Generation
 
-**AI Optimize (Plan Page)**
-- Simulates 2-second processing delay
-- Returns predefined optimizations based on selected type
-- Shows before/after comparison with explanations
-
-**Smart Replace (Plan Page)**
-- Context-aware suggestions based on:
-  - Previous activity in itinerary
-  - Next activity in itinerary
-  - Current item's category
-- Categories: Similar, Higher Rated, Budget Friendly, Local Gems, Best for Moment
-
-### Production: Claude AI Integration (Planned)
-
-**Architecture**
+**Flow:**
 ```
-User Request → Backend API → Claude API → Parse Response → Return to Client
+User Preferences → Backend → Claude API → Parse & Store → Return to Client
 ```
 
-**Optimization Prompt Template**
-```typescript
-const prompt = `You are an expert travel itinerary optimizer.
+**What we send to Claude:**
+```
+User wants: 3 days in Danang
+- Persona: Solo traveler
+- Vibe: Chill & Relax
+- Interests: Beach, Local Food, Photography
+- Budget: Mid-range
+- Activity Level: Moderate
 
-ITINERARY:
-${items.map((item, idx) =>
-  `${idx + 1}. ${item.name} (${item.category})
-   - Duration: ${item.duration} mins
-   - Location: ${item.lat}, ${item.lng}
-   - Price: ${item.priceLevel}`
-).join('\n')}
+Available locations in database: [list of 200+ curated locations with metadata]
 
-OPTIMIZATION GOAL: ${optimizationType}
-- route: Minimize travel time between locations
-- budget: Reduce overall cost while maintaining quality
-- time: Fit more activities by reducing transit
-- walking: Minimize walking distance
+Generate a 3-day itinerary optimized for this user.
+```
 
-RESPOND IN JSON:
+**What Claude returns:**
+```json
 {
-  "changes": [...],
-  "statistics": { "timeSaved": X, "costSaved": Y },
-  "reasoning": "..."
-}`;
+  "days": [
+    {
+      "day": 1,
+      "theme": "Beach & Local Flavors",
+      "items": [
+        { "locationId": "loc_123", "startTime": "06:00", "duration": 120, "reason": "Best sunrise spot, matches photography interest" },
+        { "locationId": "loc_456", "startTime": "08:30", "duration": 45, "reason": "Highly-rated local breakfast, fits budget" }
+      ]
+    }
+  ],
+  "totalCost": 850000,
+  "walkingDistance": "4.2km"
+}
 ```
 
-**Cost Estimate**
-- Claude Sonnet: ~$0.003 per optimization request
-- 10,000 optimizations/month = $30
+**Why Claude over other LLMs:**
+- Best at following complex instructions
+- Structured JSON output is reliable
+- Understands context (vibe, persona) better than competitors
 
-### Hybrid Approach (Recommended)
+### 2. AI Optimization
 
-**Use Heuristics for**
-- Route optimization (nearest neighbor algorithm)
-- Distance calculations (Haversine formula)
-- Time slot fitting
-- Budget filtering
+**Types of optimization:**
+| Type | What it does | Algorithm |
+|------|--------------|-----------|
+| **Route** | Minimize travel time between stops | Nearest-neighbor + AI refinement |
+| **Budget** | Reduce costs while keeping quality | Filter + re-rank by price/rating ratio |
+| **Time** | Fit more activities | Compress durations, remove low-value stops |
+| **Walking** | Reduce physical effort | Cluster nearby locations together |
 
-**Use AI for**
-- Natural language explanations
-- Context-aware suggestions
-- Vibe matching
-- Handling edge cases
+**Implementation:**
+1. **Heuristic pass**: Fast algorithm gives baseline optimization
+2. **AI refinement**: Claude reviews and improves with reasoning
+3. **Return diff**: Show user what changed and why
+
+### 3. Smart Replace
+
+**Context-aware suggestions:**
+```
+Current item: "Bánh Mì Bà Lan" (breakfast, 8:30 AM)
+Previous: "My Khe Beach" (beach, sunrise)
+Next: "Han Market" (shopping, 10:00 AM)
+
+AI considers:
+- Same meal time → suggest other breakfast spots
+- Near beach → suggest places in that area
+- Before shopping → suggest something energizing
+```
+
+**Categories returned:**
+- Similar (same category, comparable rating)
+- Higher Rated (quality upgrade)
+- Budget Friendly (cost reduction)
+- Local Hidden Gems (authenticity focus)
+- Best for This Moment (context-aware)
 
 ---
 
-## 3.4 Content Strategy
+## Live Trip Tracking
 
-### 3.4.1 Authentic Content Curation
+### Architecture
 
-**Local Gems Identification**
-- Partner with local influencers and content creators
-- Verify authenticity through:
-  - Not on major tourist platforms (TripAdvisor top 10)
-  - Primarily Vietnamese customer base
-  - Owner-operated businesses
-  - Unique/traditional offerings
-
-**Content Sources**
-| Source | Type | Authenticity Score |
-|--------|------|-------------------|
-| Local partnerships | Primary | High |
-| Vietnamese food bloggers | Curated | High |
-| Google Places API | Supplementary | Medium |
-| User submissions | Community | Verified |
-
-**Anti-Tourist-Trap Measures**
-- Exclude locations with:
-  - Dual pricing (tourist vs local)
-  - Commission-based taxi partnerships
-  - Predominantly negative Vietnamese reviews
-- Prioritize:
-  - Family-run establishments
-  - Locations off main tourist strips
-  - Places with Vietnamese language menus
-
-### 3.4.2 Social Media Integration
-
-**User-Generated Content**
-- In-app photo sharing at each stop
-- Automatic trip story generation
-- Share completed itineraries as templates
-
-**Influencer Partnerships**
-- Partner with Vietnamese travel content creators
-- Co-create "Local's Guide" itineraries
-- Feature verified local experiences
-
-**Content Pipeline**
 ```
-Discovery → Verification → Photography → Copywriting → Publishing
+┌─────────────┐         ┌─────────────┐         ┌─────────────┐
+│   Mobile    │◄───────►│  WebSocket  │◄───────►│   Redis     │
+│   Client    │         │   Server    │         │   Pub/Sub   │
+└─────────────┘         └─────────────┘         └─────────────┘
+                               │
+                               ▼
+                        ┌─────────────┐
+                        │ PostgreSQL  │
+                        │ (Persist)   │
+                        └─────────────┘
+```
 
-1. Identify potential location (social media, local tips)
-2. Physical verification visit
-3. Professional photography session
-4. Write descriptions in user's voice
-5. Add to database with "Local Gem" badge
+### State Management
+
+**Trip state stored in Redis (fast reads/writes):**
+```json
+{
+  "tripId": "trip_abc123",
+  "status": "active",
+  "currentDay": 1,
+  "currentStopIndex": 2,
+  "stops": [
+    { "id": "stop_1", "status": "completed", "completedAt": "2024-01-15T08:30:00Z" },
+    { "id": "stop_2", "status": "completed", "completedAt": "2024-01-15T10:15:00Z" },
+    { "id": "stop_3", "status": "current", "arrivedAt": "2024-01-15T11:00:00Z" },
+    { "id": "stop_4", "status": "upcoming" }
+  ],
+  "lastUpdated": "2024-01-15T11:00:00Z"
+}
+```
+
+**Persisted to PostgreSQL:**
+- On every status change (completed, skipped)
+- Every 5 minutes for active trips
+- On trip completion
+
+### Real-time Updates
+
+**WebSocket events:**
+```
+Client → Server:
+- stop:complete { stopId }
+- stop:skip { stopId }
+- day:advance
+- location:update { lat, lng }
+
+Server → Client:
+- trip:state { full state }
+- weather:alert { message, affectedStops }
+- reroute:suggestion { reason, alternative }
+```
+
+### Smart Rerouting
+
+**Triggers:**
+1. Weather change (rain forecast)
+2. User running late (> 30 min behind schedule)
+3. Location closed unexpectedly
+4. User skips multiple stops
+
+**Process:**
+```
+Trigger detected
+    → Query available alternatives from database
+    → Send to Claude with context
+    → Claude suggests swap with reasoning
+    → Push suggestion to client via WebSocket
+    → User accepts/rejects
+    → Update trip state
 ```
 
 ---
 
-## Technical Differentiators
+## Cost Analysis
 
-| Feature | Our Approach | Competitors |
-|---------|--------------|-------------|
-| **Optimization** | Real-time AI + heuristics | Static suggestions |
-| **Live Tracking** | Multi-day, multi-stop | Single-day only |
-| **Content** | Curated local gems | Aggregated reviews |
-| **UX** | Gamified, visual-first | Form-heavy, text-based |
-| **Personalization** | Vibe + Persona matching | Basic filters |
+### AI Costs (Claude API)
+
+| Operation | Tokens (avg) | Cost per call | Monthly (10K users) |
+|-----------|--------------|---------------|---------------------|
+| Generate itinerary | ~2,000 | $0.006 | $600 |
+| Optimize itinerary | ~1,500 | $0.0045 | $450 |
+| Smart replace | ~800 | $0.0024 | $240 |
+| Smart reroute | ~1,000 | $0.003 | $150 |
+
+**Total AI cost: ~$1,440/month for 10,000 active users**
+
+### Infrastructure Costs
+
+| Service | Specification | Monthly Cost |
+|---------|---------------|--------------|
+| Go API (2 instances) | 2 vCPU, 4GB RAM | $40 |
+| PostgreSQL | 2 vCPU, 8GB RAM, 100GB | $50 |
+| Redis | 1GB | $15 |
+| Object Storage | 50GB | $5 |
+| **Total** | | **~$110/month** |
+
+### Cost per User
+
+```
+10,000 monthly active users:
+- Infrastructure: $110
+- AI costs: $1,440
+- Total: $1,550
+
+Cost per user: $0.155/month
+```
+
+**Revenue needed to break even:**
+- Freemium: 5% convert to $5/month premium = $2,500 revenue
+- Or: $0.50 per itinerary generation fee
 
 ---
 
-## Future Roadmap
+## Data Flow Examples
 
-**Phase 1 (Current): MVP**
-- Web prototype with mock data
-- Core flows implemented
-- Demo-ready for hackathon
+### Creating an Itinerary
 
-**Phase 2: Production**
-- Go backend migration
-- Real AI integration
-- Mobile app launch
+```
+1. Client: POST /api/itineraries/generate
+   Body: { destination, duration, preferences }
 
-**Phase 3: Scale**
-- Business portal
-- Booking integration
-- Multi-city expansion
+2. API Server:
+   - Validate request
+   - Fetch relevant locations from PostgreSQL
+   - Build Claude prompt with locations + preferences
+   - Call Claude API
+   - Parse response
+   - Store itinerary in PostgreSQL
+   - Return itinerary to client
 
-**Phase 4: Platform**
-- User-generated itineraries
-- Local guide marketplace
-- Real-time crowd data
+3. Client: Displays itinerary in Plan view
+```
+
+### Live Trip Progress
+
+```
+1. Client: WebSocket connect to /ws/trip/{tripId}
+
+2. Server:
+   - Authenticate connection
+   - Load trip state from Redis
+   - Subscribe to trip's Redis pub/sub channel
+   - Send current state to client
+
+3. User completes stop:
+   Client → Server: { event: "stop:complete", stopId: "stop_3" }
+
+4. Server:
+   - Update Redis state
+   - Persist to PostgreSQL
+   - Check for schedule impact
+   - If needed, trigger reroute suggestion
+   - Broadcast new state to all connected clients (companions)
+
+5. Client: Updates UI with new state
+```
+
+---
+
+## Security Considerations
+
+- **Authentication**: JWT tokens with short expiry (15 min), refresh tokens in HTTP-only cookies
+- **API Rate Limiting**: 100 requests/minute per user (prevents AI cost abuse)
+- **Data Encryption**: TLS in transit, AES-256 at rest for sensitive data
+- **Input Validation**: All user input sanitized before database queries or AI prompts
+
+---
+
+## Scalability Path
+
+**Current (Hackathon):**
+- Single server, single database
+- Handles ~1,000 concurrent users
+
+**Phase 2 (Launch):**
+- Horizontal scaling with load balancer
+- Read replicas for PostgreSQL
+- Redis cluster for session distribution
+- Handles ~50,000 concurrent users
+
+**Phase 3 (Scale):**
+- Microservices split (Core, AI, Real-time)
+- Database sharding by region
+- CDN for static assets
+- Handles ~500,000+ concurrent users
+
+---
+
+## Key Technical Decisions Summary
+
+| Decision | Choice | Rationale |
+|----------|--------|-----------|
+| Backend language | Go | Performance for optimization algorithms, native concurrency |
+| Frontend framework | React | Code sharing with mobile, rich ecosystem |
+| Database | PostgreSQL | Reliability, JSON flexibility, geospatial support |
+| AI provider | Claude (Anthropic) | Best instruction following, reliable JSON output |
+| Real-time | WebSocket + Redis Pub/Sub | Low latency, scalable broadcast |
+| Caching | Redis | Fast trip state access, session management |
+| Hosting | Cloud Run / Railway | Easy deployment, auto-scaling |
