@@ -264,10 +264,10 @@ export default function Plan() {
     return () => clearTimeout(debounce);
   }, [cardSearchQuery]);
 
-  // Fetch locations for modal search
+  // Fetch locations for modal search (both regular search modal and Smart Replace manual search)
   useEffect(() => {
     const searchModalLocations = async () => {
-      if (!showSearch) {
+      if (!showSearch && !showSmartReplace) {
         setModalSearchResults([]);
         return;
       }
@@ -299,7 +299,7 @@ export default function Plan() {
 
     const debounce = setTimeout(searchModalLocations, 300);
     return () => clearTimeout(debounce);
-  }, [searchQuery, showSearch]);
+  }, [searchQuery, showSearch, showSmartReplace]);
 
   const toggleDay = (day: number) => {
     setExpandedDays(prev =>

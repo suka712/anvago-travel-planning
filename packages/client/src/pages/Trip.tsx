@@ -6,7 +6,7 @@ import {
   Navigation, MapPin, Clock, ChevronRight, CheckCircle2, Circle,
   CloudRain, Bike, Car, Footprints, Map, Maximize2, Minimize2,
   X, Play, Pause, SkipForward, RefreshCw, Coffee, ChevronDown,
-  Sunrise, PartyPopper, Loader2, Sparkles
+  Sunrise, PartyPopper, Loader2, Sparkles, Star, Heart, Check
 } from 'lucide-react';
 import { Button, Card, Badge } from '@/components/ui';
 import Header from '@/components/layouts/Header';
@@ -85,6 +85,14 @@ export default function Trip() {
   const [currentTime, _setCurrentTime] = useState('10:45');
   const [mapExpanded, setMapExpanded] = useState(false);
   const [showTimeline, setShowTimeline] = useState(true);
+
+  // Rating state
+  const [showDayRatingModal, setShowDayRatingModal] = useState(false);
+  const [dayRatings, setDayRatings] = useState<Record<string, number>>({}); // stopId -> rating (1-5)
+  const [showTripRatingModal, setShowTripRatingModal] = useState(false);
+  const [tripRating, setTripRating] = useState<number>(0);
+  const [tripFeedback, setTripFeedback] = useState('');
+  const [hasRatedCurrentDay, setHasRatedCurrentDay] = useState(false);
 
   // Get trip name from local mapping for demo purposes
   const tripNames: Record<string, string> = {
@@ -199,14 +207,6 @@ export default function Trip() {
     await syncToApi('advance');
   };
 
-  const handleAdvanceDay = async () => {
-    advanceToNextDay(tripId);
-    toast.success(`Starting Day ${(tripProgress?.currentDay || 1) + 1}!`, { icon: '🌅' });
-
-    // Sync day advance to API
-    await syncToApi('day_advance');
-  };
-
   const handleRestartTrip = async () => {
     resetTrip(tripId);
     toast.success('Trip restarted! Enjoy your adventure again!');
@@ -241,6 +241,70 @@ export default function Trip() {
       case 'grab_car': return Car;
       default: return Footprints;
     }
+  };
+
+  // Star rating component helper
+  const StarRating = ({ rating, onRate, size = 'md' }: { rating: number; onRate: (r: number) => void; size?: 'sm' | 'md' | 'lg' }) => {
+    const sizeClasses = {
+      sm: 'w-5 h-5',
+      md: 'w-7 h-7',
+      lg: 'w-9 h-9',
+    };
+    return (
+      <div className="flex gap-1">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <button
+            key={star}
+            onClick={() => onRate(star)}
+            className="transition-transform hover:scale-110"
+          >
+            <Star
+              className={`${sizeClasses[size]} ${
+                star <= rating
+                  ? 'text-yellow-400 fill-yellow-400'
+                  : 'text-gray-300'
+              }`}
+            />
+          </button>
+        ))}
+      </div>
+    );
+  };
+
+  // Open day rating modal
+  const handleOpenDayRating = () => {
+    setShowDayRatingModal(true);
+  };
+
+  // Submit day ratings and advance to next day
+  const handleSubmitDayRatings = async () => {
+    // In production, this would save ratings to backend
+    console.log('Day ratings:', dayRatings);
+    setShowDayRatingModal(false);
+    setHasRatedCurrentDay(true);
+    toast.success('Thanks for your feedback!');
+  };
+
+  // Handle advancing to next day (after rating)
+  const handleAdvanceDayAfterRating = async () => {
+    setHasRatedCurrentDay(false);
+    advanceToNextDay(tripId);
+    toast.success(`Starting Day ${(tripProgress?.currentDay || 1) + 1}!`, { icon: '🌅' });
+    await syncToApi('day_advance');
+  };
+
+  // Open trip rating modal
+  const handleOpenTripRating = () => {
+    setShowTripRatingModal(true);
+  };
+
+  // Submit trip rating
+  const handleSubmitTripRating = () => {
+    // In production, this would save to backend
+    console.log('Trip rating:', tripRating, 'Feedback:', tripFeedback);
+    console.log('All location ratings:', dayRatings);
+    setShowTripRatingModal(false);
+    toast.success('Thanks for rating your trip!');
   };
 
   // Derive trip name from API or local store
@@ -514,12 +578,35 @@ export default function Trip() {
               </div>
               <h2 className="text-2xl font-bold mb-2">Day {currentDay} Complete!</h2>
               <p className="text-gray-600 mb-6">
-                Great job today! Ready for Day {currentDay + 1}?
+                {hasRatedCurrentDay
+                  ? `Ready for Day ${currentDay + 1}?`
+                  : 'How was your day? Rate your experiences!'}
               </p>
-              <div className="flex gap-3 justify-center max-w-xs mx-auto">
-                <Button onClick={handleAdvanceDay} className="flex-1">
-                  Start Day {currentDay + 1}
-                </Button>
+              <div className="flex gap-3 justify-center max-w-sm mx-auto">
+                {!hasRatedCurrentDay ? (
+                  <>
+                    <Button
+                      onClick={handleOpenDayRating}
+                      className="flex-1"
+                      leftIcon={<Star className="w-4 h-4" />}
+                    >
+                      Rate Day {currentDay}
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      onClick={() => {
+                        setHasRatedCurrentDay(true);
+                      }}
+                      className="flex-1"
+                    >
+                      Skip
+                    </Button>
+                  </>
+                ) : (
+                  <Button onClick={handleAdvanceDayAfterRating} className="flex-1">
+                    Start Day {currentDay + 1}
+                  </Button>
+                )}
               </div>
             </Card>
           </motion.div>
@@ -543,13 +630,23 @@ export default function Trip() {
               <p className="text-sm text-gray-500 mb-6">
                 {tripName}
               </p>
-              <div className="flex gap-3 justify-center max-w-md mx-auto">
-                <Button onClick={handleRestartTrip} variant="secondary" className="flex-1">
-                  Restart Trip
+              <div className="flex flex-col gap-3 justify-center max-w-md mx-auto">
+                {/* Rate Trip Button */}
+                <Button
+                  onClick={handleOpenTripRating}
+                  className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
+                  leftIcon={<Star className="w-4 h-4" />}
+                >
+                  Rate Your Trip
                 </Button>
-                <Button onClick={() => navigate('/dashboard')} className="flex-1">
-                  Back to Dashboard
-                </Button>
+                <div className="flex gap-3">
+                  <Button onClick={handleRestartTrip} variant="secondary" className="flex-1">
+                    Restart Trip
+                  </Button>
+                  <Button onClick={() => navigate('/dashboard')} className="flex-1">
+                    Back to Dashboard
+                  </Button>
+                </div>
               </div>
             </Card>
           </motion.div>
@@ -880,6 +977,175 @@ export default function Trip() {
                   Open Grab App
                 </Button>
               </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Day Rating Modal */}
+      <AnimatePresence>
+        {showDayRatingModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-4"
+            onClick={() => setShowDayRatingModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 20 }}
+              onClick={e => e.stopPropagation()}
+              className="w-full max-w-lg max-h-[90vh] overflow-hidden"
+            >
+              <Card className="max-h-[90vh] flex flex-col">
+                {/* Header */}
+                <div className="text-center pb-4 border-b shrink-0">
+                  <div className="w-14 h-14 bg-gradient-to-br from-amber-400 to-orange-400 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                    <Star className="w-7 h-7 text-white" />
+                  </div>
+                  <h2 className="text-xl font-bold">Rate Day {currentDay}</h2>
+                  <p className="text-gray-600 text-sm mt-1">
+                    How was each stop? Your feedback helps us improve!
+                  </p>
+                </div>
+
+                {/* Stops to Rate */}
+                <div className="flex-1 overflow-y-auto py-4 space-y-3">
+                  {stops.filter(s => s.status === 'completed').map((stop) => (
+                    <div
+                      key={stop.id}
+                      className="flex items-center gap-3 p-3 rounded-xl border border-gray-200 hover:border-amber-300 transition-colors"
+                    >
+                      <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0 border border-gray-200">
+                        <img src={stop.image} alt={stop.name} className="w-full h-full object-cover" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-medium text-sm truncate">{stop.name}</h4>
+                        <p className="text-xs text-gray-500">{stop.time} • {stop.duration}</p>
+                      </div>
+                      <StarRating
+                        rating={dayRatings[stop.id] || 0}
+                        onRate={(r) => setDayRatings(prev => ({ ...prev, [stop.id]: r }))}
+                        size="sm"
+                      />
+                    </div>
+                  ))}
+                  {stops.filter(s => s.status === 'completed').length === 0 && (
+                    <div className="text-center py-8 text-gray-500">
+                      <p>No completed stops to rate yet.</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Actions */}
+                <div className="pt-4 border-t shrink-0 flex gap-3">
+                  <Button
+                    variant="secondary"
+                    className="flex-1"
+                    onClick={() => setShowDayRatingModal(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    className="flex-1 bg-amber-500 hover:bg-amber-600"
+                    leftIcon={<Check className="w-4 h-4" />}
+                    onClick={handleSubmitDayRatings}
+                  >
+                    Submit Ratings
+                  </Button>
+                </div>
+              </Card>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Trip Rating Modal */}
+      <AnimatePresence>
+        {showTripRatingModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-4"
+            onClick={() => setShowTripRatingModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 20 }}
+              onClick={e => e.stopPropagation()}
+              className="w-full max-w-md"
+            >
+              <Card>
+                {/* Header */}
+                <div className="text-center mb-6">
+                  <div className="w-16 h-16 bg-gradient-to-br from-sky-500 to-purple-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <Heart className="w-8 h-8 text-white" />
+                  </div>
+                  <h2 className="text-xl font-bold">How was your trip?</h2>
+                  <p className="text-gray-600 text-sm mt-1">
+                    We'd love to hear about your experience!
+                  </p>
+                </div>
+
+                {/* Trip Summary */}
+                <div className="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                  <p className="text-sm font-medium text-gray-700">{tripName}</p>
+                  <p className="text-xs text-gray-500">{totalDays} days • {completedCount} stops visited</p>
+                </div>
+
+                {/* Overall Rating */}
+                <div className="text-center mb-6">
+                  <p className="text-sm text-gray-600 mb-3">Overall Experience</p>
+                  <div className="flex justify-center">
+                    <StarRating
+                      rating={tripRating}
+                      onRate={setTripRating}
+                      size="lg"
+                    />
+                  </div>
+                  {tripRating > 0 && (
+                    <p className="text-sm text-gray-500 mt-2">
+                      {tripRating === 5 ? 'Amazing!' : tripRating === 4 ? 'Great!' : tripRating === 3 ? 'Good' : tripRating === 2 ? 'Could be better' : 'Not great'}
+                    </p>
+                  )}
+                </div>
+
+                {/* Feedback */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Any feedback? (Optional)
+                  </label>
+                  <textarea
+                    value={tripFeedback}
+                    onChange={(e) => setTripFeedback(e.target.value)}
+                    placeholder="Tell us what you loved or what could be improved..."
+                    className="w-full p-3 rounded-lg border-2 border-gray-200 focus:border-sky-primary focus:outline-none transition-colors resize-none"
+                    rows={3}
+                  />
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-3">
+                  <Button
+                    variant="secondary"
+                    className="flex-1"
+                    onClick={() => setShowTripRatingModal(false)}
+                  >
+                    Maybe Later
+                  </Button>
+                  <Button
+                    className="flex-1"
+                    leftIcon={<Check className="w-4 h-4" />}
+                    onClick={handleSubmitTripRating}
+                  >
+                    {tripRating > 0 ? 'Submit Rating' : 'Skip'}
+                  </Button>
+                </div>
+              </Card>
             </motion.div>
           </motion.div>
         )}
