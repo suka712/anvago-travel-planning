@@ -4,10 +4,12 @@
 1. [System Architecture](#system-architecture)
 2. [Technology Choices (Deep Dive)](#technology-choices)
 3. [Core Features & How They Work](#core-features)
-4. [AI Integration Details](#ai-integration-details)
-5. [Data Models & API Contracts](#data-models--api-contracts)
-6. [Cost Analysis](#cost-analysis)
-7. [Future Improvements & Scaling](#future-improvements--scaling)
+4. [Feature Flows (Presentation Reference)](#feature-flows-presentation-reference)
+5. [AI Integration Details](#ai-integration-details)
+6. [Live Trip Tracking](#live-trip-tracking-implementation)
+7. [Data Models & API Contracts](#data-models--api-contracts)
+8. [Cost Analysis](#cost-analysis)
+9. [Future Improvements & Scaling](#future-improvements--scaling)
 
 ---
 
@@ -381,6 +383,331 @@ const totalEstimate = estimatedCost + transportCost;
 - 2-3 sentence summary
 - Top 3 highlights
 - Mood/vibe tag
+
+---
+
+## Feature Flows (Presentation Reference)
+
+Simplified step-by-step flows for each AI feature. Use these for presentations and demos.
+
+### Flow 1: AI Optimization ("Go AI Optimize")
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    AI OPTIMIZATION FLOW                         │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  1. CURRENT ITINERARY                                           │
+│     User has selected an itinerary with 6-8 stops               │
+│                         ↓                                       │
+│  2. SELECT OPTIMIZATION TYPE                                    │
+│     Route | Time | Budget | Walking                             │
+│                         ↓                                       │
+│  3. GATHER STATIC CONTEXT                                       │
+│     • User preferences (budget level, activity level)           │
+│     • Time constraints (start/end of day)                       │
+│     • Interests (food, beach, culture)                          │
+│                         ↓                                       │
+│  4. GATHER DYNAMIC DATA                                         │
+│     • Opening hours for each location                           │
+│     • GPS coordinates (for distance calc)                       │
+│     • Crowd levels (if available)                               │
+│     • Travel times between stops                                │
+│                         ↓                                       │
+│  5. SEND TO CLAUDE                                              │
+│     Prompt includes: items, preferences, constraints, goal      │
+│                         ↓                                       │
+│  6. RECEIVE OPTIMIZED ORDER                                     │
+│     • New sequence of items                                     │
+│     • Adjusted start times                                      │
+│     • Change explanations ("Moved B after C because...")        │
+│                         ↓                                       │
+│  7. SHOW COMPARISON                                             │
+│     Before vs After with highlighted changes                    │
+│     User: Accept | Reject | Modify                              │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Key insight:** AI adds value by considering factors that algorithms miss (meal spacing, sunset timing, energy flow).
+
+---
+
+### Flow 2: Contextual Swap (formerly "Smart Replace")
+
+> **Note:** Consider renaming "Smart Replace" to "Contextual Swap" or "Swap Suggestions" - the current name implies automation but the feature is user-initiated.
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    CONTEXTUAL SWAP FLOW                         │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  1. USER CLICKS "SWAP" ON AN ITEM                               │
+│     Item: "My Khe Beach" at 2:00 PM                             │
+│                         ↓                                       │
+│  2. QUERY ALTERNATIVES FROM DATABASE                            │
+│     • Same city                                                 │
+│     • Open at that time slot                                    │
+│     • Similar duration (±30 min)                                │
+│     → Returns 10-15 candidates                                  │
+│                         ↓                                       │
+│  3. GATHER SEQUENCE CONTEXT                                     │
+│     • Previous item: "Lunch at Bánh Mì Bà Lan" (just ate)       │
+│     • Next item: "Marble Mountains" (active hiking)             │
+│     • Time slot: 2:00-4:00 PM (hot afternoon)                   │
+│                         ↓                                       │
+│  4. GATHER DAY CONTEXT                                          │
+│     • Day theme: "Beach & Culture"                              │
+│     • Types already in day: [food, beach, temple]               │
+│     • Missing: local experience, relaxation                     │
+│                         ↓                                       │
+│  5. SEND TO CLAUDE FOR CATEGORIZATION                           │
+│     "Rank these 15 alternatives for this context"               │
+│                         ↓                                       │
+│  6. RECEIVE CATEGORIZED SUGGESTIONS                             │
+│     • Similar: Another beach                                    │
+│     • Higher Rated: Better-reviewed spot                        │
+│     • Budget Friendly: Cheaper option                           │
+│     • Local Gem: High authenticity score                        │
+│     • Perfect Fit: Best for THIS moment (see below)             │
+│                         ↓                                       │
+│  7. SHOW OPTIONS WITH REASONS                                   │
+│     Each option shows: why it fits, rating diff, cost diff      │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### Flow 3: "Perfect Fit" Scoring (Best for This Moment)
+
+This is the intelligence behind the "Best for This Moment" / "Perfect Fit" category:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                 "PERFECT FIT" SCORING ALGORITHM                 │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  INPUT: Current time slot, previous/next items, day context     │
+│                                                                 │
+│  ┌─────────────────────────────────────────────────────────┐    │
+│  │  SCORE 1: TIME-OF-DAY FIT (0-25 points)                 │    │
+│  ├─────────────────────────────────────────────────────────┤    │
+│  │  Morning (6-10am):                                      │    │
+│  │    +25: breakfast spots, beaches (sunrise), temples     │    │
+│  │    +10: cafes, markets                                  │    │
+│  │     +0: bars, nightlife                                 │    │
+│  │                                                         │    │
+│  │  Midday (10am-2pm):                                     │    │
+│  │    +25: museums (AC), indoor markets, lunch spots       │    │
+│  │    +10: shaded activities                               │    │
+│  │     +0: outdoor beaches (too hot)                       │    │
+│  │                                                         │    │
+│  │  Afternoon (2-5pm):                                     │    │
+│  │    +25: cafes, pools, air-conditioned spaces            │    │
+│  │    +15: covered markets, malls                          │    │
+│  │     +5: outdoor but shaded                              │    │
+│  │                                                         │    │
+│  │  Evening (5-8pm):                                       │    │
+│  │    +25: viewpoints (sunset), dinner spots, night markets│    │
+│  │    +15: rooftop bars, waterfront                        │    │
+│  └─────────────────────────────────────────────────────────┘    │
+│                                                                 │
+│  ┌─────────────────────────────────────────────────────────┐    │
+│  │  SCORE 2: ENERGY FLOW (0-25 points)                     │    │
+│  ├─────────────────────────────────────────────────────────┤    │
+│  │  After ACTIVE (beach, hiking, walking tour):            │    │
+│  │    +25: rest, food, seated activity, spa                │    │
+│  │    +10: light walking, browsing                         │    │
+│  │     +0: another active activity                         │    │
+│  │                                                         │    │
+│  │  After FOOD:                                            │    │
+│  │    +25: light walking, exploration, markets             │    │
+│  │    +10: cultural site (not too active)                  │    │
+│  │     +0: heavy meal, intense activity                    │    │
+│  │                                                         │    │
+│  │  After REST/RELAXATION:                                 │    │
+│  │    +25: active, adventure, exploration                  │    │
+│  │    +15: moderate activity                               │    │
+│  │     +5: more rest                                       │    │
+│  └─────────────────────────────────────────────────────────┘    │
+│                                                                 │
+│  ┌─────────────────────────────────────────────────────────┐    │
+│  │  SCORE 3: DAY VARIETY (0-25 points)                     │    │
+│  ├─────────────────────────────────────────────────────────┤    │
+│  │  Check what's MISSING from this day:                    │    │
+│  │    No food yet?       → +25 for restaurants             │    │
+│  │    All tourist spots? → +25 for local gems              │    │
+│  │    No culture?        → +25 for temples/museums         │    │
+│  │    No nature?         → +25 for beaches/parks           │    │
+│  │    No relaxation?     → +25 for spas/cafes              │    │
+│  │                                                         │    │
+│  │  Check for REPETITION:                                  │    │
+│  │    Same type as prev? → -15 penalty                     │    │
+│  │    3rd of same type?  → -25 penalty                     │    │
+│  └─────────────────────────────────────────────────────────┘    │
+│                                                                 │
+│  ┌─────────────────────────────────────────────────────────┐    │
+│  │  SCORE 4: PRACTICAL FIT (0-25 points)                   │    │
+│  ├─────────────────────────────────────────────────────────┤    │
+│  │  Distance from previous location:                       │    │
+│  │    < 10 min travel:  +25                                │    │
+│  │    10-20 min travel: +15                                │    │
+│  │    20-30 min travel: +5                                 │    │
+│  │    > 30 min travel:  +0                                 │    │
+│  │                                                         │    │
+│  │  Time slot fit:                                         │    │
+│  │    Fits perfectly:   +0 (baseline)                      │    │
+│  │    Slightly short:   -5                                 │    │
+│  │    Too long:         -10                                │    │
+│  │                                                         │    │
+│  │  Currently open:                                        │    │
+│  │    Yes: +0 (required)                                   │    │
+│  │    No:  DISQUALIFIED                                    │    │
+│  └─────────────────────────────────────────────────────────┘    │
+│                                                                 │
+│  TOTAL SCORE = Time + Energy + Variety + Practical             │
+│  Maximum: 100 points                                            │
+│                                                                 │
+│  PERFECT FIT = Highest scoring alternative                      │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Example calculation:**
+
+```
+Scenario: Replacing 2:00 PM beach activity
+Previous: Lunch (food)
+Next: Marble Mountains (active hiking)
+Day so far: [breakfast, temple, lunch] - no relaxation yet
+
+Candidate: "Son Tra Coffee" (cafe with view)
+  Time-of-day:  +25 (cafe perfect for hot afternoon)
+  Energy flow:  +25 (light activity after food, before hiking)
+  Day variety:  +25 (no cafe/relaxation in day yet)
+  Practical:    +20 (12 min away, fits 2-hour slot)
+  TOTAL:        95/100 → PERFECT FIT ✓
+
+Candidate: "Another Beach"
+  Time-of-day:  +5  (too hot at 2pm)
+  Energy flow:  +0  (active after food, before active)
+  Day variety:  -15 (already had beach yesterday)
+  Practical:    +25 (nearby)
+  TOTAL:        15/100 → Low rank
+```
+
+---
+
+### Flow 4: Smart Reroute (Live Trip Adjustments)
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     SMART REROUTE FLOW                          │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  1. TRIP IS ACTIVE                                              │
+│     User is currently on their itinerary                        │
+│                         ↓                                       │
+│  2. TRIGGER DETECTED                                            │
+│     • Weather: Rain starting in 30 min                          │
+│     • Delay: User is 45 min behind schedule                     │
+│     • Closure: Next venue reported closed                       │
+│     • Behavior: User skipped 2 consecutive stops                │
+│                         ↓                                       │
+│  3. ASSESS IMPACT                                               │
+│     • Which remaining stops are affected?                       │
+│     • What's the cascade effect on timing?                      │
+│     • Is the original plan still viable?                        │
+│                         ↓                                       │
+│  4. QUERY ALTERNATIVES                                          │
+│     • Open NOW                                                  │
+│     • Nearby (< 15 min travel)                                  │
+│     • Fits remaining time window                                │
+│     • Matches user's exhibited preferences                      │
+│                         ↓                                       │
+│  5. SEND CONTEXT TO CLAUDE                                      │
+│     "User is behind schedule because X.                         │
+│      They skipped Y but loved Z.                                │
+│      Weather is changing to W.                                  │
+│      Suggest adjustment for remaining 3 hours."                 │
+│                         ↓                                       │
+│  6. RECEIVE ADJUSTMENT PLAN                                     │
+│     • Drop optional stop (with reason)                          │
+│     • Substitute closed venue                                   │
+│     • Reorder for new conditions                                │
+│                         ↓                                       │
+│  7. PUSH NOTIFICATION TO USER                                   │
+│     "Rain expected at 4pm. We suggest moving                    │
+│      Marble Mountains to tomorrow and visiting                  │
+│      Han Market (covered) instead."                             │
+│                         ↓                                       │
+│  8. USER DECIDES                                                │
+│     Accept → Update itinerary, recalculate times                │
+│     Reject → Keep original, show risk warning                   │
+│     Modify → Show other options                                 │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### Flow 5: Trip Memory Generation
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    TRIP MEMORY FLOW                             │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  1. TRIP COMPLETED                                              │
+│     User marks final stop as done                               │
+│                         ↓                                       │
+│  2. GATHER TRIP DATA                                            │
+│     • Completed stops: [list with ratings]                      │
+│     • Skipped stops: [list]                                     │
+│     • Total time: 8 hours                                       │
+│     • Photos uploaded: 12                                       │
+│     • Tips written: 3                                           │
+│                         ↓                                       │
+│  3. ANALYZE PATTERNS                                            │
+│     • Highest rated: Bánh Mì Bà Lan (5 stars)                   │
+│     • Most time spent: My Khe Beach (2 hours)                   │
+│     • Category preference: 4 food spots visited                 │
+│                         ↓                                       │
+│  4. SEND TO CLAUDE                                              │
+│     "Generate a trip memory for sharing.                        │
+│      Tone: warm, personal, Instagram-worthy."                   │
+│                         ↓                                       │
+│  5. RECEIVE MEMORY                                              │
+│     • Title: "A Foodie's Paradise in Da Nang"                   │
+│     • Summary: "From sunrise on My Khe Beach to                 │
+│       the best bánh mì I've ever had..."                        │
+│     • Highlights: [3 moments]                                   │
+│     • Mood tag: #LocalFlavors                                   │
+│                         ↓                                       │
+│  6. DISPLAY SHAREABLE CARD                                      │
+│     Memory text + user's photos + share buttons                 │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### Making Features Feel "Smarter"
+
+Current problem: Features are **reactive** (user-initiated), not **proactive**.
+
+| Feature | Current (Reactive) | Smarter (Proactive) |
+|---------|-------------------|---------------------|
+| Swap | User clicks "Replace" | System: "This beach might be too crowded at 2pm. Consider these..." |
+| Reroute | User asks for help | System detects delay, pushes suggestion |
+| Optimize | User clicks "Optimize" | System: "Your route has 3 issues. Want me to fix them?" |
+
+**Quick wins to feel smarter:**
+1. Show warnings on potential issues (closed venues, bad timing)
+2. Pre-calculate "Perfect Fit" alternatives before user asks
+3. Badge items with "⚠️ Busy time" or "✓ Perfect timing"
+4. Proactive notification: "Tomorrow's weather looks rainy for your beach day"
 
 ---
 
