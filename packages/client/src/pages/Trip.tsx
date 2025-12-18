@@ -6,7 +6,8 @@ import {
   Navigation, MapPin, Clock, ChevronRight, CheckCircle2, Circle,
   CloudRain, Bike, Car, Footprints, Map, Maximize2, Minimize2,
   X, Play, Pause, SkipForward, RefreshCw, Coffee, ChevronDown,
-  Sunrise, PartyPopper, Loader2, Sparkles, Star, Heart, Check
+  Sunrise, PartyPopper, Loader2, Sparkles, Star, Heart, Check,
+  Shield, Share2, Image
 } from 'lucide-react';
 import { Button, Card, Badge } from '@/components/ui';
 import Header from '@/components/layouts/Header';
@@ -93,6 +94,16 @@ export default function Trip() {
   const [tripRating, setTripRating] = useState<number>(0);
   const [tripFeedback, setTripFeedback] = useState('');
   const [hasRatedCurrentDay, setHasRatedCurrentDay] = useState(false);
+
+  // Trip Memory state
+  const [showMemoryModal, setShowMemoryModal] = useState(false);
+  const [isGeneratingMemory, setIsGeneratingMemory] = useState(false);
+  const [generatedMemory, setGeneratedMemory] = useState<{
+    title: string;
+    summary: string;
+    highlights: string[];
+    mood: string;
+  } | null>(null);
 
   // Get trip name from local mapping for demo purposes
   const tripNames: Record<string, string> = {
@@ -305,6 +316,41 @@ export default function Trip() {
     console.log('All location ratings:', dayRatings);
     setShowTripRatingModal(false);
     toast.success('Thanks for rating your trip!');
+  };
+
+  // Generate Trip Memory
+  const handleGenerateMemory = async () => {
+    setShowMemoryModal(true);
+    setIsGeneratingMemory(true);
+
+    // Simulate AI generation with mock data
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    // Mock generated memory based on trip data
+    const completedStops = stops.filter(s => s.status === 'completed');
+    const topRatedStops = Object.entries(dayRatings)
+      .filter(([, rating]) => rating >= 4)
+      .map(([stopId]) => stops.find(s => s.id === stopId)?.name)
+      .filter(Boolean);
+
+    setGeneratedMemory({
+      title: `${totalDays} Days in Da Nang`,
+      summary: `An unforgettable ${totalDays}-day adventure exploring Da Nang's beaches, culture, and cuisine. From sunrise views at My Khe Beach to savoring authentic bánh mì, this trip captured the essence of Central Vietnam.`,
+      highlights: topRatedStops.length > 0
+        ? topRatedStops.slice(0, 3) as string[]
+        : completedStops.slice(0, 3).map(s => s.name),
+      mood: completedStops.some(s => s.type === 'beach') ? '🏖️ Beach Vibes'
+        : completedStops.some(s => s.type === 'food') ? '🍜 Foodie Paradise'
+        : '✨ Explorer Mode',
+    });
+
+    setIsGeneratingMemory(false);
+  };
+
+  // Share memory (mock)
+  const handleShareMemory = () => {
+    toast.success('Trip memory copied to clipboard!');
+    // In production, this would copy to clipboard or open share dialog
   };
 
   // Derive trip name from API or local store
@@ -639,6 +685,15 @@ export default function Trip() {
                 >
                   Rate Your Trip
                 </Button>
+                {/* Generate Trip Memory Button */}
+                <Button
+                  onClick={handleGenerateMemory}
+                  variant="secondary"
+                  className="w-full border-2 border-purple-300 hover:bg-purple-50"
+                  leftIcon={<Sparkles className="w-4 h-4 text-purple-500" />}
+                >
+                  Generate Trip Memory
+                </Button>
                 <div className="flex gap-3">
                   <Button onClick={handleRestartTrip} variant="secondary" className="flex-1">
                     Restart Trip
@@ -694,6 +749,18 @@ export default function Trip() {
                     </span>
                     <span className="text-gray-400">•</span>
                     <span>{currentStop.duration}</span>
+                    {currentStop.authenticityScore && (
+                      <>
+                        <span className="text-gray-400">•</span>
+                        <span className={`flex items-center gap-1 font-medium ${
+                          currentStop.authenticityScore >= 80 ? 'text-green-600' :
+                          currentStop.authenticityScore >= 60 ? 'text-amber-600' : 'text-red-500'
+                        }`}>
+                          <Shield className="w-4 h-4" />
+                          {currentStop.authenticityScore}% Local
+                        </span>
+                      </>
+                    )}
                   </div>
                   <Button
                     variant="ghost"
@@ -840,6 +907,15 @@ export default function Trip() {
                             <span className="font-mono text-xs text-gray-500">{stop.time}</span>
                             {stop.status === 'current' && (
                               <Badge variant="primary" className="text-[10px] px-1.5 py-0.5">Now</Badge>
+                            )}
+                            {stop.authenticityScore && (
+                              <span className={`flex items-center gap-0.5 text-[10px] font-medium ${
+                                stop.authenticityScore >= 80 ? 'text-green-600' :
+                                stop.authenticityScore >= 60 ? 'text-amber-600' : 'text-red-500'
+                              }`}>
+                                <Shield className="w-3 h-3" />
+                                {stop.authenticityScore}%
+                              </span>
                             )}
                           </div>
                           <h4 className={`font-medium text-sm ${
@@ -1145,6 +1221,123 @@ export default function Trip() {
                     {tripRating > 0 ? 'Submit Rating' : 'Skip'}
                   </Button>
                 </div>
+              </Card>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Trip Memory Modal */}
+      <AnimatePresence>
+        {showMemoryModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-4"
+            onClick={() => !isGeneratingMemory && setShowMemoryModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 20 }}
+              onClick={e => e.stopPropagation()}
+              className="w-full max-w-md"
+            >
+              <Card className="overflow-hidden">
+                {/* Header with gradient */}
+                <div className="bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 p-6 text-white text-center -mx-4 -mt-4 mb-4">
+                  <div className="w-14 h-14 bg-white/20 backdrop-blur rounded-2xl flex items-center justify-center mx-auto mb-3">
+                    <Image className="w-7 h-7" />
+                  </div>
+                  <h2 className="text-xl font-bold">Trip Memory</h2>
+                  <p className="text-white/80 text-sm mt-1">
+                    AI-generated trip summary
+                  </p>
+                </div>
+
+                {/* Content */}
+                {isGeneratingMemory ? (
+                  <div className="py-12 text-center">
+                    <Loader2 className="w-10 h-10 animate-spin text-purple-500 mx-auto mb-4" />
+                    <p className="text-gray-600 font-medium">Crafting your memory...</p>
+                    <p className="text-sm text-gray-400 mt-1">Analyzing your trip highlights</p>
+                  </div>
+                ) : generatedMemory ? (
+                  <div className="space-y-4">
+                    {/* Mood Badge */}
+                    <div className="text-center">
+                      <span className="inline-block px-4 py-2 bg-gradient-to-r from-purple-100 to-pink-100 rounded-full text-sm font-medium text-purple-700">
+                        {generatedMemory.mood}
+                      </span>
+                    </div>
+
+                    {/* Title */}
+                    <h3 className="text-xl font-bold text-center text-gray-800">
+                      {generatedMemory.title}
+                    </h3>
+
+                    {/* Summary */}
+                    <p className="text-gray-600 text-sm leading-relaxed text-center">
+                      {generatedMemory.summary}
+                    </p>
+
+                    {/* Highlights */}
+                    {generatedMemory.highlights.length > 0 && (
+                      <div className="bg-gray-50 rounded-xl p-4">
+                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                          Top Highlights
+                        </p>
+                        <div className="space-y-2">
+                          {generatedMemory.highlights.map((highlight, idx) => (
+                            <div key={idx} className="flex items-center gap-2 text-sm text-gray-700">
+                              <Sparkles className="w-4 h-4 text-purple-500 shrink-0" />
+                              <span>{highlight}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Stats */}
+                    <div className="flex justify-center gap-6 py-2">
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-purple-600">{totalDays}</p>
+                        <p className="text-xs text-gray-500">Days</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-pink-600">{completedCount}</p>
+                        <p className="text-xs text-gray-500">Stops</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-orange-500">
+                          {stops.filter(s => s.authenticityScore && s.authenticityScore >= 80).length}
+                        </p>
+                        <p className="text-xs text-gray-500">Local Gems</p>
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+
+                {/* Actions */}
+                {!isGeneratingMemory && generatedMemory && (
+                  <div className="flex gap-3 mt-6">
+                    <Button
+                      variant="secondary"
+                      className="flex-1"
+                      onClick={() => setShowMemoryModal(false)}
+                    >
+                      Close
+                    </Button>
+                    <Button
+                      className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+                      leftIcon={<Share2 className="w-4 h-4" />}
+                      onClick={handleShareMemory}
+                    >
+                      Share
+                    </Button>
+                  </div>
+                )}
               </Card>
             </motion.div>
           </motion.div>

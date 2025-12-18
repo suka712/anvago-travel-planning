@@ -18,7 +18,7 @@ import {
   Car, Footprints, Sun, Lock, Crown, Heart,
   MapPin, RefreshCw, Filter, ArrowRight, Check, ArrowUpDown,
   Loader2, Zap, Leaf, Users, Camera, Coffee, TrendingUp,
-  Gem, Timer, ArrowLeftRight
+  Gem, Timer, ArrowLeftRight, Shield, TrendingDown, Wallet
 } from 'lucide-react';
 import { Button, Card, Badge } from '@/components/ui';
 import Header from '@/components/layouts/Header';
@@ -37,6 +37,7 @@ interface ItineraryItem {
   rating?: number;
   isLocalGem?: boolean;
   transitMins?: number; // Transit time to next activity
+  authenticityScore?: number; // 0-100, AI-calculated authenticity rating
 }
 
 interface DayPlan {
@@ -86,12 +87,12 @@ const mockItinerary: DayPlan[] = [
     title: 'Beach Vibes & Local Flavors',
     startTime: 360, // 6:00 AM
     items: [
-      { id: '1', name: 'Sunrise at My Khe Beach', type: 'beach', durationMins: 120, image: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=200', rating: 4.8, transitMins: 15 },
-      { id: '2', name: 'Bánh Mì Bà Lan', type: 'food', durationMins: 45, image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=200', cost: 30000, rating: 4.9, isLocalGem: true, transitMins: 20 },
-      { id: '3', name: 'Han Market', type: 'shopping', durationMins: 120, image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=200', cost: 0, rating: 4.5, transitMins: 15 },
-      { id: '4', name: 'Madame Lan Restaurant', type: 'food', durationMins: 90, image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=200', cost: 250000, rating: 4.7, transitMins: 20 },
-      { id: '5', name: 'Beach Club Relaxation', type: 'beach', durationMins: 180, image: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=200', cost: 150000, rating: 4.6, transitMins: 25 },
-      { id: '6', name: 'Bé Mặn Seafood', type: 'food', durationMins: 120, image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=200', cost: 400000, rating: 4.8 },
+      { id: '1', name: 'Sunrise at My Khe Beach', type: 'beach', durationMins: 120, image: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=200', rating: 4.8, transitMins: 15, authenticityScore: 88 },
+      { id: '2', name: 'Bánh Mì Bà Lan', type: 'food', durationMins: 45, image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=200', cost: 30000, rating: 4.9, isLocalGem: true, transitMins: 20, authenticityScore: 96 },
+      { id: '3', name: 'Han Market', type: 'shopping', durationMins: 120, image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=200', cost: 0, rating: 4.5, transitMins: 15, authenticityScore: 72 },
+      { id: '4', name: 'Madame Lan Restaurant', type: 'food', durationMins: 90, image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=200', cost: 250000, rating: 4.7, transitMins: 20, authenticityScore: 78 },
+      { id: '5', name: 'Beach Club Relaxation', type: 'beach', durationMins: 180, image: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=200', cost: 150000, rating: 4.6, transitMins: 25, authenticityScore: 45 },
+      { id: '6', name: 'Bé Mặn Seafood', type: 'food', durationMins: 120, image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=200', cost: 400000, rating: 4.8, authenticityScore: 94 },
     ],
   },
   {
@@ -99,20 +100,14 @@ const mockItinerary: DayPlan[] = [
     title: 'Mountains & Mysticism',
     startTime: 360, // 6:00 AM
     items: [
-      { id: '7', name: 'Marble Mountains', type: 'nature', durationMins: 240, image: 'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=200', cost: 40000, rating: 4.9, transitMins: 30 },
-      { id: '8', name: 'The Fig Restaurant', type: 'food', durationMins: 90, image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=200', cost: 300000, rating: 4.6, transitMins: 20 },
-      { id: '9', name: 'Cham Museum', type: 'museum', durationMins: 120, image: 'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=200', cost: 60000, rating: 4.7, transitMins: 15 },
-      { id: '10', name: 'Dragon Bridge Show', type: 'attraction', durationMins: 60, image: 'https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=200', cost: 0, rating: 4.8 },
+      { id: '7', name: 'Marble Mountains', type: 'nature', durationMins: 240, image: 'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=200', cost: 40000, rating: 4.9, transitMins: 30, authenticityScore: 85 },
+      { id: '8', name: 'The Fig Restaurant', type: 'food', durationMins: 90, image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=200', cost: 300000, rating: 4.6, transitMins: 20, authenticityScore: 58 },
+      { id: '9', name: 'Cham Museum', type: 'museum', durationMins: 120, image: 'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=200', cost: 60000, rating: 4.7, transitMins: 15, authenticityScore: 92 },
+      { id: '10', name: 'Dragon Bridge Show', type: 'attraction', durationMins: 60, image: 'https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=200', cost: 0, rating: 4.8, authenticityScore: 82 },
     ],
   },
 ];
 
-const mockSearchResults = [
-  { id: 's1', name: 'Son Tra Peninsula', type: 'nature', durationMins: 180, cost: 0, rating: 4.9, image: 'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=200' },
-  { id: 's2', name: '43 Factory Coffee', type: 'cafe', durationMins: 60, cost: 80000, rating: 4.8, image: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=200', isLocalGem: true },
-  { id: 's3', name: 'Linh Ung Pagoda', type: 'temple', durationMins: 90, cost: 0, rating: 4.7, image: 'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=200' },
-  { id: 's4', name: 'Ba Na Hills', type: 'attraction', durationMins: 360, cost: 850000, rating: 4.6, image: 'https://images.unsplash.com/photo-1569288052389-dac9b01c9c05?w=200' },
-];
 
 export default function Plan() {
   const { id } = useParams();
@@ -160,6 +155,7 @@ export default function Plan() {
       rating: number;
       image: string;
       isLocalGem?: boolean;
+      authenticityScore?: number;
       reason: string;
       comparison: {
         ratingDiff: number;
@@ -182,6 +178,7 @@ export default function Plan() {
     rating?: number;
     image: string;
     isLocalGem?: boolean;
+    authenticityScore?: number;
   }>>([]);
   const [isSearching, setIsSearching] = useState(false);
 
@@ -319,7 +316,7 @@ export default function Plan() {
     ));
   };
 
-  const handleAddItem = (dayIndex: number, item: typeof mockSearchResults[0]) => {
+  const handleAddItem = (dayIndex: number, item: Omit<ItineraryItem, 'transitMins'>) => {
     const newItem: ItineraryItem = {
       ...item,
       transitMins: 15, // Default transit time
@@ -332,10 +329,10 @@ export default function Plan() {
   };
 
   // Insert item at a specific position within a day
-  const handleInsertItem = (dayIndex: number, position: number, item: typeof mockSearchResults[0]) => {
+  const handleInsertItem = (dayIndex: number, position: number, item: Omit<ItineraryItem, 'id' | 'transitMins'> & { id?: string }) => {
     const newItem: ItineraryItem = {
       ...item,
-      id: `inserted-${Date.now()}`, // Ensure unique ID
+      id: item.id || `inserted-${Date.now()}`, // Ensure unique ID
       transitMins: 15,
     };
     setItinerary(prev => prev.map((day, idx) => {
@@ -347,7 +344,7 @@ export default function Plan() {
   };
 
   // Replace an existing item with a new one
-  const handleReplaceItem = (item: typeof mockSearchResults[0]) => {
+  const handleReplaceItem = (item: Omit<ItineraryItem, 'id' | 'transitMins'>) => {
     if (!replaceTarget) return;
     const newItem: ItineraryItem = {
       ...item,
@@ -408,6 +405,7 @@ export default function Plan() {
       rating: number;
       image: string;
       isLocalGem?: boolean;
+      authenticityScore?: number;
     }>> = {
       food: [
         { id: 'sg1', name: 'Mì Quảng Bà Mua', type: 'food', durationMins: 45, cost: 40000, rating: 4.9, image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=200', isLocalGem: true },
@@ -882,6 +880,15 @@ export default function Plan() {
                                             {item.rating}
                                           </span>
                                         )}
+                                        {item.authenticityScore && (
+                                          <span className={`flex items-center gap-1 ${
+                                            item.authenticityScore >= 80 ? 'text-green-600' :
+                                            item.authenticityScore >= 60 ? 'text-amber-600' : 'text-red-500'
+                                          }`}>
+                                            <Shield className="w-3 h-3" />
+                                            {item.authenticityScore}%
+                                          </span>
+                                        )}
                                       </div>
                                     </div>
 
@@ -993,6 +1000,71 @@ export default function Plan() {
                   <p className="text-xs text-amber-800">
                     Wherever you go, we encourage supporting local businesses and vendors. Your purchase means a lot to the community.
                   </p>
+                </div>
+              </Card>
+
+              {/* Budget Prediction Card */}
+              <Card>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="font-bold text-lg flex items-center gap-2">
+                    <Wallet className="w-5 h-5 text-green-500" />
+                    Budget Prediction
+                  </h2>
+                  <Badge variant="success" className="text-[10px]">
+                    <Sparkles className="w-3 h-3 mr-1" />
+                    AI
+                  </Badge>
+                </div>
+
+                {/* Total Estimated Cost */}
+                <div className="p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border border-green-200 mb-4">
+                  <p className="text-xs text-gray-600 mb-1">Estimated Total</p>
+                  <p className="text-2xl font-bold text-green-600">
+                    {formatCost(itinerary.reduce((total, day) =>
+                      total + day.items.reduce((dayTotal, item) => dayTotal + (item.cost || 0), 0), 0
+                    ))}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Activities only • Transport extra
+                  </p>
+                </div>
+
+                {/* Daily Breakdown */}
+                <div className="space-y-2 mb-4">
+                  {itinerary.map((day) => {
+                    const dayCost = day.items.reduce((total, item) => total + (item.cost || 0), 0);
+                    const maxDayCost = Math.max(...itinerary.map(d =>
+                      d.items.reduce((t, i) => t + (i.cost || 0), 0)
+                    ));
+                    const percentage = maxDayCost > 0 ? (dayCost / maxDayCost) * 100 : 0;
+                    return (
+                      <div key={day.day} className="flex items-center gap-3">
+                        <span className="text-xs text-gray-500 w-12">Day {day.day}</span>
+                        <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-gradient-to-r from-green-400 to-emerald-500 rounded-full transition-all"
+                            style={{ width: `${percentage}%` }}
+                          />
+                        </div>
+                        <span className="text-xs font-medium text-gray-700 w-16 text-right">
+                          {formatCost(dayCost)}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* AI Insights */}
+                <div className="p-3 bg-sky-50 rounded-lg border border-sky-100">
+                  <div className="flex items-start gap-2">
+                    <TrendingDown className="w-4 h-4 text-sky-600 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-xs font-medium text-sky-800">Save with local gems</p>
+                      <p className="text-xs text-sky-600">
+                        Switch to 2 local alternatives to save ~150k VND
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </Card>
 
@@ -1907,7 +1979,6 @@ export default function Plan() {
                                 leftIcon={<Check className="w-4 h-4" />}
                                 onClick={() => {
                                   handleReplaceItem({
-                                    id: suggestion.id,
                                     name: suggestion.name,
                                     type: suggestion.type,
                                     durationMins: suggestion.durationMins,

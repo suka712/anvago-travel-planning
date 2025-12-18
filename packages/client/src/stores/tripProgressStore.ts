@@ -10,6 +10,7 @@ export interface TripStop {
   status: 'completed' | 'current' | 'upcoming' | 'skipped';
   address: string;
   image: string;
+  authenticityScore?: number; // 0-100 AI-calculated authenticity
   transport?: {
     mode: 'grab_bike' | 'grab_car' | 'walk';
     duration: string;
@@ -36,24 +37,24 @@ type DayStops = Record<number, TripStop[]>;
 const multiDayTemplates: Record<string, DayStops> = {
   'Beach & Culture Explorer': {
     1: [
-      { id: '1-1', name: 'Sunrise at My Khe Beach', type: 'beach', time: '6:00', duration: '2h', status: 'upcoming', address: 'My Khe Beach, Phuoc My, Son Tra, Da Nang', image: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=300' },
-      { id: '1-2', name: 'Bánh Mì Bà Lan', type: 'food', time: '8:30', duration: '45m', status: 'upcoming', address: '115 Nguyen Chi Thanh, Hai Chau, Da Nang', image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=300', transport: { mode: 'grab_bike', duration: '10 min', cost: 25000 } },
-      { id: '1-3', name: 'Han Market', type: 'shopping', time: '10:00', duration: '2h', status: 'upcoming', address: '119 Tran Phu, Hai Chau, Da Nang', image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=300', transport: { mode: 'walk', duration: '15 min' } },
-      { id: '1-4', name: 'Madame Lan Restaurant', type: 'food', time: '12:30', duration: '1.5h', status: 'upcoming', address: '4 Bach Dang, Hai Chau, Da Nang', image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=300', transport: { mode: 'grab_bike', duration: '8 min', cost: 20000 } },
-      { id: '1-5', name: 'Beach Club Relaxation', type: 'beach', time: '15:00', duration: '3h', status: 'upcoming', address: 'My Khe Beach, Son Tra, Da Nang', image: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=300', transport: { mode: 'grab_car', duration: '15 min', cost: 75000 } },
+      { id: '1-1', name: 'Sunrise at My Khe Beach', type: 'beach', time: '6:00', duration: '2h', status: 'upcoming', address: 'My Khe Beach, Phuoc My, Son Tra, Da Nang', image: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=300', authenticityScore: 88 },
+      { id: '1-2', name: 'Bánh Mì Bà Lan', type: 'food', time: '8:30', duration: '45m', status: 'upcoming', address: '115 Nguyen Chi Thanh, Hai Chau, Da Nang', image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=300', transport: { mode: 'grab_bike', duration: '10 min', cost: 25000 }, authenticityScore: 96 },
+      { id: '1-3', name: 'Han Market', type: 'shopping', time: '10:00', duration: '2h', status: 'upcoming', address: '119 Tran Phu, Hai Chau, Da Nang', image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=300', transport: { mode: 'walk', duration: '15 min' }, authenticityScore: 72 },
+      { id: '1-4', name: 'Madame Lan Restaurant', type: 'food', time: '12:30', duration: '1.5h', status: 'upcoming', address: '4 Bach Dang, Hai Chau, Da Nang', image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=300', transport: { mode: 'grab_bike', duration: '8 min', cost: 20000 }, authenticityScore: 78 },
+      { id: '1-5', name: 'Beach Club Relaxation', type: 'beach', time: '15:00', duration: '3h', status: 'upcoming', address: 'My Khe Beach, Son Tra, Da Nang', image: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=300', transport: { mode: 'grab_car', duration: '15 min', cost: 75000 }, authenticityScore: 45 },
     ],
     2: [
-      { id: '2-1', name: 'Dragon Bridge Morning Walk', type: 'activity', time: '7:00', duration: '1h', status: 'upcoming', address: 'Dragon Bridge, Hai Chau, Da Nang', image: 'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=300' },
-      { id: '2-2', name: 'Phở Sài Gòn Breakfast', type: 'food', time: '8:30', duration: '1h', status: 'upcoming', address: '15 Nguyen Chi Thanh, Da Nang', image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=300', transport: { mode: 'walk', duration: '10 min' } },
-      { id: '2-3', name: 'Marble Mountains', type: 'activity', time: '10:00', duration: '3h', status: 'upcoming', address: 'Marble Mountains, Ngu Hanh Son, Da Nang', image: 'https://images.unsplash.com/photo-1569288052389-dac9b01c9c05?w=300', transport: { mode: 'grab_car', duration: '25 min', cost: 95000 } },
-      { id: '2-4', name: 'Lunch at Làng Cá Restaurant', type: 'food', time: '13:30', duration: '1.5h', status: 'upcoming', address: 'An Bang Beach, Hoi An', image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=300', transport: { mode: 'grab_bike', duration: '15 min', cost: 35000 } },
-      { id: '2-5', name: 'An Bang Beach Sunset', type: 'beach', time: '16:00', duration: '3h', status: 'upcoming', address: 'An Bang Beach, Hoi An', image: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=300', transport: { mode: 'walk', duration: '5 min' } },
+      { id: '2-1', name: 'Dragon Bridge Morning Walk', type: 'activity', time: '7:00', duration: '1h', status: 'upcoming', address: 'Dragon Bridge, Hai Chau, Da Nang', image: 'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=300', authenticityScore: 82 },
+      { id: '2-2', name: 'Phở Sài Gòn Breakfast', type: 'food', time: '8:30', duration: '1h', status: 'upcoming', address: '15 Nguyen Chi Thanh, Da Nang', image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=300', transport: { mode: 'walk', duration: '10 min' }, authenticityScore: 94 },
+      { id: '2-3', name: 'Marble Mountains', type: 'activity', time: '10:00', duration: '3h', status: 'upcoming', address: 'Marble Mountains, Ngu Hanh Son, Da Nang', image: 'https://images.unsplash.com/photo-1569288052389-dac9b01c9c05?w=300', transport: { mode: 'grab_car', duration: '25 min', cost: 95000 }, authenticityScore: 85 },
+      { id: '2-4', name: 'Lunch at Làng Cá Restaurant', type: 'food', time: '13:30', duration: '1.5h', status: 'upcoming', address: 'An Bang Beach, Hoi An', image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=300', transport: { mode: 'grab_bike', duration: '15 min', cost: 35000 }, authenticityScore: 91 },
+      { id: '2-5', name: 'An Bang Beach Sunset', type: 'beach', time: '16:00', duration: '3h', status: 'upcoming', address: 'An Bang Beach, Hoi An', image: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=300', transport: { mode: 'walk', duration: '5 min' }, authenticityScore: 87 },
     ],
     3: [
-      { id: '3-1', name: 'Hoi An Ancient Town', type: 'activity', time: '8:00', duration: '3h', status: 'upcoming', address: 'Ancient Town, Hoi An', image: 'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=300' },
-      { id: '3-2', name: 'Cao Lầu at Morning Glory', type: 'food', time: '11:30', duration: '1.5h', status: 'upcoming', address: '106 Nguyen Thai Hoc, Hoi An', image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=300', transport: { mode: 'walk', duration: '10 min' } },
-      { id: '3-3', name: 'Tailor Shop Visit', type: 'shopping', time: '14:00', duration: '2h', status: 'upcoming', address: 'Le Loi Street, Hoi An', image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=300', transport: { mode: 'walk', duration: '5 min' } },
-      { id: '3-4', name: 'Hoi An Night Market', type: 'shopping', time: '18:00', duration: '3h', status: 'upcoming', address: 'Nguyen Hoang Street, Hoi An', image: 'https://images.unsplash.com/photo-1569288052389-dac9b01c9c05?w=300', transport: { mode: 'walk', duration: '8 min' } },
+      { id: '3-1', name: 'Hoi An Ancient Town', type: 'activity', time: '8:00', duration: '3h', status: 'upcoming', address: 'Ancient Town, Hoi An', image: 'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=300', authenticityScore: 92 },
+      { id: '3-2', name: 'Cao Lầu at Morning Glory', type: 'food', time: '11:30', duration: '1.5h', status: 'upcoming', address: '106 Nguyen Thai Hoc, Hoi An', image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=300', transport: { mode: 'walk', duration: '10 min' }, authenticityScore: 68 },
+      { id: '3-3', name: 'Tailor Shop Visit', type: 'shopping', time: '14:00', duration: '2h', status: 'upcoming', address: 'Le Loi Street, Hoi An', image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=300', transport: { mode: 'walk', duration: '5 min' }, authenticityScore: 75 },
+      { id: '3-4', name: 'Hoi An Night Market', type: 'shopping', time: '18:00', duration: '3h', status: 'upcoming', address: 'Nguyen Hoang Street, Hoi An', image: 'https://images.unsplash.com/photo-1569288052389-dac9b01c9c05?w=300', transport: { mode: 'walk', duration: '8 min' }, authenticityScore: 79 },
     ],
   },
   'Foodie Paradise Trail': {
