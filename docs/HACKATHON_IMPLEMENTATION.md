@@ -384,6 +384,572 @@ const totalEstimate = estimatedCost + transportCost;
 
 ---
 
+## Live Trip Tracking Implementation
+
+This section covers how we track users during active trips, detect arrivals, and provide real-time assistance.
+
+### Architecture Overview
+
+```
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│   Mobile App    │────▶│   WebSocket     │────▶│     Redis       │
+│                 │     │   Server (Go)   │     │   (Trip State)  │
+│ • GPS tracking  │◀────│                 │◀────│                 │
+│ • Geofencing    │     │ • Auth          │     │ • Pub/Sub       │
+│ • Notifications │     │ • State sync    │     │ • TTL (24h)     │
+└─────────────────┘     └────────┬────────┘     └─────────────────┘
+                                 │
+                    ┌────────────┼────────────┐
+                    ▼            ▼            ▼
+             ┌───────────┐ ┌───────────┐ ┌───────────┐
+             │ Weather   │ │ PostgreSQL│ │ Claude    │
+             │ API       │ │ (Persist) │ │ (Reroute) │
+             └───────────┘ └───────────┘ └───────────┘
+```
+
+### Location Tracking Approaches
+
+#### Option 1: Continuous GPS (High Accuracy, High Battery)
+
+```typescript
+// React Native / Expo Location
+import * as Location from 'expo-location';
+
+const startTracking = async () => {
+  const { status } = await Location.requestForegroundPermissionsAsync();
+  if (status !== 'granted') return;
+
+  // High accuracy for urban navigation
+  await Location.watchPositionAsync(
+    {
+      accuracy: Location.Accuracy.High,
+      timeInterval: 10000,    // Every 10 seconds
+      distanceInterval: 50,   // Or every 50 meters
+    },
+    (location) => {
+      sendLocationToServer(location.coords);
+    }
+  );
+};
+```
+
+**When to use:** User actively navigating, needs turn-by-turn directions
+**Battery impact:** High (~15% per hour)
+
+#### Option 2: Geofencing (Low Battery, Event-Based)
+
+```typescript
+// Set up geofences around each stop
+const setupGeofences = async (stops: TripStop[]) => {
+  const geofences = stops.map((stop, index) => ({
+    identifier: stop.id,
+    latitude: stop.latitude,
+    longitude: stop.longitude,
+    radius: 100, // 100 meter radius
+    notifyOnEnter: true,
+    notifyOnExit: true,
+  }));
+
+  await Location.startGeofencingAsync('TRIP_GEOFENCES', geofences);
+};
+
+// Background task triggered on geofence events
+TaskManager.defineTask('TRIP_GEOFENCES', ({ data, error }) => {
+  if (error) return;
+
+  const { eventType, region } = data;
+
+  if (eventType === Location.GeofencingEventType.Enter) {
+    // User arrived at location
+    handleArrival(region.identifier);
+  } else if (eventType === Location.GeofencingEventType.Exit) {
+    // User left location
+    handleDeparture(region.identifier);
+  }
+});
+```
+
+**When to use:** Default mode, detecting arrivals/departures
+**Battery impact:** Low (~2-3% per hour)
+
+#### Option 3: Hybrid Approach (Recommended)
+
+```typescript
+// Combine both for optimal experience
+const TrackingMode = {
+  PASSIVE: 'passive',     // Geofencing only
+  ACTIVE: 'active',       // GPS + Geofencing
+  NAVIGATION: 'navigation' // High-frequency GPS
+};
+
+const locationStrategy = {
+  // When app is backgrounded
+  background: TrackingMode.PASSIVE,
+
+  // When app is open but user is browsing
+  foreground_idle: TrackingMode.PASSIVE,
+
+  // When user is actively traveling to next stop
+  foreground_navigating: TrackingMode.ACTIVE,
+
+  // When user requests turn-by-turn directions
+  navigation_mode: TrackingMode.NAVIGATION,
+};
+```
+
+### Arrival Detection Algorithm
+
+Detecting when a user has "arrived" is more nuanced than just GPS proximity.
+
+#### Simple Proximity Check
+
+```go
+// Basic arrival detection
+func checkArrival(userLat, userLng, stopLat, stopLng float64) bool {
+    distance := haversine(userLat, userLng, stopLat, stopLng)
+    return distance <= 100 // Within 100 meters
+}
+```
+
+**Problem:** GPS drift, tall buildings, user passing by without stopping
+
+#### Smart Arrival Detection
+
+```go
+type ArrivalDetector struct {
+    stopID        string
+    stopLat       float64
+    stopLng       float64
+    radius        float64
+    enteredAt     *time.Time
+    dwellRequired time.Duration
+    readings      []LocationReading
+}
+
+type LocationReading struct {
+    Lat       float64
+    Lng       float64
+    Accuracy  float64
+    Timestamp time.Time
+}
+
+func (d *ArrivalDetector) ProcessReading(reading LocationReading) ArrivalStatus {
+    distance := haversine(reading.Lat, reading.Lng, d.stopLat, d.stopLng)
+
+    // Factor 1: Is user within radius?
+    withinRadius := distance <= d.radius
+
+    // Factor 2: Is GPS accuracy acceptable?
+    accurateEnough := reading.Accuracy <= 50 // 50 meter accuracy
+
+    // Factor 3: Has user been here long enough? (dwell time)
+    if withinRadius && accurateEnough {
+        if d.enteredAt == nil {
+            now := time.Now()
+            d.enteredAt = &now
+        }
+
+        dwellTime := time.Since(*d.enteredAt)
+        if dwellTime >= d.dwellRequired {
+            return ArrivalStatus{
+                Arrived:   true,
+                Confidence: calculateConfidence(d.readings),
+                DwellTime: dwellTime,
+            }
+        }
+
+        return ArrivalStatus{Arrived: false, Status: "dwelling"}
+    }
+
+    // User left the area before dwell time
+    d.enteredAt = nil
+    return ArrivalStatus{Arrived: false, Status: "outside"}
+}
+
+func calculateConfidence(readings []LocationReading) float64 {
+    // More readings with consistent position = higher confidence
+    if len(readings) < 3 {
+        return 0.5
+    }
+
+    // Check consistency of readings
+    var totalVariance float64
+    for i := 1; i < len(readings); i++ {
+        dist := haversine(
+            readings[i].Lat, readings[i].Lng,
+            readings[i-1].Lat, readings[i-1].Lng,
+        )
+        totalVariance += dist
+    }
+
+    avgVariance := totalVariance / float64(len(readings)-1)
+
+    // Low variance = high confidence
+    if avgVariance < 10 {
+        return 0.95
+    } else if avgVariance < 30 {
+        return 0.8
+    } else if avgVariance < 50 {
+        return 0.6
+    }
+    return 0.4
+}
+```
+
+#### Arrival Detection Parameters by Location Type
+
+| Location Type | Radius | Dwell Time | Notes |
+|---------------|--------|------------|-------|
+| Restaurant    | 50m    | 2 min      | Small area, user sits down |
+| Beach         | 200m   | 5 min      | Large area, user might walk around |
+| Museum        | 100m   | 3 min      | Building entry |
+| Viewpoint     | 150m   | 1 min      | Quick photo stop |
+| Shopping      | 100m   | 2 min      | Multiple entrances |
+
+### Real-Time State Synchronization
+
+#### WebSocket Protocol
+
+```go
+// Server-side WebSocket handler
+type TripWebSocket struct {
+    conn     *websocket.Conn
+    tripID   string
+    userID   string
+    redis    *redis.Client
+}
+
+// Message types
+type WSMessage struct {
+    Type    string          `json:"type"`
+    Payload json.RawMessage `json:"payload"`
+}
+
+// Client → Server messages
+const (
+    MSG_LOCATION_UPDATE = "location:update"
+    MSG_STOP_COMPLETE   = "stop:complete"
+    MSG_STOP_SKIP       = "stop:skip"
+    MSG_REQUEST_REROUTE = "reroute:request"
+)
+
+// Server → Client messages
+const (
+    MSG_TRIP_STATE      = "trip:state"
+    MSG_ARRIVAL_DETECTED = "arrival:detected"
+    MSG_WEATHER_ALERT   = "weather:alert"
+    MSG_REROUTE_SUGGEST = "reroute:suggest"
+    MSG_NEARBY_TIP      = "nearby:tip"
+)
+```
+
+#### Location Update Flow
+
+```
+┌──────────┐                    ┌──────────┐                    ┌──────────┐
+│  Client  │                    │  Server  │                    │  Redis   │
+└────┬─────┘                    └────┬─────┘                    └────┬─────┘
+     │                               │                               │
+     │ location:update               │                               │
+     │ {lat, lng, accuracy, ts}      │                               │
+     │──────────────────────────────▶│                               │
+     │                               │                               │
+     │                               │ Check arrival at current stop │
+     │                               │──────────────────────────────▶│
+     │                               │                               │
+     │                               │◀──────────────────────────────│
+     │                               │                               │
+     │         [If arrived]          │                               │
+     │◀──────────────────────────────│                               │
+     │ arrival:detected              │                               │
+     │ {stopId, confidence}          │                               │
+     │                               │                               │
+     │                               │ Update trip state             │
+     │                               │──────────────────────────────▶│
+     │                               │                               │
+     │                               │ Fetch contextual info         │
+     │                               │ (tips, nearby, weather)       │
+     │                               │                               │
+     │◀──────────────────────────────│                               │
+     │ nearby:tip                    │                               │
+     │ {tip, source}                 │                               │
+     │                               │                               │
+```
+
+#### Trip State in Redis
+
+```go
+type TripState struct {
+    TripID          string           `json:"tripId"`
+    UserID          string           `json:"userId"`
+    Status          string           `json:"status"` // active, paused, completed
+    CurrentDay      int              `json:"currentDay"`
+    CurrentStopIdx  int              `json:"currentStopIdx"`
+    Stops           []StopState      `json:"stops"`
+    LastLocation    *Location        `json:"lastLocation"`
+    StartedAt       time.Time        `json:"startedAt"`
+    LastUpdated     time.Time        `json:"lastUpdated"`
+    Alerts          []Alert          `json:"alerts"`
+}
+
+type StopState struct {
+    StopID      string     `json:"stopId"`
+    Status      string     `json:"status"` // upcoming, current, arrived, completed, skipped
+    ArrivedAt   *time.Time `json:"arrivedAt"`
+    CompletedAt *time.Time `json:"completedAt"`
+    DwellTime   int        `json:"dwellTime"` // seconds spent at location
+    UserRating  *int       `json:"userRating"`
+}
+
+// Redis key structure
+// trip:{tripId}:state -> TripState (JSON)
+// trip:{tripId}:location_history -> List of Location (for path reconstruction)
+// user:{userId}:active_trip -> tripId (quick lookup)
+
+// TTL: 24 hours after last update (auto-cleanup)
+```
+
+### Contextual Information Delivery
+
+#### When User Arrives at Location
+
+```go
+func onArrival(tripState *TripState, stopID string) {
+    stop := getStopDetails(stopID)
+
+    // 1. Send arrival confirmation
+    sendToClient(tripState.UserID, WSMessage{
+        Type: MSG_ARRIVAL_DETECTED,
+        Payload: ArrivalPayload{
+            StopID:     stopID,
+            StopName:   stop.Name,
+            Confidence: 0.95,
+        },
+    })
+
+    // 2. Send relevant tips from other users
+    tips := getTipsForLocation(stopID)
+    if len(tips) > 0 {
+        sendToClient(tripState.UserID, WSMessage{
+            Type: MSG_NEARBY_TIP,
+            Payload: TipPayload{
+                Tips: tips[:min(3, len(tips))],
+                Source: "community",
+            },
+        })
+    }
+
+    // 3. Check for time-sensitive info
+    if stop.Type == "restaurant" {
+        sendToClient(tripState.UserID, WSMessage{
+            Type: "info:contextual",
+            Payload: map[string]interface{}{
+                "type": "menu_suggestion",
+                "message": "Local favorite: Bánh mì here is famous!",
+                "source": "ai",
+            },
+        })
+    }
+
+    // 4. Update ETA for remaining stops
+    recalculateSchedule(tripState)
+}
+```
+
+#### Schedule Adjustment Logic
+
+```go
+func recalculateSchedule(tripState *TripState) {
+    currentTime := time.Now()
+    currentStopIdx := tripState.CurrentStopIdx
+
+    var cumulativeDelay time.Duration
+
+    for i := currentStopIdx; i < len(tripState.Stops); i++ {
+        stop := &tripState.Stops[i]
+        originalStartTime := stop.ScheduledStart
+
+        // Adjust based on cumulative delay
+        newStartTime := originalStartTime.Add(cumulativeDelay)
+
+        // Check if this pushes into problematic territory
+        if newStartTime.After(stop.Location.CloseTime) {
+            // Stop would be closed - trigger reroute suggestion
+            suggestReroute(tripState, i, "venue_closed")
+            return
+        }
+
+        stop.AdjustedStart = newStartTime
+
+        // If user is running late, track the delay
+        if i == currentStopIdx && tripState.Stops[i].Status == "arrived" {
+            actualArrival := *tripState.Stops[i].ArrivedAt
+            expectedArrival := originalStartTime
+            if actualArrival.After(expectedArrival) {
+                cumulativeDelay = actualArrival.Sub(expectedArrival)
+            }
+        }
+    }
+
+    // Notify client of updated schedule
+    sendToClient(tripState.UserID, WSMessage{
+        Type: "schedule:updated",
+        Payload: ScheduleUpdate{
+            Delay:    cumulativeDelay.Minutes(),
+            Stops:    tripState.Stops,
+            NeedsAction: cumulativeDelay > 30*time.Minute,
+        },
+    })
+}
+```
+
+### Handling Edge Cases
+
+#### Poor GPS Signal
+
+```go
+func handlePoorSignal(reading LocationReading, tripState *TripState) {
+    if reading.Accuracy > 100 { // More than 100m uncertainty
+        // Don't make arrival decisions with poor data
+        sendToClient(tripState.UserID, WSMessage{
+            Type: "location:quality",
+            Payload: map[string]interface{}{
+                "quality": "poor",
+                "message": "GPS signal weak. Move to open area for better accuracy.",
+                "accuracy": reading.Accuracy,
+            },
+        })
+
+        // Fall back to manual confirmation
+        sendToClient(tripState.UserID, WSMessage{
+            Type: "arrival:confirm_request",
+            Payload: map[string]interface{}{
+                "stopId": tripState.Stops[tripState.CurrentStopIdx].StopID,
+                "stopName": tripState.Stops[tripState.CurrentStopIdx].Location.Name,
+                "message": "Are you at this location?",
+            },
+        })
+    }
+}
+```
+
+#### User Goes Off-Route
+
+```go
+func checkOffRoute(location Location, tripState *TripState) {
+    currentStop := tripState.Stops[tripState.CurrentStopIdx]
+    nextStop := tripState.Stops[tripState.CurrentStopIdx+1]
+
+    // Expected path: current → next
+    expectedPath := []Location{currentStop.Location.Coords, nextStop.Location.Coords}
+
+    // Calculate perpendicular distance from expected path
+    distanceFromPath := perpendicularDistance(location, expectedPath)
+
+    if distanceFromPath > 500 { // More than 500m off expected route
+        // User might be exploring or lost
+        sendToClient(tripState.UserID, WSMessage{
+            Type: "route:off_track",
+            Payload: map[string]interface{}{
+                "distance": distanceFromPath,
+                "options": []string{
+                    "continue_exploring",
+                    "return_to_route",
+                    "skip_to_next_stop",
+                },
+            },
+        })
+    }
+}
+```
+
+#### Battery Optimization
+
+```go
+// Adaptive tracking based on battery level
+func getTrackingConfig(batteryLevel int) TrackingConfig {
+    switch {
+    case batteryLevel > 50:
+        return TrackingConfig{
+            Interval:  10 * time.Second,
+            Accuracy:  AccuracyHigh,
+            Geofencing: true,
+        }
+    case batteryLevel > 20:
+        return TrackingConfig{
+            Interval:  30 * time.Second,
+            Accuracy:  AccuracyMedium,
+            Geofencing: true,
+        }
+    default:
+        // Low battery - minimal tracking
+        return TrackingConfig{
+            Interval:  0, // Geofencing only
+            Accuracy:  AccuracyLow,
+            Geofencing: true,
+        }
+    }
+}
+```
+
+### Privacy Considerations
+
+#### Data Minimization
+
+```go
+// Only collect what's necessary
+type LocationUpdate struct {
+    Lat       float64 `json:"lat"`
+    Lng       float64 `json:"lng"`
+    Accuracy  float64 `json:"accuracy"`
+    Timestamp int64   `json:"ts"`
+    // NO device ID, NO precise altitude, NO speed
+}
+
+// Location history retention
+const (
+    ACTIVE_TRIP_RETENTION  = 24 * time.Hour  // During trip
+    COMPLETED_TRIP_RETENTION = 7 * 24 * time.Hour // After completion
+    ANONYMIZED_RETENTION   = 90 * 24 * time.Hour // For analytics (no user ID)
+)
+```
+
+#### User Controls
+
+```typescript
+// Client-side privacy settings
+interface PrivacySettings {
+  locationTracking: 'always' | 'while_using' | 'never';
+  shareLocationWithCompanions: boolean;
+  contributeToHeatmaps: boolean; // Anonymized aggregate data
+  retainTripHistory: boolean;
+}
+```
+
+### Manual Fallback (Current Implementation)
+
+Since the current app is a demo without real GPS integration, we use manual controls:
+
+```typescript
+// Current UI allows manual state changes
+const handleCompleteStop = () => {
+  // User manually marks stop as complete
+  updateStopStatus(currentStopId, 'completed');
+  advanceToNextStop();
+};
+
+const handleSkipStop = () => {
+  updateStopStatus(currentStopId, 'skipped');
+  advanceToNextStop();
+};
+```
+
+**For hackathon demo:** Manual buttons simulate what GPS + geofencing would do automatically.
+
+**For production:** Replace manual controls with automatic detection, keeping manual override as fallback.
+
+---
+
 ## AI Integration Details
 
 ### Request/Response Shapes

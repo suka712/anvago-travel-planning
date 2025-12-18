@@ -7,11 +7,13 @@ import {
   CloudRain, Bike, Car, Footprints, Map, Maximize2, Minimize2,
   X, Play, Pause, SkipForward, RefreshCw, Coffee, ChevronDown,
   Sunrise, PartyPopper, Loader2, Sparkles, Star, Heart, Check,
-  Shield, Share2, Image
+  Shield, Share2, Image, Camera, MessageSquare, DollarSign,
+  Gift, Coins
 } from 'lucide-react';
 import { Button, Card, Badge } from '@/components/ui';
 import Header from '@/components/layouts/Header';
 import { useTripProgressStore, TripStop } from '@/stores/tripProgressStore';
+import { useRewardsStore, REWARD_POINTS } from '@/stores/rewardsStore';
 import { tripsAPI } from '@/services/api';
 
 // API trip data type
@@ -104,6 +106,26 @@ export default function Trip() {
     highlights: string[];
     mood: string;
   } | null>(null);
+
+  // Data collection modal state
+  const [showDataCollectionModal, setShowDataCollectionModal] = useState(false);
+  const [dataCollectionStep, setDataCollectionStep] = useState<'photos' | 'tips' | 'verify' | 'complete'>('photos');
+  const [collectedData, setCollectedData] = useState<{
+    photos: Record<string, string[]>; // stopId -> photo URLs (mock)
+    tips: Record<string, string>; // stopId -> tip text
+    verifiedHours: string[]; // stopIds with verified hours
+    verifiedPrices: string[]; // stopIds with verified prices
+  }>({
+    photos: {},
+    tips: {},
+    verifiedHours: [],
+    verifiedPrices: [],
+  });
+  const [earnedPoints, setEarnedPoints] = useState(0);
+  const [selectedStopForData, setSelectedStopForData] = useState<string | null>(null);
+
+  // Rewards store
+  const { addPoints, points: userPoints } = useRewardsStore();
 
   // Get trip name from local mapping for demo purposes
   const tripNames: Record<string, string> = {
@@ -352,6 +374,113 @@ export default function Trip() {
     toast.success('Trip memory copied to clipboard!');
     // In production, this would copy to clipboard or open share dialog
   };
+
+  // Data collection handlers
+  const handleOpenDataCollection = () => {
+    setShowDataCollectionModal(true);
+    setDataCollectionStep('photos');
+    setEarnedPoints(0);
+  };
+
+  const handleAddPhoto = (stopId: string) => {
+    // Mock photo upload - in production this would open file picker
+    const mockPhotoUrl = `https://picsum.photos/400/300?random=${Date.now()}`;
+    const existingPhotos = collectedData.photos[stopId] || [];
+    const isFirstPhoto = existingPhotos.length === 0;
+
+    setCollectedData(prev => ({
+      ...prev,
+      photos: {
+        ...prev.photos,
+        [stopId]: [...existingPhotos, mockPhotoUrl],
+      },
+    }));
+
+    const pointsEarned = REWARD_POINTS.UPLOAD_PHOTO + (isFirstPhoto ? REWARD_POINTS.FIRST_PHOTO_BONUS : 0);
+    setEarnedPoints(prev => prev + pointsEarned);
+    addPoints(pointsEarned, {
+      type: 'photo',
+      locationId: stopId,
+      locationName: stops.find(s => s.id === stopId)?.name,
+      points: pointsEarned,
+    });
+
+    toast.success(`+${pointsEarned} points for photo!`);
+  };
+
+  const handleAddTip = (stopId: string, tip: string) => {
+    if (tip.length < 10) return;
+
+    setCollectedData(prev => ({
+      ...prev,
+      tips: { ...prev.tips, [stopId]: tip },
+    }));
+
+    const pointsEarned = tip.length >= 50 ? REWARD_POINTS.DETAILED_REVIEW : REWARD_POINTS.WRITE_TIP;
+    setEarnedPoints(prev => prev + pointsEarned);
+    addPoints(pointsEarned, {
+      type: 'tip',
+      locationId: stopId,
+      locationName: stops.find(s => s.id === stopId)?.name,
+      points: pointsEarned,
+    });
+
+    toast.success(`+${pointsEarned} points for tip!`);
+    setSelectedStopForData(null);
+  };
+
+  const handleVerifyHours = (stopId: string) => {
+    if (collectedData.verifiedHours.includes(stopId)) return;
+
+    setCollectedData(prev => ({
+      ...prev,
+      verifiedHours: [...prev.verifiedHours, stopId],
+    }));
+
+    setEarnedPoints(prev => prev + REWARD_POINTS.VERIFY_HOURS);
+    addPoints(REWARD_POINTS.VERIFY_HOURS, {
+      type: 'verify_hours',
+      locationId: stopId,
+      locationName: stops.find(s => s.id === stopId)?.name,
+      points: REWARD_POINTS.VERIFY_HOURS,
+    });
+
+    toast.success(`+${REWARD_POINTS.VERIFY_HOURS} points!`);
+  };
+
+  const handleVerifyPrice = (stopId: string) => {
+    if (collectedData.verifiedPrices.includes(stopId)) return;
+
+    setCollectedData(prev => ({
+      ...prev,
+      verifiedPrices: [...prev.verifiedPrices, stopId],
+    }));
+
+    setEarnedPoints(prev => prev + REWARD_POINTS.VERIFY_PRICE);
+    addPoints(REWARD_POINTS.VERIFY_PRICE, {
+      type: 'verify_price',
+      locationId: stopId,
+      locationName: stops.find(s => s.id === stopId)?.name,
+      points: REWARD_POINTS.VERIFY_PRICE,
+    });
+
+    toast.success(`+${REWARD_POINTS.VERIFY_PRICE} points!`);
+  };
+
+  const handleFinishDataCollection = () => {
+    // Bonus for completing trip data
+    const bonusPoints = REWARD_POINTS.COMPLETE_TRIP;
+    setEarnedPoints(prev => prev + bonusPoints);
+    addPoints(bonusPoints, {
+      type: 'rating',
+      tripId: id,
+      points: bonusPoints,
+    });
+
+    setDataCollectionStep('complete');
+  };
+
+  const completedStops = stops.filter(s => s.status === 'completed');
 
   // Derive trip name from API or local store
   const tripName = apiTrip?.itinerary?.title || tripProgress?.tripName || 'My Trip';
@@ -677,6 +806,19 @@ export default function Trip() {
                 {tripName}
               </p>
               <div className="flex flex-col gap-3 justify-center max-w-md mx-auto">
+                {/* Share Experience / Data Collection Button - Primary CTA */}
+                <Button
+                  onClick={handleOpenDataCollection}
+                  className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 shadow-lg"
+                  size="lg"
+                  leftIcon={<Gift className="w-5 h-5" />}
+                >
+                  <span className="flex items-center gap-2">
+                    Share Photos & Earn Rewards
+                    <span className="px-2 py-0.5 bg-white/20 rounded-full text-xs">+50 pts</span>
+                  </span>
+                </Button>
+
                 {/* Rate Trip Button */}
                 <Button
                   onClick={handleOpenTripRating}
@@ -1335,6 +1477,377 @@ export default function Trip() {
                       onClick={handleShareMemory}
                     >
                       Share
+                    </Button>
+                  </div>
+                )}
+              </Card>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Data Collection Modal */}
+      <AnimatePresence>
+        {showDataCollectionModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-4 overflow-y-auto py-8"
+            onClick={() => dataCollectionStep === 'complete' && setShowDataCollectionModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 20 }}
+              onClick={e => e.stopPropagation()}
+              className="w-full max-w-lg"
+            >
+              <Card className="overflow-hidden max-h-[85vh] overflow-y-auto">
+                {/* Header with gradient */}
+                <div className="bg-gradient-to-br from-green-500 via-emerald-500 to-teal-500 p-6 text-white text-center -mx-4 -mt-4 mb-4 sticky top-0 z-10">
+                  <div className="flex items-center justify-between mb-2">
+                    <button
+                      onClick={() => setShowDataCollectionModal(false)}
+                      className="p-1 hover:bg-white/20 rounded-lg transition-colors"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                    <div className="flex items-center gap-2 bg-white/20 rounded-full px-3 py-1">
+                      <Coins className="w-4 h-4" />
+                      <span className="font-bold">+{earnedPoints}</span>
+                    </div>
+                  </div>
+                  <div className="w-14 h-14 bg-white/20 backdrop-blur rounded-2xl flex items-center justify-center mx-auto mb-3">
+                    {dataCollectionStep === 'complete' ? (
+                      <Gift className="w-7 h-7" />
+                    ) : dataCollectionStep === 'photos' ? (
+                      <Camera className="w-7 h-7" />
+                    ) : dataCollectionStep === 'tips' ? (
+                      <MessageSquare className="w-7 h-7" />
+                    ) : (
+                      <Check className="w-7 h-7" />
+                    )}
+                  </div>
+                  <h2 className="text-xl font-bold">
+                    {dataCollectionStep === 'complete'
+                      ? 'Thanks for Contributing!'
+                      : dataCollectionStep === 'photos'
+                      ? 'Share Your Photos'
+                      : dataCollectionStep === 'tips'
+                      ? 'Leave Tips for Others'
+                      : 'Verify Location Info'}
+                  </h2>
+                  <p className="text-white/80 text-sm mt-1">
+                    {dataCollectionStep === 'complete'
+                      ? `You earned ${earnedPoints} points!`
+                      : 'Help other travelers & earn rewards'}
+                  </p>
+
+                  {/* Progress Steps */}
+                  {dataCollectionStep !== 'complete' && (
+                    <div className="flex justify-center gap-2 mt-4">
+                      {['photos', 'tips', 'verify'].map((step, idx) => (
+                        <div
+                          key={step}
+                          className={`w-2 h-2 rounded-full ${
+                            step === dataCollectionStep
+                              ? 'bg-white'
+                              : ['photos', 'tips', 'verify'].indexOf(dataCollectionStep) > idx
+                              ? 'bg-white/60'
+                              : 'bg-white/30'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Content based on step */}
+                {dataCollectionStep === 'photos' && (
+                  <div className="space-y-4">
+                    <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-start gap-3">
+                      <Gift className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium text-amber-800">Earn up to {REWARD_POINTS.UPLOAD_PHOTO + REWARD_POINTS.FIRST_PHOTO_BONUS} points per photo!</p>
+                        <p className="text-xs text-amber-600">First photo of a location gets bonus points</p>
+                      </div>
+                    </div>
+
+                    <p className="text-sm text-gray-600">
+                      Share photos from places you visited. Your photos help other travelers!
+                    </p>
+
+                    <div className="space-y-3 max-h-64 overflow-y-auto">
+                      {completedStops.map((stop) => (
+                        <div key={stop.id} className="border rounded-xl p-3">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-100">
+                                <img src={stop.image} alt={stop.name} className="w-full h-full object-cover" />
+                              </div>
+                              <div>
+                                <p className="font-medium text-sm">{stop.name}</p>
+                                <p className="text-xs text-gray-500">{stop.type}</p>
+                              </div>
+                            </div>
+                            <Button
+                              size="sm"
+                              onClick={() => handleAddPhoto(stop.id)}
+                              leftIcon={<Camera className="w-3.5 h-3.5" />}
+                            >
+                              Add
+                            </Button>
+                          </div>
+                          {/* Show uploaded photos */}
+                          {collectedData.photos[stop.id]?.length > 0 && (
+                            <div className="flex gap-2 mt-2 overflow-x-auto pb-1">
+                              {collectedData.photos[stop.id].map((url, idx) => (
+                                <div key={idx} className="w-16 h-16 rounded-lg overflow-hidden shrink-0 border-2 border-green-400">
+                                  <img src={url} alt="" className="w-full h-full object-cover" />
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="flex gap-3">
+                      <Button
+                        variant="secondary"
+                        className="flex-1"
+                        onClick={() => setDataCollectionStep('tips')}
+                      >
+                        Skip
+                      </Button>
+                      <Button
+                        className="flex-1 bg-green-500 hover:bg-green-600"
+                        onClick={() => setDataCollectionStep('tips')}
+                      >
+                        Continue
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {dataCollectionStep === 'tips' && (
+                  <div className="space-y-4">
+                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 flex items-start gap-3">
+                      <MessageSquare className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium text-blue-800">+{REWARD_POINTS.WRITE_TIP} points per tip</p>
+                        <p className="text-xs text-blue-600">Detailed tips (50+ chars) earn +{REWARD_POINTS.DETAILED_REVIEW} points!</p>
+                      </div>
+                    </div>
+
+                    <p className="text-sm text-gray-600">
+                      Share tips to help future travelers. What should they know?
+                    </p>
+
+                    <div className="space-y-3 max-h-64 overflow-y-auto">
+                      {completedStops.map((stop) => (
+                        <div key={stop.id} className="border rounded-xl p-3">
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="w-8 h-8 rounded-lg overflow-hidden bg-gray-100">
+                              <img src={stop.image} alt={stop.name} className="w-full h-full object-cover" />
+                            </div>
+                            <p className="font-medium text-sm flex-1">{stop.name}</p>
+                            {collectedData.tips[stop.id] && (
+                              <Check className="w-4 h-4 text-green-500" />
+                            )}
+                          </div>
+                          {selectedStopForData === stop.id ? (
+                            <div className="space-y-2">
+                              <textarea
+                                className="w-full border rounded-lg p-2 text-sm resize-none"
+                                placeholder="e.g., Best to visit early morning before crowds..."
+                                rows={3}
+                                id={`tip-${stop.id}`}
+                              />
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="secondary"
+                                  onClick={() => setSelectedStopForData(null)}
+                                >
+                                  Cancel
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  onClick={() => {
+                                    const textarea = document.getElementById(`tip-${stop.id}`) as HTMLTextAreaElement;
+                                    handleAddTip(stop.id, textarea.value);
+                                  }}
+                                >
+                                  Submit
+                                </Button>
+                              </div>
+                            </div>
+                          ) : !collectedData.tips[stop.id] ? (
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              onClick={() => setSelectedStopForData(stop.id)}
+                              leftIcon={<MessageSquare className="w-3.5 h-3.5" />}
+                              className="w-full"
+                            >
+                              Add Tip
+                            </Button>
+                          ) : (
+                            <p className="text-xs text-gray-500 italic">"{collectedData.tips[stop.id]}"</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="flex gap-3">
+                      <Button
+                        variant="secondary"
+                        className="flex-1"
+                        onClick={() => setDataCollectionStep('verify')}
+                      >
+                        Skip
+                      </Button>
+                      <Button
+                        className="flex-1 bg-green-500 hover:bg-green-600"
+                        onClick={() => setDataCollectionStep('verify')}
+                      >
+                        Continue
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {dataCollectionStep === 'verify' && (
+                  <div className="space-y-4">
+                    <div className="bg-purple-50 border border-purple-200 rounded-xl p-3 flex items-start gap-3">
+                      <Check className="w-5 h-5 text-purple-600 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium text-purple-800">Quick verifications = quick points!</p>
+                        <p className="text-xs text-purple-600">Help keep our info accurate</p>
+                      </div>
+                    </div>
+
+                    <p className="text-sm text-gray-600">
+                      Confirm if the info we have is still correct:
+                    </p>
+
+                    <div className="space-y-3 max-h-64 overflow-y-auto">
+                      {completedStops.map((stop) => (
+                        <div key={stop.id} className="border rounded-xl p-3">
+                          <div className="flex items-center gap-2 mb-3">
+                            <div className="w-8 h-8 rounded-lg overflow-hidden bg-gray-100">
+                              <img src={stop.image} alt={stop.name} className="w-full h-full object-cover" />
+                            </div>
+                            <p className="font-medium text-sm">{stop.name}</p>
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleVerifyHours(stop.id)}
+                              disabled={collectedData.verifiedHours.includes(stop.id)}
+                              className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                                collectedData.verifiedHours.includes(stop.id)
+                                  ? 'bg-green-100 text-green-700 border border-green-300'
+                                  : 'bg-gray-100 hover:bg-purple-100 text-gray-700 hover:text-purple-700'
+                              }`}
+                            >
+                              <Clock className="w-3.5 h-3.5" />
+                              {collectedData.verifiedHours.includes(stop.id) ? 'Verified' : 'Hours OK'}
+                              {!collectedData.verifiedHours.includes(stop.id) && (
+                                <span className="text-purple-500">+{REWARD_POINTS.VERIFY_HOURS}</span>
+                              )}
+                            </button>
+                            <button
+                              onClick={() => handleVerifyPrice(stop.id)}
+                              disabled={collectedData.verifiedPrices.includes(stop.id)}
+                              className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                                collectedData.verifiedPrices.includes(stop.id)
+                                  ? 'bg-green-100 text-green-700 border border-green-300'
+                                  : 'bg-gray-100 hover:bg-purple-100 text-gray-700 hover:text-purple-700'
+                              }`}
+                            >
+                              <DollarSign className="w-3.5 h-3.5" />
+                              {collectedData.verifiedPrices.includes(stop.id) ? 'Verified' : 'Price OK'}
+                              {!collectedData.verifiedPrices.includes(stop.id) && (
+                                <span className="text-purple-500">+{REWARD_POINTS.VERIFY_PRICE}</span>
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <Button
+                      className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
+                      size="lg"
+                      onClick={handleFinishDataCollection}
+                    >
+                      Finish & Claim Rewards
+                    </Button>
+                  </div>
+                )}
+
+                {dataCollectionStep === 'complete' && (
+                  <div className="text-center space-y-6">
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: 'spring', damping: 10 }}
+                      className="w-20 h-20 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center mx-auto shadow-lg"
+                    >
+                      <Check className="w-10 h-10 text-white" />
+                    </motion.div>
+
+                    <div>
+                      <motion.p
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2 }}
+                        className="text-3xl font-bold text-green-600"
+                      >
+                        +{earnedPoints} Points
+                      </motion.p>
+                      <p className="text-gray-500 mt-1">Added to your balance</p>
+                    </div>
+
+                    {/* Stats summary */}
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="bg-gray-50 rounded-xl p-3">
+                        <Camera className="w-5 h-5 text-gray-400 mx-auto mb-1" />
+                        <p className="text-lg font-bold">
+                          {Object.values(collectedData.photos).reduce((a, b) => a + b.length, 0)}
+                        </p>
+                        <p className="text-xs text-gray-500">Photos</p>
+                      </div>
+                      <div className="bg-gray-50 rounded-xl p-3">
+                        <MessageSquare className="w-5 h-5 text-gray-400 mx-auto mb-1" />
+                        <p className="text-lg font-bold">{Object.keys(collectedData.tips).length}</p>
+                        <p className="text-xs text-gray-500">Tips</p>
+                      </div>
+                      <div className="bg-gray-50 rounded-xl p-3">
+                        <Check className="w-5 h-5 text-gray-400 mx-auto mb-1" />
+                        <p className="text-lg font-bold">
+                          {collectedData.verifiedHours.length + collectedData.verifiedPrices.length}
+                        </p>
+                        <p className="text-xs text-gray-500">Verified</p>
+                      </div>
+                    </div>
+
+                    <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                      <p className="text-sm font-medium text-amber-800">
+                        Your total balance: <span className="text-lg font-bold">{userPoints} points</span>
+                      </p>
+                      <p className="text-xs text-amber-600 mt-1">
+                        Redeem for premium time or partner discounts!
+                      </p>
+                    </div>
+
+                    <Button
+                      className="w-full"
+                      onClick={() => setShowDataCollectionModal(false)}
+                    >
+                      Done
                     </Button>
                   </div>
                 )}
