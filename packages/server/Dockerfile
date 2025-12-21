@@ -59,4 +59,4 @@ EXPOSE ${PORT:-3001}
 WORKDIR /app/packages/server
 
 # Run migrations and start server
-CMD ["sh", "-c", "pnpm prisma migrate deploy && node dist/index.js"]
+CMD ["sh", "-c", "pnpm prisma migrate deploy && echo 'Migration done, starting server...' && node dist/index.js"]

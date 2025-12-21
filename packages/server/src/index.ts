@@ -46,8 +46,8 @@ app.get('/health', (_, res) => {
 // Error handling
 app.use(errorHandler);
 
-// Start server
-app.listen(PORT, () => {
+// Start server - bind to 0.0.0.0 for container environments
+const server = app.listen(Number(PORT), '0.0.0.0', () => {
   console.log(`
   ╔═══════════════════════════════════════════════╗
   ║                                               ║
@@ -55,11 +55,16 @@ app.listen(PORT, () => {
   ║   Travel the world your way                   ║
   ║                                               ║
   ║   🚀 Server running on port ${PORT}              ║
-  ║   📍 http://localhost:${PORT}                    ║
+  ║   📍 http://0.0.0.0:${PORT}                      ║
   ║   🔗 Client: ${CLIENT_URL}              ║
   ║                                               ║
   ╚═══════════════════════════════════════════════╝
   `);
+});
+
+server.on('error', (err) => {
+  console.error('Server failed to start:', err);
+  process.exit(1);
 });
 
 export default app;
