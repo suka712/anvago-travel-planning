@@ -37,7 +37,10 @@ COPY --from=builder /app/packages/client/dist /usr/share/nginx/html
 # Copy nginx config as template (needs PORT substitution)
 COPY packages/client/nginx.conf /etc/nginx/nginx.conf.template
 
+# Copy and setup entrypoint script
+COPY packages/client/docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
 EXPOSE 80
 
-# envsubst replaces $PORT, then start nginx
-CMD ["/bin/sh", "-c", "envsubst '$$PORT' < /etc/nginx/nginx.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
+CMD ["/docker-entrypoint.sh"]
