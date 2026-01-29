@@ -12,7 +12,7 @@ const app: Express = express();
 const PORT = process.env.PORT || 3001;
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
 
-// Security middleware
+// Security middleware // Redeployment test
 app.use(helmet());
 app.use(cors({
   origin: CLIENT_URL,
