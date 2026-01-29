@@ -141,7 +141,7 @@ See `docs/DESIGN_SYSTEM.md` for full specifications.
 
 ## 👥 Team
 
-Built with ❤️ for the Grab Hackathon 2024
+Built with ❤️ for the Grab Hackathon 2026
 
 ## 📄 License
 
