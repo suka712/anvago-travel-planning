@@ -8,6 +8,7 @@ import onboardingRoutes from './onboarding.js';
 import integrationRoutes from './integrations.js';
 import adminRoutes from './admin.js';
 import externalRoutes from './external.js';
+import foodRoutes from './food.js';
 
 const router: Router = Router();
 
@@ -21,6 +22,7 @@ router.use('/onboarding', onboardingRoutes);
 router.use('/integrations', integrationRoutes);
 router.use('/admin', adminRoutes);
 router.use('/external', externalRoutes);
+router.use('/food', foodRoutes);
 
 // API info
 router.get('/', (_, res) => {
@@ -40,6 +42,7 @@ router.get('/', (_, res) => {
         integrations: '/api/v1/integrations',
         admin: '/api/v1/admin',
         external: '/api/v1/external',
+        food: '/api/v1/food',
       },
     },
   });

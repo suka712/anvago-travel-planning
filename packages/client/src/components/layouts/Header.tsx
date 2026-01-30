@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X, Globe, Coins, Flame, ChevronRight, Gift } from 'lucide-react';
+import { Menu, X, Globe, Coins, Flame, ChevronRight, Gift, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '@/stores/authStore';
 import { useRewardsStore, REWARD_TIERS, GIFTS } from '@/stores/rewardsStore';
@@ -51,6 +51,13 @@ export default function Header({ transparent = false }: HeaderProps) {
               className="font-medium text-gray-600 hover:text-black transition-colors"
             >
               Discover
+            </Link>
+            <Link
+              to="/food-finder"
+              className="font-medium text-gray-600 hover:text-black transition-colors flex items-center gap-1"
+            >
+              <Sparkles className="w-4 h-4 text-orange-500" />
+              AI Food
             </Link>
             {isAuthenticated && (
               <Link
@@ -252,6 +259,14 @@ export default function Header({ transparent = false }: HeaderProps) {
               onClick={() => setMobileMenuOpen(false)}
             >
               Discover
+            </Link>
+            <Link
+              to="/food-finder"
+              className="flex items-center gap-2 py-2 font-medium"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <Sparkles className="w-4 h-4 text-orange-500" />
+              AI Food
             </Link>
             {isAuthenticated ? (
               <>

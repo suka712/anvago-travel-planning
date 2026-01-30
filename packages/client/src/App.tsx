@@ -11,6 +11,7 @@ import Itinerary from '@/pages/Itinerary';
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
 import Dashboard from '@/pages/Dashboard';
+import FoodFinder from '@/pages/FoodFinder';
 import Plan from '@/pages/Plan';
 import Trip from '@/pages/Trip';
 import Admin from '@/pages/Admin';
@@ -49,6 +50,7 @@ function App() {
       <Route path="/generating" element={<Generating />} />
       <Route path="/results" element={<Results />} />
       <Route path="/itinerary/:id" element={<Itinerary />} />
+      <Route path="/food-finder" element={<FoodFinder />} />
 
       {/* Auth routes */}
       <Route path="/login" element={<Login />} />

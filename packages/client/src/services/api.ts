@@ -208,18 +208,29 @@ export const integrationsAPI = {
 export const adminAPI = {
   getStats: () =>
     api.get('/admin/stats'),
-  
+
   getUsers: () =>
     api.get('/admin/users'),
-  
+
   getLocations: () =>
     api.get('/admin/locations'),
-  
+
   updateDemoState: (state: any) =>
     api.post('/admin/demo-state', state),
-  
+
   reseedDatabase: () =>
     api.post('/admin/reseed'),
+};
+
+export const foodAPI = {
+  getSpots: (params?: { category?: string; lat?: number; lng?: number; radius?: number }) =>
+    api.get('/food/spots', { params }),
+
+  getAIRecommendations: (data: { mood?: string; preferences?: string[]; timeOfDay?: string; lat?: number; lng?: number }) =>
+    api.post('/food/ai-recommend', data),
+
+  getAIInsight: (data: { spotId: string; spotName: string; category: string; tags: string[] }) =>
+    api.post('/food/ai-insight', data),
 };
 
 export default api;
