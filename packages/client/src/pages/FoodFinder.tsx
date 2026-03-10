@@ -4,10 +4,11 @@ import {
   Sparkles, MapPin, Star, ChefHat,
   Utensils, Coffee, IceCream, Pizza, Salad, Soup,
   RefreshCw, Navigation, Brain, Zap, Heart,
-  ArrowRight
+  ArrowRight, MessageSquare, Send, AlertCircle, CheckCircle
 } from 'lucide-react';
 import { Button, Card, Badge } from '@/components/ui';
 import Header from '@/components/layouts/Header';
+import { foodAPI } from '@/services/api';
 
 // Food categories with icons
 const foodCategories = [
@@ -158,6 +159,15 @@ export default function FoodFinder() {
   const [aiRecommendation, setAiRecommendation] = useState<string>('');
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
 
+  // Comments state
+  interface Comment { id: string; text: string; author: string; createdAt: string; }
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [commentText, setCommentText] = useState('');
+  const [commentAuthor, setCommentAuthor] = useState('');
+  const [commentError, setCommentError] = useState('');
+  const [commentSuccess, setCommentSuccess] = useState(false);
+  const [commentSubmitting, setCommentSubmitting] = useState(false);
+
   // Initial load with AI animation
   useEffect(() => {
     const loadFoodSpots = async () => {
@@ -233,6 +243,46 @@ export default function FoodFinder() {
       }
       return next;
     });
+  };
+
+  // Open spot modal and load its comments
+  const openSpot = async (spot: typeof mockFoodSpots[0]) => {
+    setSelectedSpot(spot);
+    setCommentText('');
+    setCommentAuthor('');
+    setCommentError('');
+    setCommentSuccess(false);
+    try {
+      const res = await foodAPI.getComments(spot.id);
+      setComments(res.data.data || []);
+    } catch {
+      setComments([]);
+    }
+  };
+
+  // Submit a comment
+  const submitComment = async () => {
+    if (!selectedSpot || !commentText.trim()) return;
+    setCommentSubmitting(true);
+    setCommentError('');
+    setCommentSuccess(false);
+    try {
+      const res = await foodAPI.submitComment({
+        spotId: selectedSpot.id,
+        text: commentText,
+        author: commentAuthor.trim() || undefined,
+      });
+      setComments(prev => [res.data.data, ...prev]);
+      setCommentText('');
+      setCommentAuthor('');
+      setCommentSuccess(true);
+      setTimeout(() => setCommentSuccess(false), 3000);
+    } catch (err: any) {
+      const msg = err?.response?.data?.error || 'Failed to submit comment.';
+      setCommentError(msg);
+    } finally {
+      setCommentSubmitting(false);
+    }
   };
 
   return (
@@ -545,7 +595,7 @@ export default function FoodFinder() {
                     {/* Action Button */}
                     <Button
                       className="w-full mt-4"
-                      onClick={() => setSelectedSpot(spot)}
+                      onClick={() => openSpot(spot)}
                     >
                       View Details
                       <ArrowRight className="w-4 h-4 ml-2" />
@@ -647,7 +697,7 @@ export default function FoodFinder() {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex gap-3">
+                  <div className="flex gap-3 mb-6">
                     <Button className="flex-1">
                       <Navigation className="w-4 h-4 mr-2" />
                       Get Directions
@@ -662,6 +712,96 @@ export default function FoodFinder() {
                         }`}
                       />
                     </Button>
+                  </div>
+
+                  {/* Comments Section */}
+                  <div className="border-t-2 border-gray-100 pt-5">
+                    <div className="flex items-center gap-2 mb-4">
+                      <MessageSquare className="w-5 h-5 text-orange-500" />
+                      <h3 className="font-bold text-gray-900">Leave a Comment</h3>
+                      <span className="text-xs text-gray-400 ml-auto">{comments.length} comment{comments.length !== 1 ? 's' : ''}</span>
+                    </div>
+
+                    {/* Submit form */}
+                    <div className="space-y-3 mb-5">
+                      <input
+                        type="text"
+                        placeholder="Your name (optional)"
+                        value={commentAuthor}
+                        onChange={e => setCommentAuthor(e.target.value)}
+                        className="w-full px-3 py-2 border-2 border-gray-200 rounded-xl text-sm focus:outline-none focus:border-orange-400 transition-colors"
+                      />
+                      <textarea
+                        placeholder="Share your experience... (write naturally, not like a robot)"
+                        value={commentText}
+                        onChange={e => { setCommentText(e.target.value); setCommentError(''); }}
+                        rows={3}
+                        className="w-full px-3 py-2 border-2 border-gray-200 rounded-xl text-sm resize-none focus:outline-none focus:border-orange-400 transition-colors"
+                      />
+
+                      {/* Error message */}
+                      {commentError && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="flex items-start gap-2 px-3 py-2 bg-red-50 border-2 border-red-200 rounded-xl text-sm text-red-700"
+                        >
+                          <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                          <span>{commentError}</span>
+                        </motion.div>
+                      )}
+
+                      {/* Success message */}
+                      {commentSuccess && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="flex items-center gap-2 px-3 py-2 bg-green-50 border-2 border-green-200 rounded-xl text-sm text-green-700"
+                        >
+                          <CheckCircle className="w-4 h-4 flex-shrink-0" />
+                          <span>Comment posted!</span>
+                        </motion.div>
+                      )}
+
+                      <Button
+                        className="w-full"
+                        onClick={submitComment}
+                        disabled={commentSubmitting || !commentText.trim()}
+                      >
+                        {commentSubmitting ? (
+                          <span className="flex items-center gap-2">
+                            <motion.div
+                              animate={{ rotate: 360 }}
+                              transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                              className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
+                            />
+                            Posting...
+                          </span>
+                        ) : (
+                          <>
+                            <Send className="w-4 h-4 mr-2" />
+                            Post Comment
+                          </>
+                        )}
+                      </Button>
+                    </div>
+
+                    {/* Existing comments */}
+                    {comments.length > 0 && (
+                      <div className="space-y-3">
+                        {comments.map(comment => (
+                          <div key={comment.id} className="bg-gray-50 rounded-xl p-3 border border-gray-200">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="font-semibold text-sm text-gray-800">{comment.author}</span>
+                              <span className="text-xs text-gray-400">
+                                {new Date(comment.createdAt).toLocaleDateString()}
+                              </span>
+                            </div>
+                            <p className="text-sm text-gray-700">{comment.text}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               </motion.div>

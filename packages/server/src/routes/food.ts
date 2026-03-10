@@ -4,6 +4,70 @@ import { prisma } from '../config/database.js';
 
 const router: Router = Router();
 
+// In-memory comment store: spotId -> list of comments
+interface Comment {
+  id: string;
+  spotId: string;
+  text: string;
+  author: string;
+  createdAt: string;
+}
+const commentStore: Map<string, Comment[]> = new Map();
+
+// AI-generated text detector (if-else keyword filter)
+function looksAIGenerated(text: string): boolean {
+  const lower = text.toLowerCase();
+
+  const aiPhrases = [
+    'delve into',
+    'as an ai',
+    'i am an ai',
+    'certainly',
+    'absolutely',
+    'i\'d be happy to',
+    'in conclusion',
+    'in summary',
+    'it is worth noting',
+    'it\'s worth noting',
+    'it is important to note',
+    'furthermore',
+    'moreover',
+    'nevertheless',
+    'subsequently',
+    'undoubtedly',
+    'multifaceted',
+    'nuanced perspective',
+    'paradigm',
+    'seamlessly',
+    'in the realm of',
+    'culinary journey',
+    'exceptional dining experience',
+    'this establishment',
+    'leverage',
+    'utilize',
+    'comprehensive',
+    'overall, this',
+    'i would highly recommend',
+    'the ambiance is',
+    'a delightful experience',
+  ];
+
+  for (const phrase of aiPhrases) {
+    if (lower.includes(phrase)) {
+      return true;
+    }
+  }
+
+  // Also flag if text is suspiciously long and formal (over 300 chars with no casual tone)
+  if (text.length > 300) {
+    const casualIndicators = ['!', 'omg', 'wow', 'lol', 'tbh', 'ngl', 'honestly', 'literally', 'super', 'so good', 'loved it', 'hate'];
+    const hasCasual = casualIndicators.some(c => lower.includes(c));
+    if (!hasCasual) return true;
+  }
+
+  return false;
+}
+
 const genAI = process.env.GEMINI_API_KEY
   ? new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
   : null;
@@ -272,6 +336,49 @@ Make it sound like a friend giving a tip. Include 1-2 relevant emojis. Be specif
       error: 'Failed to generate insight',
     });
   }
+});
+
+// GET /food/comments/:spotId - Get comments for a food spot
+router.get('/comments/:spotId', (req: Request, res: Response) => {
+  const { spotId } = req.params;
+  const comments = commentStore.get(spotId) || [];
+  res.json({ success: true, data: comments });
+});
+
+// POST /food/comments - Submit a comment for a food spot
+router.post('/comments', (req: Request, res: Response) => {
+  const { spotId, text, author } = req.body;
+
+  if (!spotId || !text || typeof text !== 'string') {
+    return res.status(400).json({ success: false, error: 'spotId and text are required' });
+  }
+
+  const trimmed = text.trim();
+
+  if (trimmed.length < 5) {
+    return res.status(400).json({ success: false, error: 'Comment is too short.' });
+  }
+
+  if (looksAIGenerated(trimmed)) {
+    return res.status(422).json({
+      success: false,
+      aiDetected: true,
+      error: 'Your comment sounds AI-generated. Please write it in your own words and try again!',
+    });
+  }
+
+  const comment: Comment = {
+    id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    spotId,
+    text: trimmed,
+    author: (author as string)?.trim() || 'Anonymous',
+    createdAt: new Date().toISOString(),
+  };
+
+  const existing = commentStore.get(spotId) || [];
+  commentStore.set(spotId, [comment, ...existing]);
+
+  return res.status(201).json({ success: true, data: comment });
 });
 
 // Helper: Calculate distance between two coordinates (in km)

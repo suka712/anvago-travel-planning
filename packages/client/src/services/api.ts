@@ -231,6 +231,12 @@ export const foodAPI = {
 
   getAIInsight: (data: { spotId: string; spotName: string; category: string; tags: string[] }) =>
     api.post('/food/ai-insight', data),
+
+  getComments: (spotId: string) =>
+    api.get(`/food/comments/${spotId}`),
+
+  submitComment: (data: { spotId: string; text: string; author?: string }) =>
+    api.post('/food/comments', data),
 };
 
 export default api;
