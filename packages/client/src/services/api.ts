@@ -222,6 +222,16 @@ export const adminAPI = {
     api.post('/admin/reseed'),
 };
 
+export const paymentsAPI = {
+  createPayment: () =>
+    api.post<{ success: boolean; data: { payUrl: string; orderId: string } }>('/payments/create'),
+
+  getStatus: (orderId: string) =>
+    api.get<{ success: boolean; data: { orderId: string; status: string } }>(
+      `/payments/status/${orderId}`
+    ),
+};
+
 export const foodAPI = {
   getSpots: (params?: { category?: string; lat?: number; lng?: number; radius?: number }) =>
     api.get('/food/spots', { params }),

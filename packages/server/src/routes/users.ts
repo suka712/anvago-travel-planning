@@ -122,32 +122,6 @@ router.put('/me/preferences', requireAuth, async (req, res, next) => {
   }
 });
 
-// POST /users/me/upgrade (Mock premium upgrade)
-router.post('/me/upgrade', requireAuth, async (req, res, next) => {
-  try {
-    // In a real app, this would integrate with Stripe
-    // For demo, we just toggle premium status
-    
-    const user = await prisma.user.update({
-      where: { id: req.user!.id },
-      data: {
-        isPremium: true,
-        premiumUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
-      },
-    });
-
-    res.json({
-      success: true,
-      data: {
-        message: 'Successfully upgraded to Premium!',
-        isPremium: user.isPremium,
-        premiumUntil: user.premiumUntil,
-      },
-    });
-  } catch (error) {
-    next(error);
-  }
-});
 
 export default router;
 

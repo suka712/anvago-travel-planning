@@ -29,6 +29,9 @@ importers:
       '@dnd-kit/utilities':
         specifier: ^3.2.2
         version: 3.2.2(react@18.3.1)
+      '@stripe/stripe-js':
+        specifier: ^9.0.1
+        version: 9.0.1
       '@tanstack/react-query':
         specifier: ^5.62.8
         version: 5.90.12(react@18.3.1)
@@ -141,6 +144,9 @@ importers:
       passport-jwt:
         specifier: ^4.0.1
         version: 4.0.1
+      stripe:
+        specifier: ^21.0.1
+        version: 21.0.1(@types/node@22.19.2)
       zod:
         specifier: ^3.24.1
         version: 3.25.76
@@ -806,6 +812,10 @@ packages:
 
   '@standard-schema/spec@1.0.0':
     resolution: {integrity: sha512-m2bOd0f2RT9k8QJx1JN85cZYyH1RqFBdlwtkSlf4tBDYLCiiZnv1fIIwacK6cqwXavOydf0NPToMQgpKq+dVlA==}
+
+  '@stripe/stripe-js@9.0.1':
+    resolution: {integrity: sha512-un0URSosrW7wNr7xZ5iI2mC9mdeXZ3KERoVlA2RdmeLXYxHUPXq0yHzir2n/MtyXXEdSaELtz4WXGS6dzPEeKA==}
+    engines: {node: '>=12.16'}
 
   '@tailwindcss/node@4.1.18':
     resolution: {integrity: sha512-DoR7U1P7iYhw16qJ49fgXUlry1t4CpXeErJHnQ44JgTSKMaZUdf17cfn5mHchfJ4KRBZRFA/Coo+MUF5+gOaCQ==}
@@ -1951,6 +1961,15 @@ packages:
     resolution: {integrity: sha512-DvEy55V3DB7uknRo+4iOGT5fP1slR8wQohVdknigZPMpMstaKJQWhwiYBACJE3Ul2pTnATihhBYnRhZQHGBiRw==}
     engines: {node: '>= 0.8'}
 
+  stripe@21.0.1:
+    resolution: {integrity: sha512-ocv0j7dWttswDWV2XL/kb6+yiLpDXNXL3RQAOB5OB2kr49z0cEatdQc12+zP/j5nrXk6rAsT4N3y/NUvBbK7Pw==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      '@types/node': '>=18'
+    peerDependenciesMeta:
+      '@types/node':
+        optional: true
+
   supercluster@8.0.1:
     resolution: {integrity: sha512-IiOea5kJ9iqzD2t7QJq/cREyLHTtSmUT6gQsweojg9WH2sYJqZK9SswTu6jrscO6D1G5v5vYZ9ru/eq85lXeZQ==}
 
@@ -2577,6 +2596,8 @@ snapshots:
     optional: true
 
   '@standard-schema/spec@1.0.0': {}
+
+  '@stripe/stripe-js@9.0.1': {}
 
   '@tailwindcss/node@4.1.18':
     dependencies:
@@ -3808,6 +3829,10 @@ snapshots:
   statuses@2.0.1: {}
 
   statuses@2.0.2: {}
+
+  stripe@21.0.1(@types/node@22.19.2):
+    optionalDependencies:
+      '@types/node': 22.19.2
 
   supercluster@8.0.1:
     dependencies:

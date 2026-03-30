@@ -9,6 +9,7 @@ import integrationRoutes from './integrations.js';
 import adminRoutes from './admin.js';
 import externalRoutes from './external.js';
 import foodRoutes from './food.js';
+import paymentRoutes from './payments.js';
 
 const router: Router = Router();
 
@@ -23,6 +24,7 @@ router.use('/integrations', integrationRoutes);
 router.use('/admin', adminRoutes);
 router.use('/external', externalRoutes);
 router.use('/food', foodRoutes);
+router.use('/payments', paymentRoutes);
 
 // API info
 router.get('/', (_, res) => {

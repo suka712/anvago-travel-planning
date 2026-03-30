@@ -18,6 +18,7 @@ import Admin from '@/pages/Admin';
 import Settings from '@/pages/Settings';
 import NotFound from '@/pages/NotFound';
 import AuthCallback from '@/pages/AuthCallback';
+import PaymentResult from '@/pages/PaymentResult';
 
 // Route guards
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
@@ -56,6 +57,9 @@ function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
+
+      {/* Payment result — MoMo redirects here after checkout */}
+      <Route path="/payment/result" element={<PaymentResult />} />
 
       {/* Protected routes */}
       <Route element={<ProtectedRoute />}>

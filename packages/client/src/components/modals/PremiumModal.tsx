@@ -1,6 +1,9 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Crown, Check, Sparkles, Zap, Star, Shield } from 'lucide-react';
+import { X, Crown, Check, Sparkles, Zap, Star, Shield, Loader2 } from 'lucide-react';
+import { useState } from 'react';
+import toast from 'react-hot-toast';
 import { Button, Card, Badge } from '@/components/ui';
+import { paymentsAPI } from '@/services/api';
 
 interface PremiumModalProps {
   isOpen: boolean;
@@ -32,10 +35,18 @@ const premiumFeatures = [
 ];
 
 export default function PremiumModal({ isOpen, onClose, feature }: PremiumModalProps) {
-  const handleUpgrade = () => {
-    // In real app, would redirect to payment flow
-    console.log('Upgrading to premium');
-    onClose();
+  const [loading, setLoading] = useState(false);
+
+  const handleUpgrade = async () => {
+    setLoading(true);
+    try {
+      const res = await paymentsAPI.createPayment();
+      window.location.href = res.data.data.payUrl;
+    } catch (err: any) {
+      const msg = err?.response?.data?.error?.message || 'Failed to start payment. Please try again.';
+      toast.error(msg);
+      setLoading(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -118,9 +129,13 @@ export default function PremiumModal({ isOpen, onClose, feature }: PremiumModalP
 
             {/* CTA */}
             <div className="space-y-3">
-              <Button fullWidth size="lg" onClick={handleUpgrade}>
-                <Crown className="w-5 h-5 mr-2" />
-                Start Free Trial
+              <Button fullWidth size="lg" onClick={handleUpgrade} disabled={loading}>
+                {loading ? (
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                ) : (
+                  <Crown className="w-5 h-5 mr-2" />
+                )}
+                {loading ? 'Redirecting to MoMo...' : 'Pay with MoMo'}
               </Button>
               <button
                 onClick={onClose}
