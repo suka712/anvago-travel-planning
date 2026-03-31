@@ -1,18 +1,19 @@
 import { Router } from 'express';
-import crypto from 'crypto';
+import { SePayPgClient } from 'sepay-pg-node';
 import { prisma } from '../config/database.js';
 import { requireAuth } from '../middleware/auth.js';
 import { AppError } from '../middleware/errorHandler.js';
 
 const router: Router = Router();
 
-const MOMO_PARTNER_CODE = process.env.MOMO_PARTNER_CODE || 'MOMO';
-const MOMO_ACCESS_KEY = process.env.MOMO_ACCESS_KEY || 'F8BBA842ECF85';
-const MOMO_SECRET_KEY = process.env.MOMO_SECRET_KEY || 'K951B6PE1waDMi640xX08PD3vg6EkVlz';
-const MOMO_ENDPOINT =
-  process.env.MOMO_ENDPOINT || 'https://test-payment.momo.vn/v2/gateway/api/create';
-const SERVER_URL = process.env.SERVER_URL || 'http://localhost:3001';
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
+const SERVER_URL = process.env.SERVER_URL || 'http://localhost:3001';
+
+const sepay = new SePayPgClient({
+  env: (process.env.SEPAY_ENV as 'sandbox' | 'production') || 'sandbox',
+  merchant_id: process.env.SEPAY_MERCHANT_ID || '',
+  secret_key: process.env.SEPAY_SECRET_KEY || '',
+});
 
 const PREMIUM_AMOUNT_VND = 99000; // 99,000 VND/month
 const PREMIUM_DURATION_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
@@ -26,72 +27,27 @@ router.post('/create', requireAuth, async (req, res, next) => {
       throw AppError.badRequest('Already a premium member');
     }
 
-    const requestId = `req-${Date.now()}-${user.id.slice(0, 8)}`;
     const orderId = `anvago-${Date.now()}-${user.id.slice(0, 8)}`;
-    const orderInfo = 'Anvago Premium - 1 thang';
-    const redirectUrl = `${CLIENT_URL}/payment/result`;
-    const ipnUrl = `${SERVER_URL}/api/v1/payments/ipn`;
-    const requestType = 'payWithMethod';
-    const extraData = '';
-    const amount = PREMIUM_AMOUNT_VND;
 
-    const rawSignature =
-      `accessKey=${MOMO_ACCESS_KEY}` +
-      `&amount=${amount}` +
-      `&extraData=${extraData}` +
-      `&ipnUrl=${ipnUrl}` +
-      `&orderId=${orderId}` +
-      `&orderInfo=${orderInfo}` +
-      `&partnerCode=${MOMO_PARTNER_CODE}` +
-      `&redirectUrl=${redirectUrl}` +
-      `&requestId=${requestId}` +
-      `&requestType=${requestType}`;
-
-    const signature = crypto
-      .createHmac('sha256', MOMO_SECRET_KEY)
-      .update(rawSignature)
-      .digest('hex');
-
-    const payload = {
-      partnerCode: MOMO_PARTNER_CODE,
-      partnerName: 'Anvago',
-      storeId: 'AnvagoStore',
-      requestId,
-      amount,
-      orderId,
-      orderInfo,
-      redirectUrl,
-      ipnUrl,
-      lang: 'vi',
-      extraData,
-      requestType,
-      signature,
-    };
-
-    const momoRes = await fetch(MOMO_ENDPOINT, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
+    const fields = sepay.checkout.initOneTimePaymentFields({
+      operation: 'PURCHASE',
+      payment_method: 'BANK_TRANSFER',
+      order_invoice_number: orderId,
+      order_amount: PREMIUM_AMOUNT_VND,
+      currency: 'VND',
+      order_description: 'Anvago Premium - 1 thang',
+      success_url: `${CLIENT_URL}/payment/result?orderId=${orderId}`,
+      error_url: `${CLIENT_URL}/payment/result?orderId=${orderId}&status=error`,
+      cancel_url: `${CLIENT_URL}/payment/result?orderId=${orderId}&status=cancel`,
     });
 
-    const momoData = (await momoRes.json()) as {
-      resultCode: number;
-      message: string;
-      payUrl?: string;
-      qrCodeUrl?: string;
-      deeplink?: string;
-    };
-
-    if (momoData.resultCode !== 0) {
-      throw AppError.internal(`MoMo error: ${momoData.message}`);
-    }
+    const checkoutUrl = sepay.checkout.initCheckoutUrl();
 
     await prisma.payment.create({
       data: {
         userId: user.id,
         orderId,
-        requestId,
-        amount,
+        amount: PREMIUM_AMOUNT_VND,
         status: 'pending',
       },
     });
@@ -99,9 +55,8 @@ router.post('/create', requireAuth, async (req, res, next) => {
     res.json({
       success: true,
       data: {
-        payUrl: momoData.payUrl,
-        qrCodeUrl: momoData.qrCodeUrl,
-        deeplink: momoData.deeplink,
+        checkoutUrl,
+        fields,
         orderId,
       },
     });
@@ -110,68 +65,44 @@ router.post('/create', requireAuth, async (req, res, next) => {
   }
 });
 
-// POST /payments/ipn  — MoMo Instant Payment Notification
-// No auth — called by MoMo's servers. Verified via HMAC signature.
+// POST /payments/ipn  — SEPAY Instant Payment Notification
+// No auth — verified via X-Secret-Key header
 router.post('/ipn', async (req, res) => {
-  const {
-    partnerCode,
-    orderId,
-    requestId,
-    amount,
-    orderInfo,
-    orderType,
-    transId,
-    resultCode,
-    message,
-    payType,
-    responseTime,
-    extraData,
-    signature,
-  } = req.body;
+  const secretKey = req.headers['x-secret-key'];
 
-  // Verify MoMo signature
-  const rawSignature =
-    `accessKey=${MOMO_ACCESS_KEY}` +
-    `&amount=${amount}` +
-    `&extraData=${extraData}` +
-    `&message=${message}` +
-    `&orderId=${orderId}` +
-    `&orderInfo=${orderInfo}` +
-    `&orderType=${orderType}` +
-    `&partnerCode=${partnerCode}` +
-    `&payType=${payType}` +
-    `&requestId=${requestId}` +
-    `&responseTime=${responseTime}` +
-    `&resultCode=${resultCode}` +
-    `&transId=${transId}`;
-
-  const expectedSig = crypto
-    .createHmac('sha256', MOMO_SECRET_KEY)
-    .update(rawSignature)
-    .digest('hex');
-
-  if (signature !== expectedSig) {
-    console.error('[MoMo IPN] Invalid signature for orderId:', orderId);
-    return res.status(400).json({ message: 'Invalid signature' });
+  if (secretKey !== process.env.SEPAY_SECRET_KEY) {
+    console.error('[SEPAY IPN] Invalid secret key');
+    return res.status(400).json({ message: 'Invalid secret key' });
   }
+
+  const { notification_type, order, transaction } = req.body as {
+    notification_type: string;
+    order: { order_invoice_number: string; order_status: string };
+    transaction: { transaction_status: string; transaction_id?: string };
+  };
+
+  const orderId = order?.order_invoice_number;
 
   const payment = await prisma.payment.findUnique({ where: { orderId } });
 
   if (!payment) {
-    console.error('[MoMo IPN] Unknown orderId:', orderId);
+    console.error('[SEPAY IPN] Unknown orderId:', orderId);
     return res.status(404).json({ message: 'Payment not found' });
   }
 
   if (payment.status !== 'pending') {
     // Already processed (duplicate IPN)
-    return res.status(204).send();
+    return res.status(200).json({ success: true });
   }
 
-  if (resultCode === 0) {
+  if (order.order_status === 'CAPTURED' && transaction.transaction_status === 'APPROVED') {
     await prisma.$transaction([
       prisma.payment.update({
         where: { orderId },
-        data: { status: 'completed', momoTransId: String(transId) },
+        data: {
+          status: 'completed',
+          gatewayTransId: transaction.transaction_id ?? null,
+        },
       }),
       prisma.user.update({
         where: { id: payment.userId },
@@ -181,18 +112,18 @@ router.post('/ipn', async (req, res) => {
         },
       }),
     ]);
-    console.log(`[MoMo IPN] Payment completed — userId: ${payment.userId}, orderId: ${orderId}`);
+    console.log(`[SEPAY IPN] Payment completed — userId: ${payment.userId}, orderId: ${orderId}`);
   } else {
     await prisma.payment.update({
       where: { orderId },
       data: { status: 'failed' },
     });
     console.log(
-      `[MoMo IPN] Payment failed — orderId: ${orderId}, resultCode: ${resultCode}`
+      `[SEPAY IPN] Payment failed — orderId: ${orderId}, notification_type: ${notification_type}`
     );
   }
 
-  return res.status(204).send();
+  return res.status(200).json({ success: true });
 });
 
 // GET /payments/status/:orderId  — polled by frontend after redirect

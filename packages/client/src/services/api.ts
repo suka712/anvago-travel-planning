@@ -224,7 +224,7 @@ export const adminAPI = {
 
 export const paymentsAPI = {
   createPayment: () =>
-    api.post<{ success: boolean; data: { payUrl: string; orderId: string } }>('/payments/create'),
+    api.post<{ success: boolean; data: { checkoutUrl: string; fields: Record<string, string>; orderId: string } }>('/payments/create'),
 
   getStatus: (orderId: string) =>
     api.get<{ success: boolean; data: { orderId: string; status: string } }>(

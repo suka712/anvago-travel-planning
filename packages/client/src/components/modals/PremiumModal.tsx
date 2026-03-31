@@ -41,7 +41,21 @@ export default function PremiumModal({ isOpen, onClose, feature }: PremiumModalP
     setLoading(true);
     try {
       const res = await paymentsAPI.createPayment();
-      window.location.href = res.data.data.payUrl;
+      const { checkoutUrl, fields } = res.data.data;
+
+      // SEPAY requires a form POST to their checkout page
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = checkoutUrl;
+      Object.entries(fields as Record<string, string>).forEach(([key, value]) => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = key;
+        input.value = value;
+        form.appendChild(input);
+      });
+      document.body.appendChild(form);
+      form.submit();
     } catch (err: any) {
       const msg = err?.response?.data?.error?.message || 'Failed to start payment. Please try again.';
       toast.error(msg);
@@ -135,7 +149,7 @@ export default function PremiumModal({ isOpen, onClose, feature }: PremiumModalP
                 ) : (
                   <Crown className="w-5 h-5 mr-2" />
                 )}
-                {loading ? 'Redirecting to MoMo...' : 'Pay with MoMo'}
+                {loading ? 'Redirecting to SEPAY...' : 'Pay with SEPAY'}
               </Button>
               <button
                 onClick={onClose}

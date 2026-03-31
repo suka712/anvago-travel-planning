@@ -14,14 +14,13 @@ export default function PaymentResult() {
   const { loadUser } = useAuthStore();
 
   const orderId = searchParams.get('orderId');
-  const resultCode = searchParams.get('resultCode');
+  const redirectStatus = searchParams.get('status'); // 'error' or 'cancel' from SEPAY redirect
 
   const [status, setStatus] = useState<Status>('polling');
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    // MoMo includes resultCode=0 in the redirect URL on success
-    if (resultCode && resultCode !== '0') {
+    if (redirectStatus === 'error' || redirectStatus === 'cancel') {
       setStatus('failed');
       return;
     }
@@ -64,7 +63,7 @@ export default function PaymentResult() {
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [orderId, resultCode, loadUser]);
+  }, [orderId, redirectStatus, loadUser]);
 
   return (
     <div className="min-h-screen bg-[#FAFAF8] flex items-center justify-center p-4">
@@ -77,7 +76,7 @@ export default function PaymentResult() {
           <>
             <Loader2 className="w-16 h-16 text-[#4FC3F7] animate-spin mx-auto mb-6" />
             <h1 className="text-2xl font-bold mb-2">Confirming payment...</h1>
-            <p className="text-gray-500">Please wait while we verify your payment with MoMo.</p>
+            <p className="text-gray-500">Please wait while we verify your payment with SEPAY.</p>
           </>
         )}
 
@@ -86,7 +85,7 @@ export default function PaymentResult() {
             <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-6" />
             <h1 className="text-2xl font-bold mb-2">You're now Premium!</h1>
             <p className="text-gray-500 mb-8">
-              Your MoMo payment was confirmed. Enjoy all premium features for the next 30 days.
+              Your payment was confirmed. Enjoy all premium features for the next 30 days.
             </p>
             <Button fullWidth size="lg" onClick={() => navigate('/dashboard')}>
               Go to Dashboard

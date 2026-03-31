@@ -31,6 +31,7 @@
     "passport-facebook": "^3.0.0",
     "passport-google-oauth20": "^2.0.0",
     "passport-jwt": "^4.0.1",
+    "sepay-pg-node": "^1.0.0",
     "stripe": "^21.0.1",
     "zod": "^3.24.1"
   },
