@@ -170,15 +170,6 @@ export default function Login() {
               Sign In
             </Button>
           </form>
-
-          {/* Demo Credentials */}
-          <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-            <p className="text-sm text-gray-600 text-center mb-2">Demo accounts:</p>
-            <div className="text-xs text-gray-500 space-y-1">
-              <p><strong>Admin:</strong> admin@anvago.com / admin123</p>
-              <p><strong>User:</strong> demo@anvago.com / demo123</p>
-            </div>
-          </div>
         </Card>
 
         {/* Sign Up Link */}
