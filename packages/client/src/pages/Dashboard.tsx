@@ -16,6 +16,8 @@ import { useFavoritesStore } from '@/stores/favoritesStore';
 import { PremiumModal } from '@/components/modals';
 import { itinerariesAPI, tripsAPI } from '@/services/api';
 
+const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=600';
+
 // Trip status types
 type TripStatus = 'active' | 'upcoming' | 'planning' | 'completed';
 
@@ -473,6 +475,7 @@ export default function Dashboard() {
                               src={trip.image}
                               alt={trip.name}
                               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                              onError={(e) => { e.currentTarget.src = FALLBACK_IMAGE; }}
                             />
                             <div className={`absolute top-2 left-2 w-8 h-8 ${getStatusColor(trip.status)} rounded-lg flex items-center justify-center`}>
                               <StatusIcon className="w-4 h-4 text-white" />
@@ -594,6 +597,7 @@ export default function Dashboard() {
                       src={itinerary.coverImage}
                       alt={itinerary.name}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      onError={(e) => { e.currentTarget.src = FALLBACK_IMAGE; }}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
