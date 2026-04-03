@@ -10,6 +10,8 @@ import { Button, Card, Badge } from '@/components/ui';
 import Header from '@/components/layouts/Header';
 import { foodAPI } from '@/services/api';
 
+const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400';
+
 // Food categories with icons
 const foodCategories = [
   { id: 'all', name: 'All Food', icon: Utensils, color: 'bg-gray-100' },
@@ -523,6 +525,7 @@ export default function FoodFinder() {
                       src={spot.image}
                       alt={spot.name}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      onError={(e) => { e.currentTarget.src = FALLBACK_IMAGE; }}
                     />
                     {/* Overlay badges */}
                     <div className="absolute top-3 left-3 flex gap-2">
@@ -644,6 +647,7 @@ export default function FoodFinder() {
                     src={selectedSpot.image}
                     alt={selectedSpot.name}
                     className="w-full h-full object-cover"
+                    onError={(e) => { e.currentTarget.src = FALLBACK_IMAGE; }}
                   />
                   <button
                     onClick={() => setSelectedSpot(null)}
