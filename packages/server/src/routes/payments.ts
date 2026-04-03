@@ -15,7 +15,7 @@ const sepay = new SePayPgClient({
   secret_key: process.env.SEPAY_SECRET_KEY || '',
 });
 
-const PREMIUM_AMOUNT_VND = 99000; // 99,000 VND/month
+const PREMIUM_AMOUNT_VND = 280000; // 280,000 VND/month
 const PREMIUM_DURATION_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
 // POST /payments/create

@@ -133,7 +133,7 @@ export default function PremiumModal({ isOpen, onClose, feature }: PremiumModalP
             {/* Pricing */}
             <div className="bg-gray-50 rounded-xl p-4 mb-6">
               <div className="flex items-baseline justify-center gap-2 mb-2">
-                <span className="text-4xl font-black">$9.99</span>
+                <span className="text-4xl font-black">280,000₫</span>
                 <span className="text-gray-500">/month</span>
               </div>
               <p className="text-center text-sm text-gray-500">

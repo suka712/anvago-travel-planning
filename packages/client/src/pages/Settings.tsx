@@ -439,7 +439,7 @@ export default function Settings() {
                             </Badge>
                           </div>
                           <p className="text-3xl font-black mb-4">
-                            $9.99<span className="text-sm font-normal text-gray-500">/month</span>
+                            280,000₫<span className="text-sm font-normal text-gray-500">/month</span>
                           </p>
                           <ul className="space-y-2 text-sm">
                             <li className="flex items-center gap-2">
@@ -480,9 +480,9 @@ export default function Settings() {
                       <h3 className="font-bold mb-4">Billing History</h3>
                       <div className="space-y-1">
                         {[
-                          { date: 'Dec 1, 2024', amount: '$9.99', status: 'Paid' },
-                          { date: 'Nov 1, 2024', amount: '$9.99', status: 'Paid' },
-                          { date: 'Oct 1, 2024', amount: '$9.99', status: 'Paid' },
+                          { date: 'Dec 1, 2024', amount: '280,000₫', status: 'Paid' },
+                          { date: 'Nov 1, 2024', amount: '280,000₫', status: 'Paid' },
+                          { date: 'Oct 1, 2024', amount: '280,000₫', status: 'Paid' },
                         ].map((invoice, idx) => (
                           <div
                             key={idx}
