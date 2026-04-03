@@ -10,7 +10,7 @@ import { Button, Card, Badge } from '@/components/ui';
 import Header from '@/components/layouts/Header';
 import { foodAPI } from '@/services/api';
 
-const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400';
+const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1715925717150-2a6d181d8846?q=80&w=1286&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D';
 
 // Food categories with icons
 const foodCategories = [
