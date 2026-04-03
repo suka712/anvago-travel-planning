@@ -454,6 +454,7 @@ export default function Results() {
                           src={itinerary.image}
                           alt={itinerary.name}
                           className="w-full h-full object-cover"
+                          onError={(e) => { e.currentTarget.src = 'https://placehold.co/600x400?text=No+Image'; }}
                         />
                         {viewMode === 'suggested' && itinerary.matchScore !== undefined && itinerary.matchScore > 0 && (
                           <div className="absolute top-2 left-2">
@@ -522,6 +523,7 @@ export default function Results() {
                           src={selectedItinerary.image}
                           alt={selectedItinerary.name}
                           className="w-full h-full object-cover"
+                          onError={(e) => { e.currentTarget.src = 'https://placehold.co/600x400?text=No+Image'; }}
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
 
@@ -744,7 +746,7 @@ export default function Results() {
                 </div>
 
                 <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg mb-4">
-                  <img src={selectedItinerary.image} alt={selectedItinerary.name} className="w-12 h-12 rounded-lg object-cover" />
+                  <img src={selectedItinerary.image} alt={selectedItinerary.name} className="w-12 h-12 rounded-lg object-cover" onError={(e) => { e.currentTarget.src = 'https://placehold.co/600x400?text=No+Image'; }} />
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-sm truncate">{selectedItinerary.name}</p>
                     <p className="text-xs text-gray-500">{selectedItinerary.duration} days • {answers.destination || 'Danang'}</p>
