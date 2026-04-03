@@ -173,7 +173,7 @@ export default function FoodFinder() {
 
   // Chat state
   interface ChatMessage { role: 'user' | 'assistant'; content: string }
-  const [chatOpen, setChatOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(true);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState('');
   const [chatLoading, setChatLoading] = useState(false);
