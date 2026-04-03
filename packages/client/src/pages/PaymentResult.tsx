@@ -32,7 +32,7 @@ export default function PaymentResult() {
 
     // Poll the backend until the IPN has been processed (or timeout after 30s)
     let attempts = 0;
-    const MAX_ATTEMPTS = 10;
+    const MAX_ATTEMPTS = 20;
 
     const poll = async () => {
       attempts += 1;
@@ -58,7 +58,7 @@ export default function PaymentResult() {
     };
 
     poll();
-    intervalRef.current = setInterval(poll, 3000);
+    intervalRef.current = setInterval(poll, 1500);
 
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
