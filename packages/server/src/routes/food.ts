@@ -338,6 +338,73 @@ Make it sound like a friend giving a tip. Include 1-2 relevant emojis. Be specif
   }
 });
 
+// POST /food/chat - Chat with AI food assistant powered by NVIDIA NIM
+router.post('/chat', async (req: Request, res: Response) => {
+  try {
+    const { messages } = req.body as {
+      messages: { role: 'user' | 'assistant'; content: string }[];
+    };
+
+    if (!messages || !Array.isArray(messages) || messages.length === 0) {
+      return res.status(400).json({ success: false, error: 'messages array is required' });
+    }
+
+    const apiKey = process.env.NVIDIA_NIM_API_KEY;
+    if (!apiKey) {
+      return res.status(500).json({ success: false, error: 'NVIDIA NIM API key not configured' });
+    }
+
+    const spotsContext = mockFoodSpots
+      .map(s => `- ${s.name} (${s.category}): ${s.tags.join(', ')}, Rating: ${s.rating}, Price: ${'$'.repeat(s.priceLevel)}, ${s.openNow ? 'Open' : 'Closed'}, Address: ${s.address}`)
+      .join('\n');
+
+    const systemMessage = {
+      role: 'system',
+      content: `You are Anvago's friendly AI food assistant for Da Nang, Vietnam. You help travelers discover the best food spots, answer questions about local cuisine, and give personalized recommendations.
+
+Here are the current food spots in our database:
+${spotsContext}
+
+Guidelines:
+- Be concise, friendly, and enthusiastic about Da Nang food
+- Use 1-2 emojis per response
+- If asked about a specific dish, relate it to the available spots when possible
+- Give honest, helpful recommendations
+- Keep responses to 2-4 sentences unless the user asks for detail`,
+    };
+
+    const response = await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: 'meta/llama-3.1-8b-instruct',
+        messages: [systemMessage, ...messages],
+        max_tokens: 512,
+        temperature: 0.7,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('[NVIDIA NIM] API error:', response.status, errorText);
+      return res.status(502).json({ success: false, error: 'AI service unavailable' });
+    }
+
+    const data = await response.json() as {
+      choices: { message: { content: string } }[];
+    };
+    const reply = data.choices?.[0]?.message?.content || 'Sorry, I could not generate a response.';
+
+    return res.json({ success: true, data: { reply } });
+  } catch (error) {
+    console.error('Error in food chat:', error);
+    return res.status(500).json({ success: false, error: 'Failed to process chat message' });
+  }
+});
+
 // GET /food/comments/:spotId - Get comments for a food spot
 router.get('/comments/:spotId', (req: Request, res: Response) => {
   const { spotId } = req.params;

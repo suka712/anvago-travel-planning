@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Sparkles, MapPin, Star, ChefHat,
   Utensils, Coffee, IceCream, Pizza, Salad, Soup,
   RefreshCw, Navigation, Brain, Zap, Heart,
-  ArrowRight, MessageSquare, Send, AlertCircle, CheckCircle
+  ArrowRight, MessageSquare, Send, AlertCircle, CheckCircle,
+  X, Bot, User
 } from 'lucide-react';
 import { Button, Card, Badge } from '@/components/ui';
 import Header from '@/components/layouts/Header';
@@ -170,6 +171,14 @@ export default function FoodFinder() {
   const [commentSuccess, setCommentSuccess] = useState(false);
   const [commentSubmitting, setCommentSubmitting] = useState(false);
 
+  // Chat state
+  interface ChatMessage { role: 'user' | 'assistant'; content: string }
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [chatInput, setChatInput] = useState('');
+  const [chatLoading, setChatLoading] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
   // Initial load with AI animation
   useEffect(() => {
     const loadFoodSpots = async () => {
@@ -286,6 +295,36 @@ export default function FoodFinder() {
       setCommentSubmitting(false);
     }
   };
+
+  // Send chat message
+  const sendChatMessage = async () => {
+    const text = chatInput.trim();
+    if (!text || chatLoading) return;
+
+    const userMsg: ChatMessage = { role: 'user', content: text };
+    const updated = [...chatMessages, userMsg];
+    setChatMessages(updated);
+    setChatInput('');
+    setChatLoading(true);
+
+    try {
+      const res = await foodAPI.chat(updated);
+      const reply = res.data.data.reply;
+      setChatMessages(prev => [...prev, { role: 'assistant', content: reply }]);
+    } catch {
+      setChatMessages(prev => [
+        ...prev,
+        { role: 'assistant', content: 'Sorry, I couldn\'t connect right now. Please try again!' },
+      ]);
+    } finally {
+      setChatLoading(false);
+    }
+  };
+
+  // Auto-scroll chat
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [chatMessages, chatLoading]);
 
   return (
     <div className="min-h-screen bg-[#FAFAF8]">
@@ -812,6 +851,115 @@ export default function FoodFinder() {
             </motion.div>
           )}
         </AnimatePresence>
+      </div>
+
+      {/* Floating Chat Widget */}
+      <div className="fixed bottom-6 right-6 z-50">
+        <AnimatePresence>
+          {chatOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.95 }}
+              className="mb-3 w-[360px] max-h-[500px] bg-white rounded-2xl border-2 border-black shadow-[4px_4px_0px_#000] flex flex-col overflow-hidden"
+            >
+              {/* Chat Header */}
+              <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-orange-400 to-red-500 text-white">
+                <div className="flex items-center gap-2">
+                  <Bot className="w-5 h-5" />
+                  <span className="font-bold text-sm">Food AI Assistant</span>
+                  <span className="text-[10px] bg-white/20 px-1.5 py-0.5 rounded-full">NVIDIA NIM</span>
+                </div>
+                <button onClick={() => setChatOpen(false)} className="p-1 hover:bg-white/20 rounded-lg transition-colors">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Chat Messages */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-[250px] max-h-[350px]">
+                {chatMessages.length === 0 && (
+                  <div className="text-center text-gray-400 text-sm py-8">
+                    <Bot className="w-8 h-8 mx-auto mb-2 text-orange-300" />
+                    <p className="font-medium text-gray-500">Ask me anything about food in Da Nang!</p>
+                    <p className="text-xs mt-1">Try: "What's the best pho spot?" or "I want something sweet"</p>
+                  </div>
+                )}
+                {chatMessages.map((msg, idx) => (
+                  <div key={idx} className={`flex gap-2 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    {msg.role === 'assistant' && (
+                      <div className="w-6 h-6 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center flex-shrink-0 mt-1">
+                        <Bot className="w-3.5 h-3.5 text-white" />
+                      </div>
+                    )}
+                    <div className={`max-w-[75%] px-3 py-2 rounded-xl text-sm ${
+                      msg.role === 'user'
+                        ? 'bg-black text-white rounded-br-sm'
+                        : 'bg-gray-100 text-gray-800 rounded-bl-sm'
+                    }`}>
+                      {msg.content}
+                    </div>
+                    {msg.role === 'user' && (
+                      <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0 mt-1">
+                        <User className="w-3.5 h-3.5 text-gray-600" />
+                      </div>
+                    )}
+                  </div>
+                ))}
+                {chatLoading && (
+                  <div className="flex gap-2 justify-start">
+                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center flex-shrink-0 mt-1">
+                      <Bot className="w-3.5 h-3.5 text-white" />
+                    </div>
+                    <div className="bg-gray-100 px-4 py-2 rounded-xl rounded-bl-sm">
+                      <div className="flex gap-1">
+                        {[0, 1, 2].map(i => (
+                          <motion.div
+                            key={i}
+                            className="w-1.5 h-1.5 bg-gray-400 rounded-full"
+                            animate={{ y: [0, -4, 0] }}
+                            transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.15 }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+                <div ref={chatEndRef} />
+              </div>
+
+              {/* Chat Input */}
+              <div className="border-t-2 border-gray-100 p-3">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={chatInput}
+                    onChange={e => setChatInput(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && sendChatMessage()}
+                    placeholder="Ask about food in Da Nang..."
+                    className="flex-1 px-3 py-2 border-2 border-gray-200 rounded-xl text-sm focus:outline-none focus:border-orange-400 transition-colors"
+                  />
+                  <button
+                    onClick={sendChatMessage}
+                    disabled={chatLoading || !chatInput.trim()}
+                    className="px-3 py-2 bg-gradient-to-r from-orange-400 to-red-500 text-white rounded-xl border-2 border-black shadow-[2px_2px_0px_#000] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Send className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Chat Toggle Button */}
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => setChatOpen(prev => !prev)}
+          className="w-14 h-14 bg-gradient-to-r from-orange-400 to-red-500 text-white rounded-full border-2 border-black shadow-[3px_3px_0px_#000] hover:shadow-[1px_1px_0px_#000] hover:translate-x-[2px] hover:translate-y-[2px] transition-all flex items-center justify-center"
+        >
+          {chatOpen ? <X className="w-6 h-6" /> : <MessageSquare className="w-6 h-6" />}
+        </motion.button>
       </div>
 
       {/* Footer */}

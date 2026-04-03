@@ -247,6 +247,9 @@ export const foodAPI = {
 
   submitComment: (data: { spotId: string; text: string; author?: string }) =>
     api.post('/food/comments', data),
+
+  chat: (messages: { role: 'user' | 'assistant'; content: string }[]) =>
+    api.post<{ success: boolean; data: { reply: string } }>('/food/chat', { messages }),
 };
 
 export default api;
