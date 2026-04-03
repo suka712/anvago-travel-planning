@@ -6,7 +6,7 @@ import {
   Sparkles, Map, Clock, DollarSign, Cloud, Sun, CloudRain,
   MapPin, Star, Calendar, Heart, Share2, Link2, Twitter, Facebook,
   Lock, User, LayoutGrid, Check, ArrowRight, X, ChevronRight,
-  Shuffle, TrendingUp
+  Shuffle, TrendingUp, ImageOff
 } from 'lucide-react';
 import { Button, Card, Badge } from '@/components/ui';
 import Header from '@/components/layouts/Header';
@@ -14,6 +14,39 @@ import { useOnboardingStore } from '@/stores/onboardingStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useFavoritesStore } from '@/stores/favoritesStore';
 import { itinerariesAPI } from '@/services/api';
+
+function FallbackImage({ src, alt, className }: { src: string; alt: string; className?: string }) {
+  const [errored, setErrored] = useState(false);
+
+  if (errored) {
+    return (
+      <div className={`${className} relative overflow-hidden bg-gradient-to-br from-sky-100 via-sky-50 to-sky-100`}>
+        <motion.div
+          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent"
+          animate={{ x: ['-100%', '100%'] }}
+          transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+        />
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
+          <motion.div
+            animate={{ y: [0, -4, 0], opacity: [0.5, 1, 0.5] }}
+            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+          >
+            <ImageOff className="w-6 h-6 text-sky-400" />
+          </motion.div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={src}
+      alt={alt}
+      className={className}
+      onError={() => setErrored(true)}
+    />
+  );
+}
 
 // Mock generated itineraries
 const mockItineraries = [
@@ -450,11 +483,10 @@ export default function Results() {
                     <div className="flex">
                       {/* Thumbnail */}
                       <div className="relative w-28 h-28 shrink-0 overflow-hidden">
-                        <img
+                        <FallbackImage
                           src={itinerary.image}
                           alt={itinerary.name}
                           className="w-full h-full object-cover"
-                          onError={(e) => { e.currentTarget.src = 'https://placehold.co/600x400?text=No+Image'; }}
                         />
                         {viewMode === 'suggested' && itinerary.matchScore !== undefined && itinerary.matchScore > 0 && (
                           <div className="absolute top-2 left-2">
@@ -519,11 +551,10 @@ export default function Results() {
                     <Card className="overflow-hidden">
                       {/* Hero Image */}
                       <div className="relative h-44 -m-5 mb-4">
-                        <img
+                        <FallbackImage
                           src={selectedItinerary.image}
                           alt={selectedItinerary.name}
                           className="w-full h-full object-cover"
-                          onError={(e) => { e.currentTarget.src = 'https://placehold.co/600x400?text=No+Image'; }}
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
 
@@ -746,7 +777,7 @@ export default function Results() {
                 </div>
 
                 <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg mb-4">
-                  <img src={selectedItinerary.image} alt={selectedItinerary.name} className="w-12 h-12 rounded-lg object-cover" onError={(e) => { e.currentTarget.src = 'https://placehold.co/600x400?text=No+Image'; }} />
+                  <FallbackImage src={selectedItinerary.image} alt={selectedItinerary.name} className="w-12 h-12 rounded-lg object-cover" />
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-sm truncate">{selectedItinerary.name}</p>
                     <p className="text-xs text-gray-500">{selectedItinerary.duration} days • {answers.destination || 'Danang'}</p>
