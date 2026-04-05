@@ -8,6 +8,7 @@ import { requestLogger } from './middleware/requestLogger.js';
 import { setupPassport } from './config/passport.js';
 import routes from './routes/index.js';
 import { prisma } from './config/database.js';
+import bcrypt from 'bcryptjs';
 
 const app: Express = express();
 const PORT = process.env.PORT || 3001;
@@ -47,13 +48,42 @@ app.get('/health', (_, res) => {
 // Error handling
 app.use(errorHandler);
 
-// Ensure demo account has admin access
-prisma.user.updateMany({
-  where: { email: 'demo@anvago.com' },
-  data: { isAdmin: true, isPremium: true },
-}).then((r) => {
-  if (r.count > 0) console.log('  ✓ demo@anvago.com promoted to admin');
-}).catch(() => {});
+// Ensure demo account has admin access & seed 500 users
+(async () => {
+  try {
+    const r = await prisma.user.updateMany({
+      where: { email: 'demo@anvago.com' },
+      data: { isAdmin: true, isPremium: true },
+    });
+    if (r.count > 0) console.log('  ✓ demo@anvago.com promoted to admin');
+
+    // Seed 500 demo users if not already present
+    const marker = await prisma.user.findUnique({ where: { email: 'user001@anvago.com' } });
+    if (!marker) {
+      console.log('  ⏳ Seeding 500 demo users...');
+      const hash = await bcrypt.hash('user123', 10);
+      const firstNames = ['Minh', 'Linh', 'Hoa', 'Tuan', 'Lan', 'Duc', 'Mai', 'Nam', 'Thu', 'Khoa', 'An', 'Bao', 'Chi', 'Dung', 'Giang', 'Ha', 'Khanh', 'Long', 'Ngoc', 'Phuong'];
+      const lastNames = ['Nguyen', 'Tran', 'Le', 'Pham', 'Hoang', 'Vo', 'Dang', 'Bui', 'Do', 'Ngo'];
+
+      const users = Array.from({ length: 500 }, (_, i) => {
+        const idx = i + 1;
+        const first = firstNames[i % firstNames.length];
+        const last = lastNames[i % lastNames.length];
+        return {
+          email: `user${String(idx).padStart(3, '0')}@anvago.com`,
+          passwordHash: hash,
+          name: `${first} ${last} ${idx}`,
+          isPremium: i % 5 === 0, // 20% premium
+        };
+      });
+
+      await prisma.user.createMany({ data: users, skipDuplicates: true });
+      console.log('  ✓ 500 demo users created');
+    }
+  } catch (e) {
+    console.error('  ✗ User seeding failed:', e);
+  }
+})();
 
 // Start server - bind to 0.0.0.0 for container environments
 const server = app.listen(Number(PORT), '0.0.0.0', () => {
