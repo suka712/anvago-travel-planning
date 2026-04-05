@@ -43,6 +43,7 @@ async function main() {
       passwordHash: demoPassword,
       name: 'Demo Traveler',
       isPremium: true,
+      isAdmin: true,
       preferences: {
         create: {
           personas: ['foodie', 'photographer'],
