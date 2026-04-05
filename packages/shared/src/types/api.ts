@@ -62,6 +62,7 @@ export interface LoginResponse {
     name: string;
     avatarUrl?: string;
     isPremium: boolean;
+    isAdmin?: boolean;
   };
   tokens: {
     accessToken: string;
