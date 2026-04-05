@@ -64,42 +64,60 @@ app.use(errorHandler);
         NOT: { email: { in: ['demo@anvago.com', 'admin@anvago.com', 'foodie@anvago.com'] } },
       },
     });
-    const marker = await prisma.user.findFirst({ where: { email: { contains: '@gmail.com' }, isAdmin: false } });
-    if (!marker) {
+    const seedCount = await prisma.user.count({ where: { email: { not: { endsWith: '@anvago.com' } } } });
+    if (seedCount < 50) {
       console.log('  ⏳ Seeding 500 demo users...');
       const hash = await bcrypt.hash('user123', 10);
 
-      const ho = ['Nguyen', 'Tran', 'Le', 'Pham', 'Hoang', 'Vo', 'Dang', 'Bui', 'Do', 'Ngo', 'Duong', 'Ly', 'Truong', 'Dinh', 'Ha', 'Luong', 'Mai', 'Cao', 'Lam', 'Vu'];
-      const dem = ['Van', 'Thi', 'Quang', 'Minh', 'Hoang', 'Duc', 'Thanh', 'Ngoc', 'Dinh', 'Xuan', 'Hong', 'Huu', 'Quoc', 'Anh', 'Phuoc', 'Bao', 'Gia', 'Duy', 'Khanh', 'Trung'];
-      const ten = ['Khai', 'Hieu', 'Linh', 'Tuan', 'Hoa', 'Lan', 'Duc', 'Mai', 'Nam', 'Thu', 'An', 'Bao', 'Chi', 'Dung', 'Giang', 'Ha', 'Khoa', 'Long', 'Ngoc', 'Phuong', 'Quyen', 'Son', 'Tien', 'Uyen', 'Vy', 'Huy', 'Dat', 'Thao', 'Phuc', 'Nhi', 'Tam', 'Hung', 'Trinh', 'Luan', 'My', 'Tai', 'Sang', 'Nhat', 'Tuyet', 'Hai'];
-      const domains = ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'icloud.com'];
+      const ho = ['Nguyen', 'Tran', 'Le', 'Pham', 'Hoang', 'Vo', 'Dang', 'Bui', 'Do', 'Ngo', 'Duong', 'Ly', 'Truong', 'Dinh', 'Ha', 'Luong', 'Mai', 'Cao', 'Lam', 'Vu', 'Tang', 'Trinh', 'Huynh', 'Ta', 'Chau', 'Quach', 'Dam', 'Bach', 'Tong', 'Mach'];
+      const dem = ['Van', 'Thi', 'Quang', 'Minh', 'Hoang', 'Duc', 'Thanh', 'Ngoc', 'Dinh', 'Xuan', 'Hong', 'Huu', 'Quoc', 'Anh', 'Phuoc', 'Bao', 'Gia', 'Duy', 'Khanh', 'Trung', 'Tuan', 'Kim', 'Trong', 'Hien', 'Phu'];
+      const ten = ['Khai', 'Hieu', 'Linh', 'Tuan', 'Hoa', 'Lan', 'Duc', 'Mai', 'Nam', 'Thu', 'An', 'Bao', 'Chi', 'Dung', 'Giang', 'Ha', 'Khoa', 'Long', 'Ngoc', 'Phuong', 'Quyen', 'Son', 'Tien', 'Uyen', 'Vy', 'Huy', 'Dat', 'Thao', 'Phuc', 'Nhi', 'Tam', 'Hung', 'Trinh', 'Luan', 'My', 'Tai', 'Sang', 'Nhat', 'Tuyet', 'Hai', 'Khiem', 'Truc', 'Yen', 'Loc', 'Quan', 'Vinh', 'Trang', 'Hien', 'Thuy', 'Dieu'];
+      const domains = ['gmail.com', 'gmail.com', 'gmail.com', 'yahoo.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'icloud.com'];
+
+      const pick = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
+      const strip = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 
       const used = new Set<string>();
       const users = [];
+      const now = Date.now();
 
       for (let i = 0; i < 500; i++) {
-        const h = ho[i % ho.length];
-        const d = dem[(i * 3 + 7) % dem.length];
-        const t = ten[(i * 7 + 3) % ten.length];
+        const h = pick(ho);
+        const d = pick(dem);
+        const t = pick(ten);
         const fullName = `${h} ${d} ${t}`;
+        const domain = pick(domains);
 
-        // Generate realistic email: lowercase first letter of ho + dem + ten + random digits
-        const base = (t.toLowerCase() + d.charAt(0).toLowerCase() + h.charAt(0).toLowerCase()).normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        // Varied email patterns like real people use
+        const patterns = [
+          () => `${strip(t)}${strip(h)}${Math.floor(Math.random() * 99)}@${domain}`,
+          () => `${strip(t)}.${strip(h)}${Math.floor(Math.random() * 999)}@${domain}`,
+          () => `${strip(h)}${strip(t)}${Math.floor(Math.random() * 9000) + 1000}@${domain}`,
+          () => `${strip(t)}${strip(d).charAt(0)}${strip(h).charAt(0)}${Math.floor(Math.random() * 900) + 100}@${domain}`,
+          () => `${strip(t)}_${strip(h)}${Math.floor(Math.random() * 99)}@${domain}`,
+          () => `${strip(h)}.${strip(d)}.${strip(t)}@${domain}`,
+          () => `${strip(t)}${Math.floor(Math.random() * 90) + 10}${strip(h).charAt(0)}@${domain}`,
+          () => `${strip(t)}${strip(h)}${String(Math.floor(Math.random() * 100)).padStart(2, '0')}@${domain}`,
+        ];
+
         let email = '';
         let attempts = 0;
         do {
-          const num = Math.floor(Math.random() * 900) + 100;
-          const domain = domains[i % domains.length];
-          email = `${base}${num}@${domain}`;
+          email = pick(patterns)();
           attempts++;
-        } while (used.has(email) && attempts < 10);
+        } while (used.has(email) && attempts < 20);
         used.add(email);
+
+        // Spread createdAt over last 6 months
+        const daysAgo = Math.floor(Math.random() * 180);
+        const createdAt = new Date(now - daysAgo * 86400000);
 
         users.push({
           email,
           passwordHash: hash,
           name: fullName,
           isPremium: false,
+          createdAt,
         });
       }
 
