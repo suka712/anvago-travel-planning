@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import {
-  Users, Map, Calendar, Settings, Database,
-  RefreshCw, Play, Eye, Edit, Plus,
-  BarChart3, Globe, Sparkles, CheckCircle2, CloudRain,
-  Loader2, AlertTriangle, Car, Crown, Trash2, Shield
+  Users, Map, Calendar, Settings,
+  RefreshCw, Eye, Edit, Plus,
+  BarChart3, Globe,
+  Loader2, AlertTriangle, Crown, Trash2, Shield, Search
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Button, Card, Badge } from '@/components/ui';
@@ -37,28 +36,14 @@ interface Location {
   rating: number;
 }
 
-const demoScenarios = [
-  { id: 'weather', name: 'Weather Alert', description: 'Trigger rain warning and smart reroute', icon: CloudRain, action: 'trigger_weather', payload: { weather: { type: 'rain', message: 'Heavy rain expected at 3 PM' } } },
-  { id: 'traffic', name: 'Traffic Update', description: 'Show traffic delay notification', icon: Car, action: 'trigger_traffic', payload: { traffic: { status: 'heavy', area: 'Dragon Bridge' } } },
-  { id: 'arrival', name: 'Advance Location', description: 'Move to next destination', icon: CheckCircle2, action: 'advance_location', payload: {} },
-  { id: 'complete', name: 'Complete Trip', description: 'Mark current trip as completed', icon: Sparkles, action: 'complete_trip', payload: {} },
-];
-
 export default function Admin() {
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'locations' | 'demo'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'locations'>('overview');
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [triggering, setTriggering] = useState<string | null>(null);
-  const [notification, setNotification] = useState<string | null>(null);
-  const [demoState, setDemoState] = useState({
-    weatherAlert: false,
-    trafficDelay: false,
-    mockLocation: true,
-    aiResponses: true,
-  });
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Fetch data on mount
   useEffect(() => {
@@ -82,47 +67,29 @@ export default function Admin() {
     fetchData();
   }, []);
 
-  const toggleDemoState = (key: keyof typeof demoState) => {
-    setDemoState(prev => ({ ...prev, [key]: !prev[key] }));
-  };
-
-  const handleTriggerScenario = async (scenario: typeof demoScenarios[0]) => {
-    setTriggering(scenario.id);
+  const handleRefresh = async () => {
+    setIsLoading(true);
     try {
-      await adminAPI.updateDemoState({
-        action: scenario.action,
-        payload: scenario.payload,
-      });
-      setNotification(`✓ ${scenario.name} triggered successfully!`);
-      setTimeout(() => setNotification(null), 3000);
-    } catch (err) {
-      setNotification(`✗ Failed to trigger ${scenario.name}`);
-      setTimeout(() => setNotification(null), 3000);
-    } finally {
-      setTriggering(null);
-    }
-  };
-
-  const handleReseedDatabase = async () => {
-    if (!confirm('This will reset all demo data. Continue?')) return;
-    setTriggering('reseed');
-    try {
-      await adminAPI.reseedDatabase();
-      setNotification('✓ Database reseeded successfully!');
-      // Refresh data
-      const [statsRes, usersRes] = await Promise.all([
+      const [statsRes, usersRes, locationsRes] = await Promise.all([
         adminAPI.getStats(),
         adminAPI.getUsers(),
+        adminAPI.getLocations(),
       ]);
       setStats(statsRes.data.data);
       setUsers(usersRes.data.data);
-    } catch (err) {
-      setNotification('✗ Failed to reseed database');
+      setLocations(locationsRes.data.data);
+      toast.success('Data refreshed');
+    } catch {
+      toast.error('Failed to refresh data');
     } finally {
-      setTriggering(null);
-      setTimeout(() => setNotification(null), 3000);
+      setIsLoading(false);
     }
   };
+
+  const filteredUsers = users.filter(u =>
+    u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    u.email.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   if (isLoading) {
     return (
@@ -160,10 +127,12 @@ export default function Admin() {
               </div>
               <div>
                 <h1 className="text-xl font-bold">Admin Panel</h1>
-                <p className="text-sm text-gray-600">Anvago Management & Demo Control</p>
+                <p className="text-sm text-gray-600">Anvago Management</p>
               </div>
             </div>
-            <Badge variant="warning">Demo Mode Active</Badge>
+            <Button variant="secondary" size="sm" leftIcon={<RefreshCw className="w-4 h-4" />} onClick={handleRefresh}>
+              Refresh
+            </Button>
           </div>
         </div>
       </header>
@@ -178,7 +147,6 @@ export default function Admin() {
                   { id: 'overview', label: 'Overview', icon: BarChart3 },
                   { id: 'users', label: 'Users', icon: Users },
                   { id: 'locations', label: 'Locations', icon: Map },
-                  { id: 'demo', label: 'Demo Control', icon: Play },
                 ].map(item => (
                   <button
                     key={item.id}
@@ -268,28 +236,6 @@ export default function Admin() {
                   </Card>
                 </div>
 
-                {/* Quick Actions */}
-                <Card>
-                  <h3 className="font-bold mb-4">Quick Actions</h3>
-                  <div className="flex gap-3">
-                    <Button 
-                      variant="secondary" 
-                      leftIcon={<RefreshCw className="w-4 h-4" />}
-                      onClick={() => window.location.reload()}
-                    >
-                      Refresh Data
-                    </Button>
-                    <Button 
-                      variant="secondary" 
-                      leftIcon={<Database className="w-4 h-4" />}
-                      onClick={handleReseedDatabase}
-                      isLoading={triggering === 'reseed'}
-                    >
-                      Reseed Database
-                    </Button>
-                  </div>
-                </Card>
-
                 {/* System Status */}
                 <Card>
                   <h3 className="font-bold mb-4">System Status</h3>
@@ -297,15 +243,12 @@ export default function Admin() {
                     {[
                       { name: 'API Server', status: 'online' },
                       { name: 'Database', status: 'online' },
-                      { name: 'Weather API', status: 'mock' },
-                      { name: 'AI Service (Gemini)', status: import.meta.env.VITE_GEMINI_API_KEY ? 'online' : 'mock' },
-                      { name: 'Grab Integration', status: 'mock' },
+                      { name: 'Payment Gateway (SePay)', status: 'online' },
+                      { name: 'AI Service', status: 'online' },
                     ].map(service => (
                       <div key={service.name} className="flex items-center justify-between py-2 border-b last:border-0">
                         <span>{service.name}</span>
-                        <Badge variant={service.status === 'online' ? 'success' : 'warning'}>
-                          {service.status}
-                        </Badge>
+                        <Badge variant="success">{service.status}</Badge>
                       </div>
                     ))}
                   </div>
@@ -323,6 +266,18 @@ export default function Admin() {
                   </div>
                 </div>
 
+                {/* Search */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search by name or email..."
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4FC3F7] bg-white"
+                  />
+                </div>
+
                 <Card padding="none">
                   <div className="max-h-[600px] overflow-y-auto">
                     <table className="w-full">
@@ -337,7 +292,7 @@ export default function Admin() {
                         </tr>
                       </thead>
                       <tbody className="divide-y">
-                        {users.map(user => (
+                        {filteredUsers.map(user => (
                           <tr key={user.id} className="hover:bg-gray-50">
                             <td className="px-4 py-3">
                               <div>
@@ -469,123 +424,6 @@ export default function Admin() {
               </div>
             )}
 
-            {activeTab === 'demo' && (
-              <div className="space-y-6">
-                <h2 className="text-2xl font-bold">Demo Control Panel</h2>
-                <p className="text-gray-600">Control demo scenarios and mock data for presentations.</p>
-
-                {/* Notification */}
-                {notification && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className={`p-4 rounded-xl ${
-                      notification.startsWith('✓') 
-                        ? 'bg-green-100 text-green-800 border-2 border-green-200' 
-                        : 'bg-red-100 text-red-800 border-2 border-red-200'
-                    }`}
-                  >
-                    {notification}
-                  </motion.div>
-                )}
-                
-                {/* Trigger Scenarios */}
-                <Card>
-                  <h3 className="font-bold mb-4">🎬 Trigger Demo Scenarios</h3>
-                  <p className="text-sm text-gray-600 mb-4">Click to trigger scenarios during a live demo presentation.</p>
-                  <div className="grid grid-cols-2 gap-4">
-                    {demoScenarios.map(scenario => (
-                      <motion.button
-                        key={scenario.id}
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={() => handleTriggerScenario(scenario)}
-                        disabled={triggering === scenario.id}
-                        className="p-4 rounded-xl border-2 border-black hover:border-[#4FC3F7] hover:bg-[#4FC3F7]/5 transition-colors text-left shadow-[4px_4px_0px_#000] hover:shadow-[2px_2px_0px_#000] hover:translate-x-[2px] hover:translate-y-[2px]"
-                      >
-                        {triggering === scenario.id ? (
-                          <Loader2 className="w-8 h-8 text-[#4FC3F7] mb-2 animate-spin" />
-                        ) : (
-                          <scenario.icon className="w-8 h-8 text-[#4FC3F7] mb-2" />
-                        )}
-                        <h4 className="font-bold">{scenario.name}</h4>
-                        <p className="text-sm text-gray-500">{scenario.description}</p>
-                      </motion.button>
-                    ))}
-                  </div>
-                </Card>
-
-                {/* Demo Toggles */}
-                <Card>
-                  <h3 className="font-bold mb-4">⚙️ Mock Data Controls</h3>
-                  <div className="space-y-4">
-                    {[
-                      { key: 'mockLocation', label: 'Mock Location', description: 'Simulate GPS location changes' },
-                      { key: 'weatherAlert', label: 'Weather Alerts', description: 'Enable weather warning notifications' },
-                      { key: 'trafficDelay', label: 'Traffic Delays', description: 'Simulate traffic conditions' },
-                      { key: 'aiResponses', label: 'AI Responses', description: 'Use mock AI for itinerary generation' },
-                    ].map(toggle => (
-                      <div key={toggle.key} className="flex items-center justify-between py-3 border-b last:border-0">
-                        <div>
-                          <p className="font-medium">{toggle.label}</p>
-                          <p className="text-sm text-gray-500">{toggle.description}</p>
-                        </div>
-                        <button
-                          onClick={() => toggleDemoState(toggle.key as keyof typeof demoState)}
-                          className={`relative w-12 h-6 rounded-full transition-colors ${
-                            demoState[toggle.key as keyof typeof demoState] ? 'bg-[#4FC3F7]' : 'bg-gray-300'
-                          }`}
-                        >
-                          <motion.div
-                            className="absolute top-1 w-4 h-4 bg-white rounded-full shadow"
-                            animate={{ left: demoState[toggle.key as keyof typeof demoState] ? '28px' : '4px' }}
-                          />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </Card>
-
-                {/* Demo Quick Actions */}
-                <Card>
-                  <h3 className="font-bold mb-4">🚀 Quick Actions</h3>
-                  <div className="flex flex-wrap gap-3">
-                    <Button 
-                      variant="secondary"
-                      onClick={handleReseedDatabase}
-                      isLoading={triggering === 'reseed'}
-                      leftIcon={<Database className="w-4 h-4" />}
-                    >
-                      Reset All Demo Data
-                    </Button>
-                    <Button 
-                      variant="secondary"
-                      onClick={() => window.open('/discover', '_blank')}
-                      leftIcon={<Sparkles className="w-4 h-4" />}
-                    >
-                      Generate Itinerary (New Tab)
-                    </Button>
-                  </div>
-                </Card>
-
-                {/* Demo Login Info */}
-                <Card className="bg-gradient-to-r from-[#4FC3F7]/10 to-[#81D4FA]/10">
-                  <h3 className="font-bold mb-4">📧 Demo Account Credentials</h3>
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div className="p-3 bg-white rounded-lg border">
-                      <p className="text-sm text-gray-500">Admin Account</p>
-                      <p className="font-mono text-sm">admin@anvago.com</p>
-                      <p className="font-mono text-sm text-gray-600">admin123</p>
-                    </div>
-                    <div className="p-3 bg-white rounded-lg border">
-                      <p className="text-sm text-gray-500">Demo User (Premium)</p>
-                      <p className="font-mono text-sm">demo@anvago.com</p>
-                      <p className="font-mono text-sm text-gray-600">demo123</p>
-                    </div>
-                  </div>
-                </Card>
-              </div>
-            )}
           </div>
         </div>
       </div>
