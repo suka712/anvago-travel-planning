@@ -58,24 +58,44 @@ app.use(errorHandler);
     if (r.count > 0) console.log('  ✓ demo@anvago.com promoted to admin');
 
     // Seed 500 demo users if not already present
-    const marker = await prisma.user.findUnique({ where: { email: 'user001@anvago.com' } });
+    const marker = await prisma.user.findUnique({ where: { email: 'nguyenquangk981@gmail.com' } });
     if (!marker) {
       console.log('  ⏳ Seeding 500 demo users...');
       const hash = await bcrypt.hash('user123', 10);
-      const firstNames = ['Minh', 'Linh', 'Hoa', 'Tuan', 'Lan', 'Duc', 'Mai', 'Nam', 'Thu', 'Khoa', 'An', 'Bao', 'Chi', 'Dung', 'Giang', 'Ha', 'Khanh', 'Long', 'Ngoc', 'Phuong'];
-      const lastNames = ['Nguyen', 'Tran', 'Le', 'Pham', 'Hoang', 'Vo', 'Dang', 'Bui', 'Do', 'Ngo'];
 
-      const users = Array.from({ length: 500 }, (_, i) => {
-        const idx = i + 1;
-        const first = firstNames[i % firstNames.length];
-        const last = lastNames[i % lastNames.length];
-        return {
-          email: `user${String(idx).padStart(3, '0')}@anvago.com`,
+      const ho = ['Nguyen', 'Tran', 'Le', 'Pham', 'Hoang', 'Vo', 'Dang', 'Bui', 'Do', 'Ngo', 'Duong', 'Ly', 'Truong', 'Dinh', 'Ha', 'Luong', 'Mai', 'Cao', 'Lam', 'Vu'];
+      const dem = ['Van', 'Thi', 'Quang', 'Minh', 'Hoang', 'Duc', 'Thanh', 'Ngoc', 'Dinh', 'Xuan', 'Hong', 'Huu', 'Quoc', 'Anh', 'Phuoc', 'Bao', 'Gia', 'Duy', 'Khanh', 'Trung'];
+      const ten = ['Khai', 'Hieu', 'Linh', 'Tuan', 'Hoa', 'Lan', 'Duc', 'Mai', 'Nam', 'Thu', 'An', 'Bao', 'Chi', 'Dung', 'Giang', 'Ha', 'Khoa', 'Long', 'Ngoc', 'Phuong', 'Quyen', 'Son', 'Tien', 'Uyen', 'Vy', 'Huy', 'Dat', 'Thao', 'Phuc', 'Nhi', 'Tam', 'Hung', 'Trinh', 'Luan', 'My', 'Tai', 'Sang', 'Nhat', 'Tuyet', 'Hai'];
+      const domains = ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'icloud.com'];
+
+      const used = new Set<string>();
+      const users = [];
+
+      for (let i = 0; i < 500; i++) {
+        const h = ho[i % ho.length];
+        const d = dem[(i * 3 + 7) % dem.length];
+        const t = ten[(i * 7 + 3) % ten.length];
+        const fullName = `${h} ${d} ${t}`;
+
+        // Generate realistic email: lowercase first letter of ho + dem + ten + random digits
+        const base = (t.toLowerCase() + d.charAt(0).toLowerCase() + h.charAt(0).toLowerCase()).normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        let email = '';
+        let attempts = 0;
+        do {
+          const num = Math.floor(Math.random() * 900) + 100;
+          const domain = domains[i % domains.length];
+          email = `${base}${num}@${domain}`;
+          attempts++;
+        } while (used.has(email) && attempts < 10);
+        used.add(email);
+
+        users.push({
+          email,
           passwordHash: hash,
-          name: `${first} ${last} ${idx}`,
-          isPremium: i % 5 === 0, // 20% premium
-        };
-      });
+          name: fullName,
+          isPremium: false,
+        });
+      }
 
       await prisma.user.createMany({ data: users, skipDuplicates: true });
       console.log('  ✓ 500 demo users created');
