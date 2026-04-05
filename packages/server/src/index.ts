@@ -57,8 +57,14 @@ app.use(errorHandler);
     });
     if (r.count > 0) console.log('  ✓ demo@anvago.com promoted to admin');
 
-    // Seed 500 demo users if not already present
-    const marker = await prisma.user.findUnique({ where: { email: 'nguyenquangk981@gmail.com' } });
+    // Clean up old seed users and seed 500 realistic ones
+    await prisma.user.deleteMany({
+      where: {
+        email: { endsWith: '@anvago.com' },
+        NOT: { email: { in: ['demo@anvago.com', 'admin@anvago.com', 'foodie@anvago.com'] } },
+      },
+    });
+    const marker = await prisma.user.findFirst({ where: { email: { contains: '@gmail.com' }, isAdmin: false } });
     if (!marker) {
       console.log('  ⏳ Seeding 500 demo users...');
       const hash = await bcrypt.hash('user123', 10);
