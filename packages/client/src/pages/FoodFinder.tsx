@@ -1205,10 +1205,10 @@ export default function FoodFinder() {
                   </Button>
                 ) : (
                   <>
-                    <Button onClick={() => navigate('/login', { state: { from: '/food' } })} className="w-full">
+                    <Button onClick={() => navigate('/login', { state: { from: '/food-finder' } })} className="w-full">
                       Sign In
                     </Button>
-                    <Button variant="secondary" onClick={() => navigate('/register', { state: { from: '/food' } })} className="w-full">
+                    <Button variant="secondary" onClick={() => navigate('/register', { state: { from: '/food-finder' } })} className="w-full">
                       Create Free Account
                     </Button>
                   </>

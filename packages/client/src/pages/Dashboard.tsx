@@ -363,7 +363,7 @@ export default function Dashboard() {
             </motion.div>
 
             <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-              <Card hoverable className="cursor-pointer h-full" onClick={() => navigate('/food')}>
+              <Card hoverable className="cursor-pointer h-full" onClick={() => navigate('/food-finder')}>
                 <div className="flex items-center gap-4">
                   <div className="w-14 h-14 bg-gradient-to-br from-orange-100 to-red-100 rounded-2xl flex items-center justify-center border-2 border-black">
                     <Utensils className="w-7 h-7 text-orange-600" />
