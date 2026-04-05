@@ -7,6 +7,7 @@ import { errorHandler } from './middleware/errorHandler.js';
 import { requestLogger } from './middleware/requestLogger.js';
 import { setupPassport } from './config/passport.js';
 import routes from './routes/index.js';
+import { prisma } from './config/database.js';
 
 const app: Express = express();
 const PORT = process.env.PORT || 3001;
@@ -45,6 +46,14 @@ app.get('/health', (_, res) => {
 
 // Error handling
 app.use(errorHandler);
+
+// Ensure demo account has admin access
+prisma.user.updateMany({
+  where: { email: 'demo@anvago.com' },
+  data: { isAdmin: true, isPremium: true },
+}).then((r) => {
+  if (r.count > 0) console.log('  ✓ demo@anvago.com promoted to admin');
+}).catch(() => {});
 
 // Start server - bind to 0.0.0.0 for container environments
 const server = app.listen(Number(PORT), '0.0.0.0', () => {
