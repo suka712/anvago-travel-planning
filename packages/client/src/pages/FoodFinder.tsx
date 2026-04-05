@@ -10,6 +10,9 @@ import {
 import { Button, Card, Badge } from '@/components/ui';
 import Header from '@/components/layouts/Header';
 import { foodAPI } from '@/services/api';
+import { useAuthStore } from '@/stores/authStore';
+import { useNavigate } from 'react-router-dom';
+import { Crown, Lock } from 'lucide-react';
 
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1715925717150-2a6d181d8846?q=80&w=1286&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D';
 
@@ -933,6 +936,10 @@ const generateAISummary = (spot: typeof mockFoodSpots[0]) => {
 };
 
 export default function FoodFinder() {
+  const navigate = useNavigate();
+  const { isAuthenticated, user } = useAuthStore();
+  const isPremium = isAuthenticated && user?.isPremium;
+
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [isLoading, setIsLoading] = useState(true);
   const [isAiThinking, setIsAiThinking] = useState(false);
@@ -1175,6 +1182,44 @@ export default function FoodFinder() {
         </div>
       </section>
 
+      {/* Premium Gate */}
+      {!isPremium && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <Card className="max-w-lg mx-auto text-center py-12">
+              <div className="w-20 h-20 bg-gradient-to-br from-orange-400 to-red-500 rounded-2xl flex items-center justify-center mx-auto mb-6 border-2 border-black shadow-[3px_3px_0px_#000]">
+                <Lock className="w-10 h-10 text-white" />
+              </div>
+              <h2 className="text-2xl font-bold mb-2">Premium Feature</h2>
+              <p className="text-gray-600 mb-6 max-w-sm mx-auto">
+                AI Food Finder is available exclusively for Premium members. Upgrade to discover the best food spots in Da Nang with AI-powered recommendations.
+              </p>
+              <div className="flex flex-col gap-3 max-w-xs mx-auto">
+                {isAuthenticated ? (
+                  <Button onClick={() => navigate('/settings')} className="w-full">
+                    <Crown className="w-5 h-5 mr-2" />
+                    Upgrade to Premium
+                  </Button>
+                ) : (
+                  <>
+                    <Button onClick={() => navigate('/login', { state: { from: '/food' } })} className="w-full">
+                      Sign In
+                    </Button>
+                    <Button variant="secondary" onClick={() => navigate('/register', { state: { from: '/food' } })} className="w-full">
+                      Create Free Account
+                    </Button>
+                  </>
+                )}
+              </div>
+            </Card>
+          </motion.div>
+        </div>
+      )}
+
+      {isPremium && <>
       {/* AI Thinking Overlay */}
       <AnimatePresence>
         {isAiThinking && (
@@ -1741,6 +1786,8 @@ export default function FoodFinder() {
           {chatOpen ? <X className="w-6 h-6" /> : <MessageSquare className="w-6 h-6" />}
         </motion.button>
       </div>
+
+      </>}
 
       {/* Footer */}
       <footer className="bg-white border-t-2 border-black mt-12">
