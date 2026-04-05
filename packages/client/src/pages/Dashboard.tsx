@@ -327,7 +327,7 @@ export default function Dashboard() {
       <main className="max-w-7xl mx-auto px-4 py-6 space-y-8">
         {/* Quick Actions */}
         <section>
-          <div className="grid md:grid-cols-3 gap-4">
+          <div className="grid md:grid-cols-4 gap-4">
             <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
               <Card
                 hoverable
@@ -356,6 +356,21 @@ export default function Dashboard() {
                   <div>
                     <h3 className="font-bold">AI Recommendations</h3>
                     <p className="text-sm text-gray-600">Personalized for you</p>
+                  </div>
+                  <ChevronRight className="w-5 h-5 ml-auto text-gray-400" />
+                </div>
+              </Card>
+            </motion.div>
+
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+              <Card hoverable className="cursor-pointer h-full" onClick={() => navigate('/food')}>
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 bg-gradient-to-br from-orange-100 to-red-100 rounded-2xl flex items-center justify-center border-2 border-black">
+                    <Utensils className="w-7 h-7 text-orange-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold">AI Food Finder</h3>
+                    <p className="text-sm text-gray-600">Discover local eats</p>
                   </div>
                   <ChevronRight className="w-5 h-5 ml-auto text-gray-400" />
                 </div>
