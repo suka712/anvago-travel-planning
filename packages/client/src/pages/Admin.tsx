@@ -4,8 +4,9 @@ import {
   Users, Map, Calendar, Settings, Database,
   RefreshCw, Play, Eye, Edit, Plus,
   BarChart3, Globe, Sparkles, CheckCircle2, CloudRain,
-  Loader2, AlertTriangle, Car
+  Loader2, AlertTriangle, Car, Crown, Trash2, Shield
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { Button, Card, Badge } from '@/components/ui';
 import { adminAPI } from '@/services/api';
 
@@ -316,54 +317,95 @@ export default function Admin() {
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
                   <h2 className="text-2xl font-bold">Users ({users.length})</h2>
+                  <div className="flex gap-3 text-sm text-gray-500">
+                    <span className="flex items-center gap-1"><Crown className="w-4 h-4 text-amber-500" /> {users.filter(u => u.isPremium).length} Premium</span>
+                    <span className="flex items-center gap-1"><Shield className="w-4 h-4 text-red-500" /> {users.filter(u => u.isAdmin).length} Admin</span>
+                  </div>
                 </div>
-                
+
                 <Card padding="none">
-                  <table className="w-full">
-                    <thead className="bg-gray-50 border-b">
-                      <tr>
-                        <th className="text-left px-4 py-3 font-medium text-gray-600">User</th>
-                        <th className="text-left px-4 py-3 font-medium text-gray-600">Status</th>
-                        <th className="text-left px-4 py-3 font-medium text-gray-600">Itineraries</th>
-                        <th className="text-left px-4 py-3 font-medium text-gray-600">Trips</th>
-                        <th className="text-left px-4 py-3 font-medium text-gray-600">Joined</th>
-                        <th className="text-right px-4 py-3 font-medium text-gray-600">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y">
-                      {users.map(user => (
-                        <tr key={user.id} className="hover:bg-gray-50">
-                          <td className="px-4 py-3">
-                            <div>
-                              <p className="font-medium">{user.name}</p>
-                              <p className="text-sm text-gray-500">{user.email}</p>
-                            </div>
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="flex gap-1">
-                              {user.isAdmin && (
-                                <Badge variant="error">Admin</Badge>
-                              )}
-                              <Badge variant={user.isPremium ? 'warning' : 'secondary'}>
-                                {user.isPremium ? 'Premium' : 'Free'}
-                              </Badge>
-                            </div>
-                          </td>
-                          <td className="px-4 py-3">{user._count.itineraries}</td>
-                          <td className="px-4 py-3">{user._count.trips}</td>
-                          <td className="px-4 py-3 text-gray-500 text-sm">
-                            {new Date(user.createdAt).toLocaleDateString()}
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="flex justify-end gap-2">
-                              <Button variant="ghost" size="sm"><Eye className="w-4 h-4" /></Button>
-                              <Button variant="ghost" size="sm"><Edit className="w-4 h-4" /></Button>
-                            </div>
-                          </td>
+                  <div className="max-h-[600px] overflow-y-auto">
+                    <table className="w-full">
+                      <thead className="bg-gray-50 border-b sticky top-0">
+                        <tr>
+                          <th className="text-left px-4 py-3 font-medium text-gray-600">User</th>
+                          <th className="text-left px-4 py-3 font-medium text-gray-600">Status</th>
+                          <th className="text-left px-4 py-3 font-medium text-gray-600">Itineraries</th>
+                          <th className="text-left px-4 py-3 font-medium text-gray-600">Trips</th>
+                          <th className="text-left px-4 py-3 font-medium text-gray-600">Joined</th>
+                          <th className="text-right px-4 py-3 font-medium text-gray-600">Actions</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className="divide-y">
+                        {users.map(user => (
+                          <tr key={user.id} className="hover:bg-gray-50">
+                            <td className="px-4 py-3">
+                              <div>
+                                <p className="font-medium">{user.name}</p>
+                                <p className="text-sm text-gray-500">{user.email}</p>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="flex gap-1">
+                                {user.isAdmin && (
+                                  <Badge variant="error">Admin</Badge>
+                                )}
+                                <Badge variant={user.isPremium ? 'warning' : 'secondary'}>
+                                  {user.isPremium ? 'Premium' : 'Free'}
+                                </Badge>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3">{user._count.itineraries}</td>
+                            <td className="px-4 py-3">{user._count.trips}</td>
+                            <td className="px-4 py-3 text-gray-500 text-sm">
+                              {new Date(user.createdAt).toLocaleDateString()}
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="flex justify-end gap-2">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  title={user.isPremium ? 'Remove Premium' : 'Grant Premium'}
+                                  onClick={async () => {
+                                    try {
+                                      await adminAPI.togglePremium(user.id);
+                                      setUsers(prev => prev.map(u =>
+                                        u.id === user.id ? { ...u, isPremium: !u.isPremium } : u
+                                      ));
+                                      toast.success(user.isPremium ? 'Premium removed' : 'Premium granted');
+                                    } catch {
+                                      toast.error('Failed to update user');
+                                    }
+                                  }}
+                                >
+                                  <Crown className={`w-4 h-4 ${user.isPremium ? 'text-amber-500' : 'text-gray-400'}`} />
+                                </Button>
+                                {!user.isAdmin && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    title="Delete User"
+                                    onClick={async () => {
+                                      if (!confirm(`Delete ${user.name} (${user.email})? This cannot be undone.`)) return;
+                                      try {
+                                        await adminAPI.deleteUser(user.id);
+                                        setUsers(prev => prev.filter(u => u.id !== user.id));
+                                        toast.success('User deleted');
+                                      } catch {
+                                        toast.error('Failed to delete user');
+                                      }
+                                    }}
+                                  >
+                                    <Trash2 className="w-4 h-4 text-red-400 hover:text-red-600" />
+                                  </Button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </Card>
               </div>
             )}

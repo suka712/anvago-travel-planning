@@ -220,6 +220,12 @@ export const adminAPI = {
 
   reseedDatabase: () =>
     api.post('/admin/reseed'),
+
+  togglePremium: (userId: string) =>
+    api.patch(`/admin/users/${userId}/toggle-premium`),
+
+  deleteUser: (userId: string) =>
+    api.delete(`/admin/users/${userId}`),
 };
 
 export const paymentsAPI = {

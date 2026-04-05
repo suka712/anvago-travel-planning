@@ -108,6 +108,51 @@ router.get('/users', requireAdmin, async (req, res, next) => {
   }
 });
 
+// PATCH /admin/users/:id/toggle-premium
+router.patch('/users/:id/toggle-premium', requireAdmin, async (req, res, next) => {
+  try {
+    const user = await prisma.user.findUnique({ where: { id: req.params.id } });
+    if (!user) return res.status(404).json({ success: false, error: 'User not found' });
+
+    const updated = await prisma.user.update({
+      where: { id: req.params.id },
+      data: {
+        isPremium: !user.isPremium,
+        premiumUntil: !user.isPremium ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) : null,
+      },
+      select: { id: true, email: true, name: true, isPremium: true },
+    });
+
+    res.json({ success: true, data: updated });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// DELETE /admin/users/:id
+router.delete('/users/:id', requireAdmin, async (req, res, next) => {
+  try {
+    const user = await prisma.user.findUnique({ where: { id: req.params.id } });
+    if (!user) return res.status(404).json({ success: false, error: 'User not found' });
+    if (user.isAdmin) return res.status(400).json({ success: false, error: 'Cannot delete admin users' });
+
+    await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      await tx.tripEvent.deleteMany({ where: { trip: { userId: user.id } } });
+      await tx.trip.deleteMany({ where: { userId: user.id } });
+      await tx.itineraryItem.deleteMany({ where: { itinerary: { userId: user.id } } });
+      await tx.itinerary.deleteMany({ where: { userId: user.id, isTemplate: false } });
+      await tx.mockBooking.deleteMany({ where: { userId: user.id } });
+      await tx.payment.deleteMany({ where: { userId: user.id } });
+      await tx.userPreferences.deleteMany({ where: { userId: user.id } });
+      await tx.user.delete({ where: { id: user.id } });
+    });
+
+    res.json({ success: true, data: { message: 'User deleted' } });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // GET /admin/itineraries
 router.get('/itineraries', requireAdmin, async (req, res, next) => {
   try {
